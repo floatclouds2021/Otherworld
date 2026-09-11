@@ -1,0 +1,302 @@
+"use strict";
+import { skills } from "./skills.js";
+const stances = {};
+
+class Stance {
+    constructor(
+            {
+                name,
+                id,
+                max_bonus = 2,
+                related_skill,
+                target_count = 1,
+                randomize_target_count = false,
+                is_unlocked = false,
+                stat_multipliers = {},
+                description = ""
+            }
+        ) {
+            
+        if(related_skill && !skills[related_skill]) {
+            throw(`Tried to attach skill "${related_skill}" to stance "${name}", but such a skill doesnt exist!`);
+        }
+
+        this.name = name;
+        this.max_bonus = max_bonus;
+        this.id = id;
+        this.related_skill = related_skill;
+        this.description = description;
+        if(this.target_count < 1) {
+            throw("Combat stance cannot target less than 1 enemy!");
+        }  
+        this.target_count = target_count;
+        this.randomize_target_count = randomize_target_count; //if true, the actual target count is a random number in range [1, target_count]
+        this.is_unlocked = is_unlocked;
+        this.stat_multipliers = stat_multipliers;
+    }
+
+    getDescription = function(){
+        if(this.description) {
+            return this.description;
+        } else if(this.related_skill) {
+            return skills[this.related_skill].description;
+        }
+    }
+
+    getStats = function() {
+        if(!this.related_skill) {
+            //no skill, nothing to scale stats with
+            return this.stat_multipliers;
+        } else {
+            const multipliers = {};
+            Object.keys(this.stat_multipliers).forEach(stat => {
+                if(this.stat_multipliers[stat] < 1) {
+                    multipliers[stat] = this.stat_multipliers[stat] + (1 - this.stat_multipliers[stat]) * skills[this.related_skill].current_level/(skills[this.related_skill].max_level);
+                    //div by 2 because penalties don't get fully nullified, only cut in half (e.g. x0.8 -> x0.9)
+                    //什么鬼？满级了惩罚归零简直天经地义...
+                }
+                else {
+                    multipliers[stat] =  this.stat_multipliers[stat] + (this.stat_multipliers[stat]-1) * skills[this.related_skill].current_level/skills[this.related_skill].max_level * (this.max_bonus - 1);
+                }
+            });
+            return multipliers;
+        }
+    }
+}
+
+stances["normal"] = new Stance({
+    name: "[无]",
+    id: "normal",
+    is_unlocked: true,
+    description: "不使用任何秘法，仅仅利用蛮力来战斗。",
+    stat_multipliers: {}
+})
+
+stances["quick"] = new Stance({
+    name: "Quick Steps",
+    id: "quick",
+    related_skill: "Quick steps",
+    description: "A swift and precise technique that abandons strength in favor of greater speed",
+    stat_multipliers: {
+        attack_power: 0.8,
+        attack_speed: 1.2
+    },
+});
+
+stances["heavy"] = new Stance({
+    name: "Crushing Force",
+    id: "heavy",
+    related_skill: "Heavy strike",
+    stat_multipliers: {
+        //attack multis are stronger than they appear since enemies have defense stat
+        attack_power: 1.2,
+        attack_speed: 0.8
+    },
+});
+
+stances["defensive"] = new Stance({
+    name: "Defensive Measures",
+    id: "defensive",
+    related_skill: "Defensive measures",
+    stat_multipliers: {
+        attack_power: 0.8,
+        agility: 1.2,
+        block_strength: 1.1,
+    },
+    target_count: 1,
+});
+
+stances["wide"] = new Stance({
+    name: "Broad Arc",
+    id: "wide",
+    related_skill: "Wide swing",
+    stat_multipliers: {
+        attack_power: 0.4,
+    },
+    target_count: 4,
+});
+
+stances["berserk"] = new Stance({
+    name: "Berserker's Stride",
+    id: "berserk",
+    related_skill: "Berserker's stride",
+    stat_multipliers: {
+        attack_power: 1.2,
+        hit_chance: 1.2,
+        agility: 0.4,
+        block_strength: 0.4,
+    },
+    target_count: 3,
+    randomize_target_count: true,
+});
+
+stances["flowing water"] = new Stance({
+    name: "Flowing Water",
+    id: "flowing water",
+    related_skill: "Flowing water",
+    stat_multipliers: {
+        attack_power: 1.2,
+        agility: 1.2,
+        attack_speed: 1.2,
+    },
+    target_count: 2,
+});
+//血洛大陆秘法↓
+stances["MB_Speed"] = new Stance({
+    name: "融血·疾",
+    id: "MB_Speed",
+    description: "可以稍微加快攻击速度。",
+    related_skill: "MergeBlood",
+    stat_multipliers: {
+        attack_speed: 1.1,
+        max_health: 0.75,
+    },
+    target_count: 1,
+    max_bonus: 2,
+});
+
+stances["MB_Power"] = new Stance({
+    name: "融血·锐",
+    id: "MB_Power",
+    related_skill: "MergeBlood",
+    description: "可以略微增强攻击力。",
+    stat_multipliers: {
+        attack_power: 1.1,
+        max_health: 0.75,
+    },
+    target_count: 1,
+});
+
+stances["WH_Speed"] = new Stance({
+    name: "水无心·流水",
+    id: "水无心·流水",
+    description: "加快攻击速度，并稍微加强攻击力。",
+    related_skill: "WaterHeartless",
+    stat_multipliers: {
+        attack_speed: 1.15,
+        attack_power: 1.05,
+        attack_mul  : 1.25,
+    },
+    target_count: 1,
+    max_bonus: 3,
+});
+
+stances["WH_Power"] = new Stance({
+    name: "水无心·洪水",
+    id: "水无心·洪水",
+    description: "加强攻击力，并稍微加快攻击速度。",
+    related_skill: "WaterHeartless",
+    stat_multipliers: {
+        attack_speed: 1.05,
+        attack_power: 1.15,
+        attack_mul  : 1.25,
+    },
+    target_count: 1,
+    max_bonus: 3,
+});
+
+stances["WH_Multi"] = new Stance({
+    name: "水无心·雨水",
+    id: "水无心·雨水",
+    description: "稍微增幅攻击力和攻击速度，但一次可以攻击多个目标。",
+    related_skill: "WaterHeartless",
+    stat_multipliers: {
+        attack_speed: 1.05,
+        attack_power: 1.05,
+    },
+    target_count: 2,
+    max_bonus: 3,
+});
+
+
+stances["SF_Power"] = new Stance({
+    name: "映星花·巨星",
+    id: "映星花·巨星",
+    description: "强大的单体攻击秘法，从3个方面对攻击进行叠乘。",
+    related_skill: "ReflectStarFlower",
+    stat_multipliers: {
+        attack_speed: 1.40,
+        attack_power: 1.40,
+        attack_mul  : 1.50,
+    },
+    target_count: 1,
+    max_bonus: 2,
+});
+stances["SF_Multi"] = new Stance({
+    name: "映星花·繁星",
+    id: "映星花·繁星",
+    description: "群体攻击秘法，乘区不如单体攻击，但可以一次攻击3-6个目标。",
+    related_skill: "ReflectStarFlower",
+    stat_multipliers: {
+        attack_speed: 1.20,
+        attack_power: 1.20,
+    },
+    target_count: 3,
+    max_bonus: 2,
+});
+stances["SF_Lucky"] = new Stance({
+    name: "映星花·花海",
+    id: "映星花·花海",
+    description: "抛弃了更强的杀伤力，而是专注于保存敌人战利品的价值。同样是攻击3-6个目标。",
+    related_skill: "ReflectStarFlower",
+    stat_multipliers: {
+        attack_power: 0.80,
+        attack_speed: 1.20,
+        luck: 1.20,
+    },
+    target_count: 3,
+    max_bonus: 2,
+});
+
+stances["SR_Power"] = new Stance({
+    name: "映星天彩·纯色",
+    id: "映星天彩·纯色",
+    description: "强大的单体攻击秘法。0级状态即为【映星花·巨星】的极限。",
+    related_skill: "ReflectStarSkyRainbow",
+    stat_multipliers: {
+        attack_speed: 1.80,
+        attack_power: 1.80,
+        attack_mul  : 2.00,
+    },
+    target_count: 1,
+    max_bonus: 1.6667,//2.5=1.5*1.6667
+});
+stances["SR_Multi"] = new Stance({
+    name: "映星天彩·虹彩",
+    id: "映星天彩·虹彩",
+    description: "群体攻击秘法。0级即为【映星花·繁星】的极限，且不存在无法命中4个目标的虚弱期。",
+    related_skill: "ReflectStarSkyRainbow",
+    stat_multipliers: {
+        attack_speed: 1.40,
+        attack_power: 1.40,
+    },
+    target_count: 5,
+    max_bonus: 1.6,
+});
+stances["SR_Double"] = new Stance({
+    name: "映星天彩·双虹",
+    id: "映星天彩·双红",
+    description: "附带有2连击效果的秘法。代价则是基础数值的缺失。此外，【烈日祝福·艮】或【A9·回风药剂】(没有幸运真的撑得到4-4吗)会覆盖它的效果。",
+    related_skill: "ReflectStarSkyRainbow",
+    stat_multipliers: {
+        attack_speed: 1.10,
+        attack_power: 1.10,
+    },
+    target_count: 5,
+    max_bonus: 4,
+});
+stances["SR_Blood"] = new Stance({
+    name: "映星天彩·血杀",
+    id: "映星天彩·血杀",
+    description: "附带有吸血效果的秘法。吸血倍率为1%+0.1%x【映星天彩】等级，无法超过自身生命上限。基础数值和【双虹】类似。注意只能吸到实际存在的血——让敌人倒欠你一管血并不能增加你的恢复量。",
+    related_skill: "ReflectStarSkyRainbow",
+    stat_multipliers: {
+        attack_speed: 1.10,
+        attack_power: 1.10,
+    },
+    target_count: 5,
+    max_bonus: 4,
+});
+
+
+export {stances};

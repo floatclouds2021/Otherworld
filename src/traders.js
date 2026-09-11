@@ -1,0 +1,739 @@
+"use strict";
+
+import { current_game_time } from "./game_time.js";
+import { InventoryHaver } from "./inventory.js";
+import { item_templates, getItem} from "./items.js";
+import { inf_combat , family_data } from "./main.js";
+import { skills } from "./skills.js";
+import { locations } from "./locations.js";
+
+var traders = {};
+var inventory_templates = {};
+
+
+class Trader extends InventoryHaver {
+    constructor({name,
+                 trade_text = `<span style="color:#ffffd0"> <i class="material-icons">storefront</i> 与 ${name} 交易</span>`,
+                 location_name,
+                 refresh_time = 1,
+                 refresh_shift = 0,
+                 inventory_template,
+                 profit_margin = 2,
+                 is_unlocked = true,
+                 act = 1,
+                }) 
+    {
+        super();
+        this.name = name;
+        this.trade_text = trade_text;
+        this.location_name = location_name;
+        this.last_refresh = -1;  
+        //just the day_count from game_time at which trader was supposedly last refreshed
+
+        this.refresh_time = refresh_time; 
+        //7 would mean it's refreshed every 7 days (with shift at 0 it's every monday)
+        
+        this.refresh_shift = refresh_shift; 
+        //shift refreshing days, e.g. time 7 + shift 2 would be every wednesday, shift 4 would push it to every friday
+        //pretty much pointless if refresh time is not N*7
+        
+        this.inventory_template = inventory_template;
+        //a template for the trader to use, so multiple traders can have same predefined item selection (but still separate and with certain randomness)
+
+        this.profit_margin = profit_margin;
+        //how much more expensive are the trader's items than their actual value, with default being 2 (so 2x more)
+        //don't make it too low to prevent easy xp grinding for the haggling skill
+        this.is_unlocked = is_unlocked;
+        this.act = act;
+    }
+    
+    /**
+     * refreshes trader inventory
+     * @returns boolean informing if it was able to refresh
+     */
+    refresh() {
+        if (this.can_refresh()) {
+            if(this.have_closed()){
+                this.inventory = {};//物品栏清空
+                this.last_refresh = 9e15;//永不刷新
+                return false;
+            }
+            else{
+
+                //refresh inventory
+                this.inventory = this.get_inventory_from_template();
+
+                this.last_refresh = (current_game_time.day_count);
+                return true;
+            }
+        }
+        //otherwise do nothing
+        return false;
+    }
+
+    /**
+     * checks if enough time passed since last refresh
+     * @returns {Boolean}
+     */
+    have_closed(){
+        if(this.act <= 2 && (locations["幻境核心·出口"].is_unlocked )) return true;
+        if(this.act <= 1 && (locations["赫尔沼泽入口"].is_unlocked )) return true;
+        return false;
+    }
+    can_refresh() {
+        return (this.last_refresh < 0 || current_game_time.day_count - (this.last_refresh) >= this.refresh_time);
+    }
+
+    /**
+     * creates new choice of items for the trader, based on assigned inventory template
+     * @returns {null}
+     */
+    get_inventory_from_template() {
+        const inventory = {};
+        const inventory_template = inventory_templates[this.inventory_template];
+        let quality_fix = 0;
+        let item_mul = 1;//全局乘数
+        if(this.inventory_template == "Sky II"){
+            let eff_N = inf_combat.B6 || 1;
+            if(eff_N >= 9999) eff_N = 9999;
+            quality_fix = 9 * Math.log(eff_N);
+            item_mul = eff_N ** 0.8;
+        }
+        let object_mul = 1;//局部乘数
+        for (let i = 0; i < inventory_template.length; i++) {
+            if (inventory_template[i].chance >= Math.random()) {
+                object_mul = 1;
+                if(inventory_template[i].influ.min >= 5){
+                    if(family_data.influ >= inventory_template[i].influ.min){
+                        object_mul *= Math.min(inventory_template[i].influ.cap,(family_data.influ / inventory_template[i].influ.min) ** inventory_template[i].influ.exp);//影响力充足，计算倍数
+                    }
+                    else continue;//影响力不足，直接跳过
+                }
+                let item_count = inventory_template[i].count.length == 1 ?
+                inventory_template[i].count[0] : Math.round(Math.random() *
+                    (inventory_template[i].count[1] - inventory_template[i].count[0]) + inventory_template[i].count[0]);
+                let item_count_q = item_count;
+                item_count *= item_mul;
+                item_count *= object_mul;
+                item_count = Math.ceil(item_count);
+
+                if(inventory_template[i].quality[0] >= 10) {
+                    let quality = Math.round(Math.random() *
+                        (inventory_template[i].quality[1] - inventory_template[i].quality[0]) + inventory_template[i].quality[0] + quality_fix);
+
+                    const item = getItem({...item_templates[inventory_template[i].item_name], quality});
+                    inventory[item.getInventoryKey()] = { item: item, count: item_count_q };
+                } else {
+                    inventory[item_templates[inventory_template[i].item_name].getInventoryKey()] = { item: getItem(item_templates[inventory_template[i].item_name]), count: item_count };
+
+                }
+            }
+
+
+        }//family_data.influ = 纳家影响力
+        
+        //influ.min:最低多少影响力解锁(1代表禁用)
+        //influ.exp:超过min的影响力对物品获取倍数
+        //influ.cap:倍数上限(冰宫商人惨案警钟长鸣)
+
+        //just add items based on their chances and counts in inventory_template
+        return inventory;
+    }
+
+    /**
+     * 
+     * @returns {Number} trader's profit margin multiplied by bonus from the haggling skill
+     */
+    getProfitMargin() {
+        return Math.max(Math.min(1.1,this.profit_margin),this.profit_margin * (Math.pow(0.98,skills["Haggling"].current_level)));
+    }
+
+    getItemPrice(value) {
+        let price = Math.ceil(value*this.getProfitMargin());
+        if(price >= 100) {
+            return Math.round(price/10)*10;
+        } else if(price >= 1000) {
+            return Math.round(price/100)*100;
+        } else {
+            return price;
+        }
+    }
+}
+
+class TradeItem {
+    constructor({ item_name,
+                  chance = 1,
+                  count = [1],
+                  quality = [0.2, 0.8],
+                  influ = {min:1,exp:0.0,cap:1},
+                }) 
+    {
+        this.item_name = item_name;
+        this.chance = chance; //chance for item to appear, 1 is 100%
+        this.count = count; 
+        //how many can appear, will randomly choose something between min and max if specificed, otherwise will go with specific ammount
+        
+        this.quality = quality; //min and max quality of item
+
+        this.influ = influ;
+        //influ.min:最低多少影响力解锁(1代表禁用)
+        //influ.exp:超过min的影响力对物品获取倍数
+        //influ.cap:倍数上限(冰宫商人惨案警钟长鸣)
+
+    }
+}
+
+//create traders
+(function(){
+    traders["village trader"] = new Trader({
+        name: "village trader",
+        inventory_template: "Basic",
+        is_unlocked: false,
+        location_name: "Village",
+        act:1,
+    });
+    traders["suspicious trader"] = new Trader({
+        name: "suspicious trader",
+        inventory_template: "Basic plus",
+        is_unlocked: true,
+        location_name: "Slums",
+        profit_margin: 3,
+        act:1,
+    });
+    traders["I级商城"] = new Trader({
+        name: "I级商城",
+        inventory_template: "Basic I",
+        is_unlocked: true,
+        location_name: "系统空间",
+        act:1,
+    });
+    traders["燕岗杂货铺"] = new Trader({
+        name: "燕岗杂货铺",
+        inventory_template: "Basic II",
+        is_unlocked: false,
+        location_name: "燕岗城",
+        profit_margin: 3,
+        act:1,
+    });
+    traders["矿井集市"] = new Trader({
+        name: "矿井集市",
+        inventory_template: "Basic III",
+        is_unlocked: true,
+        location_name: "燕岗矿井",
+        profit_margin: 3.2,
+        act:1,
+    });
+    traders["金属批发商"] = new Trader({
+        name: "金属批发商",
+        inventory_template: "Terra Palace",
+        is_unlocked: false,
+        location_name: "地宫浅层",
+        profit_margin: 1.5,
+        act:1,
+    });
+    traders["营地商铺"] = new Trader({
+        name: "营地商铺",
+        inventory_template: "Terra II",
+        is_unlocked: true,
+        location_name: "荒兽森林营地",
+        profit_margin: 3.6,
+        act:2,
+    });
+    traders["行脚商人"] = new Trader({
+        name: "行脚商人",
+        inventory_template: "Terra III",
+        is_unlocked: false,
+        location_name: "清野江畔",
+        profit_margin: 4.2,
+        act:2,
+    });
+    traders["废墟商人"] = new Trader({
+        name: "废墟商人",
+        inventory_template: "Terra IV",
+        is_unlocked: false,
+        location_name: "声律城废墟",
+        profit_margin: 4.8,
+        act:2,
+    });
+    traders["飞船集市"] = new Trader({
+        name: "飞船集市",
+        inventory_template: "Terra V",
+        is_unlocked: false,
+        location_name: "天外飞船",
+        profit_margin: 5.4,
+        act:2,
+    });
+    traders["百宝楼"] = new Trader({
+        name: "百宝楼",
+        inventory_template: "Sky I",
+        is_unlocked: true,
+        location_name: "飞云阁",
+        profit_margin: 4.2,
+        refresh_time: 2,
+        act:3,
+    });
+    traders["冰宫商人"] = new Trader({
+        name: "冰宫商人",
+        inventory_template: "Sky II",
+        is_unlocked: false,
+        location_name: "极寒冰宫",
+        profit_margin: 4.8,
+        refresh_time: 2,
+        act:3,
+    });
+    traders["窥秘商人"] = new Trader({
+        name: "窥秘商人",
+        inventory_template: "Sky III",
+        is_unlocked: false,
+        location_name: "传承幻境",
+        profit_margin: 6.4,
+        refresh_time: 2,
+        act:3,
+    });
+    traders["声望商人"] = new Trader({
+        name: "声望商人",
+        inventory_template: "Cloudy I",
+        is_unlocked: false,
+        location_name: "狩猎大赛·城门战",
+        profit_margin: 5.6,
+        refresh_time: 5,
+        act:4,
+    });
+    traders["声望商人·二代"] = new Trader({
+        name: "声望商人·二代",
+        inventory_template: "Cloudy II",
+        is_unlocked: false,
+        location_name: "狩猎大赛·古墓战",
+        profit_margin: 7.2,
+        refresh_time: 5,
+        act:4,
+    });
+    traders["物品存储箱"] = new Trader({
+        name: "物品存储箱",
+        trade_text: `<span style="color:#c0ffe0"> <i class="material-icons">work_outline</i> 向箱子里存取物品</span>`,
+        inventory_template: "Box",
+        is_unlocked: true,
+        location_name: "纳家秘境",
+        profit_margin: 1.0,
+        refresh_time: 9e15,
+        act:16,
+    });
+})();
+
+//create inventory templates
+(function(){
+    inventory_templates["Basic"] = 
+    [
+            new TradeItem({item_name: "Cheap iron spear", count: [1], quality: [40, 90], chance: 0.8}),
+            new TradeItem({item_name: "Cheap iron dagger", count: [1], quality: [40, 90], chance: 0.8}),
+            new TradeItem({item_name: "Cheap iron sword", count: [1], quality: [40, 90], chance: 0.8}),
+            new TradeItem({item_name: "Cheap iron axe", count: [1], quality: [40, 90], chance: 0.8}),
+            new TradeItem({item_name: "Cheap iron battle hammer", count: [1], quality: [40, 90], chance: 0.8}),
+
+            new TradeItem({item_name: "Cheap iron spear", count: [1], quality: [91, 120], chance: 0.4}),
+            new TradeItem({item_name: "Cheap iron dagger", count: [1], quality: [91, 120], chance: 0.4}),
+            new TradeItem({item_name: "Cheap iron sword", count: [1], quality: [91, 120], chance: 0.4}),
+            new TradeItem({item_name: "Cheap iron axe", count: [1], quality: [91, 120], chance: 0.4}),
+            new TradeItem({item_name: "Cheap iron battle hammer", count: [1], quality: [91, 120], chance: 0.4}),
+
+            new TradeItem({item_name: "Cheap wooden shield", count: [1], quality: [40, 90]}),
+            new TradeItem({item_name: "Cheap wooden shield", count: [1], chance: 0.8, quality: [91, 120]}),
+            new TradeItem({item_name: "Crude wooden shield", count: [1], chance: 0.7, quality: [40, 90]}),
+            new TradeItem({item_name: "Crude wooden shield", count: [1], chance: 0.4, quality: [91, 120]}),
+
+            new TradeItem({item_name: "Cheap leather vest", count: [1], quality: [40, 90]}),
+            new TradeItem({item_name: "Cheap leather vest", count: [1], chance: 0.5, quality: [91, 120]}),
+            new TradeItem({item_name: "Cheap leather pants", count: [1], quality: [40, 90]}),
+            new TradeItem({item_name: "Cheap leather pants", count: [1], chance: 0.5, quality: [91, 120]}),
+            new TradeItem({item_name: "Cheap leather hat", count: [1], quality: [40, 90]}),
+            new TradeItem({item_name: "Cheap leather hat", count: [1], chance: 0.5, quality: [91, 120]}),
+
+            new TradeItem({item_name: "Leather vest", count: [1], chance: 0.7, quality: [60, 120]}),
+            new TradeItem({item_name: "Leather pants", count: [1], chance: 0.7, quality: [60, 120]}),
+            new TradeItem({item_name: "Leather hat", count: [1], chance: 0.7, quality: [60, 120]}),
+
+            new TradeItem({item_name: "Wolf leather armor", count: [1], chance: 0.3, quality: [60, 120]}),
+            new TradeItem({item_name: "Wolf leather armored pants", count: [1], chance: 0.3, quality: [60, 120]}),
+            new TradeItem({item_name: "Wolf leather helmet", count: [1], chance: 0.3, quality: [60, 120]}),
+
+            new TradeItem({item_name: "Weak healing powder", count: [2,5]}),
+
+            new TradeItem({item_name: "ABC for kids", count: [1], chance: 1}),
+            new TradeItem({item_name: "Old combat manual", count: [1], chance: 0.5}),
+            
+            new TradeItem({item_name: "Glass phial", count: [5,10], chance: 1}),
+    ];
+
+    inventory_templates["Basic plus"] = 
+    [
+            new TradeItem({item_name: "Iron spear", count: [1], quality: [40, 80], chance: 0.8}),
+            new TradeItem({item_name: "Iron dagger", count: [1], quality: [40, 80], chance: 0.8}),
+            new TradeItem({item_name: "Iron sword", count: [1], quality: [40, 80], chance: 0.8}),
+            new TradeItem({item_name: "Iron axe", count: [1], quality: [40, 80], chance: 0.8}),
+            new TradeItem({item_name: "Iron battle hammer", count: [1], quality: [40, 80], chance: 0.8}),
+
+            new TradeItem({item_name: "Iron spear", count: [1], quality: [81, 120], chance: 0.8}),
+            new TradeItem({item_name: "Iron dagger", count: [1], quality: [81, 120], chance: 0.8}),
+            new TradeItem({item_name: "Iron sword", count: [1], quality: [81, 120], chance: 0.8}),
+            new TradeItem({item_name: "Iron axe", count: [1], quality: [81, 120], chance: 0.8}),
+            new TradeItem({item_name: "Iron battle hammer", count: [1], quality: [81, 120], chance: 0.8}),
+
+            new TradeItem({item_name: "Wooden shield", count: [1], quality: [40, 80]}),
+            new TradeItem({item_name: "Wooden shield", count: [1], chance: 0.8, quality: [81, 120]}),
+            new TradeItem({item_name: "Crude iron shield", count: [1], quality: [40, 80]}),
+            new TradeItem({item_name: "Crude iron shield", count: [1], chance: 0.8, quality: [81, 120]}),
+            new TradeItem({item_name: "Iron shield", count: [1], chance: 0.6, quality: [40, 80]}),
+            new TradeItem({item_name: "Iron shield", count: [1], chance: 0.4, quality: [81, 120]}),
+
+            new TradeItem({item_name: "Leather vest", count: [1], chance: 0.9, quality: [81, 120]}),
+            new TradeItem({item_name: "Leather pants", count: [1], chance: 0.9, quality: [81, 120]}),
+            new TradeItem({item_name: "Leather hat", count: [1], chance: 0.9, quality: [81, 120]}),
+
+            new TradeItem({item_name: "Leather shoes", count: [1], chance: 0.8, quality: [91, 120]}),
+            new TradeItem({item_name: "Leather gloves", count: [1], chance: 0.8, quality: [91, 120]}),
+            new TradeItem({item_name: "Wolf leather armor", count: [1], chance: 0.8, quality: [91, 120]}),
+            new TradeItem({item_name: "Wolf leather armored pants", count: [1], chance: 0.8, quality: [91, 120]}),
+            new TradeItem({item_name: "Wolf leather helmet", count: [1], chance: 0.8, quality: [91, 120]}),
+            
+            new TradeItem({item_name: "Iron chainmail armor", count: [1], chance: 0.8, quality: [40, 80]}),
+            new TradeItem({item_name: "Iron chainmail armor", count: [1], chance: 0.6, quality: [81, 120]}),
+            new TradeItem({item_name: "Iron chainmail pants", count: [1], chance: 0.8, quality: [40, 80]}),
+            new TradeItem({item_name: "Iron chainmail pants", count: [1], chance: 0.6, quality: [81, 120]}),
+            new TradeItem({item_name: "Iron chainmail helmet", count: [1], chance: 0.8, quality: [40, 80]}),
+            new TradeItem({item_name: "Iron chainmail helmet", count: [1], chance: 0.6, quality: [81, 120]}),
+            
+            new TradeItem({item_name: "Weak healing powder", count: [2,5]}),
+
+            new TradeItem({item_name: "Twist liek a snek", count: [1], chance: 0.7}),
+
+            new TradeItem({item_name: "Glass phial", count: [5,10], chance: 1}),
+    ];
+
+    //NekoRPG Trades below
+    inventory_templates["Basic I"] = 
+    [
+            new TradeItem({item_name: "凝胶", count: [5,10]}),
+            new TradeItem({item_name: "飞蛾翅膀", count: [5,10]}),
+
+            new TradeItem({item_name: "金属残片", count: [5,10]}),
+            new TradeItem({item_name: "魔力碎晶", count: [5,10]}),
+            
+            new TradeItem({item_name: "骨头", count: [2,5]}),
+            
+            new TradeItem({item_name: "微尘·凶兽肉排", count: [2,5], chance: 0.5}),
+            
+            new TradeItem({item_name: "铁剑", count: [1], quality: [61, 100], chance: 0.8}),
+            new TradeItem({item_name: "铁剑·改", count: [1], quality: [81, 120], chance: 0.2}),
+            new TradeItem({item_name: "粘合帽子", count: [1], quality: [61, 100], chance: 0.5}),
+            new TradeItem({item_name: "粘合背心", count: [1], quality: [61, 100], chance: 0.5}),
+            new TradeItem({item_name: "粘合裤子", count: [1], quality: [61, 100], chance: 0.5}),
+            new TradeItem({item_name: "粘合袜子", count: [1], quality: [61, 100], chance: 0.5}),
+    ];
+
+    inventory_templates["Basic II"] = 
+    [
+            new TradeItem({item_name: "金属残片", count: [10,25]}),
+            new TradeItem({item_name: "魔力碎晶", count: [10,25]}),
+            
+            
+            new TradeItem({item_name: "铁锭", count: [5,15]}),
+            new TradeItem({item_name: "合金残片", count: [1,10], chance: 0.8}),
+            new TradeItem({item_name: "异兽皮", count: [1,25], chance: 0.8}),
+
+            new TradeItem({item_name: "万物·凶兽肉排", count: [2,5], chance: 0.8}),
+            
+            new TradeItem({item_name: "铁剑·改", count: [1], quality: [81, 120], chance: 0.8}),
+            new TradeItem({item_name: "精钢剑", count: [1], quality: [71, 110], chance: 0.3}),
+
+            new TradeItem({item_name: "异兽帽子", count: [1], quality: [61, 100], chance: 0.5}),
+            new TradeItem({item_name: "异兽背心", count: [1], quality: [61, 100], chance: 0.5}),
+            new TradeItem({item_name: "异兽裤子", count: [1], quality: [61, 100], chance: 0.5}),
+            new TradeItem({item_name: "异兽袜子", count: [1], quality: [61, 100], chance: 0.5}),
+    ];
+
+    inventory_templates["Basic III"] = 
+    [
+            new TradeItem({item_name: "异兽皮", count: [15,40]}),
+            new TradeItem({item_name: "铜骨", count: [10,25]}),
+            new TradeItem({item_name: "精钢锭", count: [5,15]}),
+            //旧物品
+
+
+            new TradeItem({item_name: "紫铜矿", count: [1,12], chance: 0.7}),
+            new TradeItem({item_name: "煤炭", count: [1,12], chance: 0.8}),
+            new TradeItem({item_name: "灵液", count: [1,12], chance: 0.8}),
+            new TradeItem({item_name: "毒液", count: [1,12], chance: 0.8}),
+            //初级产品
+
+
+            new TradeItem({item_name: "润灵铜骨", count: [2,4], chance: 0.4}),
+            new TradeItem({item_name: "潮汐·凶兽肉排", count: [2,5], chance: 0.9}),
+            //加工品
+
+
+            new TradeItem({item_name: "紫铜头盔", count: [1], quality: [41, 80], chance: 0.4}),
+            new TradeItem({item_name: "紫铜胸甲", count: [1], quality: [41, 80], chance: 0.4}),
+            new TradeItem({item_name: "紫铜腿甲", count: [1], quality: [41, 80], chance: 0.4}),
+            new TradeItem({item_name: "紫铜战靴", count: [1], quality: [41, 80], chance: 0.4}),
+            //装备
+    ];
+
+    
+    inventory_templates["Terra Palace"] = 
+    [
+            new TradeItem({item_name: "地宫金属锭", count: [999,999]}),
+    ];
+    
+    inventory_templates["Terra II"] = 
+    [
+            new TradeItem({item_name: "A1·能量核心", count: [100,250]}),
+            new TradeItem({item_name: "黑色刀币", count: [100,250]}),
+            new TradeItem({item_name: "霜炙皮草", count: [100,250]}),
+            new TradeItem({item_name: "地宫·荒兽肉排", count: [100,250]}),
+            
+            
+            new TradeItem({item_name: "荒兽精华", count: [3,5]}),
+            new TradeItem({item_name: "A4·能量核心", count: [5,10], chance: 0.8}),
+            new TradeItem({item_name: "甲壳碎片", count: [5,10], chance: 0.8}),
+
+            new TradeItem({item_name: "森林·荒兽肉块", count: [2,5], chance: 0.8}),
+            new TradeItem({item_name: "活化柳木", count: [5,10], chance: 0.8}),
+            
+            new TradeItem({item_name: "充能剑", count: [1], quality: [81, 120], chance: 0.5}),
+            new TradeItem({item_name: "充能戟", count: [1], quality: [71, 110], chance: 0.2}),
+
+            new TradeItem({item_name: "活性帽子", count: [1], quality: [91, 120], chance: 0.8}),
+            new TradeItem({item_name: "活性背心", count: [1], quality: [91, 120], chance: 0.8}),
+            new TradeItem({item_name: "活性裤子", count: [1], quality: [91, 120], chance: 0.8}),
+            new TradeItem({item_name: "活性袜子", count: [1], quality: [91, 110], chance: 0.8}),
+    ];
+
+    inventory_templates["Terra III"] = 
+    [
+            new TradeItem({item_name: "活性织料", count: [100,250]}),
+            new TradeItem({item_name: "甲壳碎片", count: [100,250]}),
+            new TradeItem({item_name: "流动凝胶", count: [100,250]}),
+            new TradeItem({item_name: "A4·能量核心", count: [50,150]}),
+            new TradeItem({item_name: "森林·荒兽肉块", count: [20,50], chance: 0.8}),
+
+            
+            new TradeItem({item_name: "A9·牵制药剂", count: [10,20]}),
+            new TradeItem({item_name: "A9·魔攻药剂", count: [10,20]}),
+            new TradeItem({item_name: "A9·坚固药剂", count: [10,20]}),
+            new TradeItem({item_name: "A9·回风药剂", count: [10,20]}),
+
+            
+            new TradeItem({item_name: "充能剑", count: [1], quality: [111, 140], chance: 0.8}),
+            new TradeItem({item_name: "充能戟", count: [1], quality: [111, 140], chance: 0.8}),
+
+    ];
+    inventory_templates["Terra IV"] = 
+    [
+            new TradeItem({item_name: "透明水晶", count: [100,250]}),
+            new TradeItem({item_name: "蓝金锭", count: [100,250]}),
+            new TradeItem({item_name: "湛蓝芦苇", count: [100,250]}),
+            new TradeItem({item_name: "A7·能量核心", count: [50,150]}),
+            new TradeItem({item_name: "水溶精华", count: [99,99]}),
+            new TradeItem({item_name: "荒兽精华", count: [99,99]}),
+            new TradeItem({item_name: "青花鱼", count: [20,50], chance: 0.8}),
+
+            new TradeItem({item_name: "海绿剑", count: [1], quality: [101, 140], chance: 0.8}),
+            new TradeItem({item_name: "海绿戟", count: [1], quality: [91, 130], chance: 0.5}),
+
+            
+            new TradeItem({item_name: "海绿头盔", count: [1], quality: [101, 130], chance: 0.8}),
+            new TradeItem({item_name: "海绿胸甲", count: [1], quality: [101, 130], chance: 0.8}),
+            new TradeItem({item_name: "海绿腿甲", count: [1], quality: [101, 130], chance: 0.8}),
+            new TradeItem({item_name: "海绿战靴", count: [1], quality: [101, 130], chance: 0.8}),
+
+            
+            new TradeItem({item_name: "废墟恢复药水", count: [10,20]}),
+            new TradeItem({item_name: "废墟狂暴药水", count: [10,20]}),
+            new TradeItem({item_name: "冰柱鱼", count: [1,1],chance:0.3}),
+            new TradeItem({item_name: "废墟精华", count: [16,32]}),
+
+
+
+            
+            new TradeItem({item_name: "符文工作台套件", count: [1,1]}),
+
+            
+
+    ];
+    
+    inventory_templates["Terra V"] = 
+    [
+            new TradeItem({item_name: "A7·能量核心", count: [150,250]}),
+            new TradeItem({item_name: "海绿锭", count: [100,250]}),
+            new TradeItem({item_name: "高能凝胶", count: [500,999]}),
+
+            new TradeItem({item_name: "高能织料", count: [50,125]}),
+
+            new TradeItem({item_name: "红钢剑", count: [1], quality: [110, 139], chance: 0.8}),
+            new TradeItem({item_name: "红钢戟", count: [1], quality: [100, 129], chance: 0.5}),
+
+            
+            new TradeItem({item_name: "高能帽子", count: [1], quality: [111, 140], chance: 0.8}),
+            new TradeItem({item_name: "高能背心", count: [1], quality: [111, 140], chance: 0.8}),
+            new TradeItem({item_name: "高能裤子", count: [1], quality: [111, 140], chance: 0.8}),
+            new TradeItem({item_name: "高能袜子", count: [1], quality: [111, 140], chance: 0.8}),
+
+            
+            new TradeItem({item_name: "雷电加护", count: [5,25]}),
+            new TradeItem({item_name: "摩羽币", count: [5,25]}),
+            new TradeItem({item_name: "红黑印记", count: [5,25]}),
+            new TradeItem({item_name: "B1·能量核心", count: [5,10]}),
+
+
+    ];
+
+
+    inventory_templates["Sky I"] = 
+    [
+            new TradeItem({item_name: "B1·能量核心", count: [150,250]}),
+            new TradeItem({item_name: "秘银锭", count: [100,250]}),
+            new TradeItem({item_name: "沼泽·荒兽肉排", count: [10,50]}),
+
+            new TradeItem({item_name: "荧光精华", count: [50,125]}),
+            new TradeItem({item_name: "沼泽兽油", count: [50,125]}),
+
+            new TradeItem({item_name: "旋律剑", count: [1], quality: [141, 180], chance: 0.8}),
+            new TradeItem({item_name: "旋律戟", count: [1], quality: [141, 180], chance: 0.8}),
+
+            
+            new TradeItem({item_name: "黑森帽子", count: [1], quality: [141, 180], chance: 0.8}),
+            new TradeItem({item_name: "黑森背心", count: [1], quality: [141, 180], chance: 0.8}),
+            new TradeItem({item_name: "黑森裤子", count: [1], quality: [141, 180], chance: 0.8}),
+            new TradeItem({item_name: "黑森袜子", count: [1], quality: [141, 180], chance: 0.8}),
+
+            
+            new TradeItem({item_name: "天空兽角", count: [5,25]}),
+            new TradeItem({item_name: "黑白枝丫", count: [5,25]}),
+            new TradeItem({item_name: "黑森叶片", count: [5,25]}),
+            new TradeItem({item_name: "黑森织料", count: [5,10],chance:0.5}),
+
+
+    ];
+    inventory_templates["Sky II"] = 
+    [
+            new TradeItem({item_name: "B4·能量核心", count: [50,250]}),
+            new TradeItem({item_name: "旋律合金锭", count: [50,250]}),
+            new TradeItem({item_name: "能量冰沙", count: [10,50]}),
+
+            new TradeItem({item_name: "冰原超流体", count: [50,125]}),
+            new TradeItem({item_name: "多孔冰晶", count: [50,125]}),
+
+            new TradeItem({item_name: "晶化剑", count: [1], quality: [141, 180]}),
+            new TradeItem({item_name: "晶化戟", count: [1], quality: [141, 180]}),
+            new TradeItem({item_name: "晶化月轮", count: [1], quality: [141, 180]}),
+
+            
+            new TradeItem({item_name: "冰髓头盔", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "冰髓胸甲", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "冰髓腿甲", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "冰髓战靴", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "极寒帽子", count: [1], quality: [141, 180]}),
+            new TradeItem({item_name: "极寒背心", count: [1], quality: [141, 180]}),
+            new TradeItem({item_name: "极寒裤子", count: [1], quality: [141, 180]}),
+            new TradeItem({item_name: "极寒袜子", count: [1], quality: [141, 180]}),
+
+            
+            new TradeItem({item_name: "冰宫鳞片", count: [5,10]}),
+            new TradeItem({item_name: "光环杖芯", count: [5,10]}),
+            new TradeItem({item_name: "镶晶盾牌", count: [5,10]}),
+            new TradeItem({item_name: "万载冰髓锭", count: [1,3]}),
+            new TradeItem({item_name: "玄冰果实", count: [1,1],chance:0.2}),
+
+
+    ];
+    inventory_templates["Sky III"] = 
+    [
+            new TradeItem({item_name: "B7·能量核心", count: [50,250]}),
+            new TradeItem({item_name: "晶化合金锭", count: [50,250]}),
+            new TradeItem({item_name: "B9·??药剂", count: [10,50]}),
+
+            new TradeItem({item_name: "冰宫鳞片", count: [50,125]}),
+            new TradeItem({item_name: "光环杖芯", count: [50,125]}),
+
+            new TradeItem({item_name: "水素月轮", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "宝石月轮", count: [1], quality: [141, 180]}),
+
+            
+            new TradeItem({item_name: "水素头盔", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "水素胸甲", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "水素腿甲", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "水素战靴", count: [1], quality: [151, 190]}),
+
+            
+            new TradeItem({item_name: "传承水晶·橙", count: [5,10]}),
+            new TradeItem({item_name: "传承水晶·蓝", count: [5,10]}),
+            new TradeItem({item_name: "传承水晶·白", count: [5,10]}),
+            new TradeItem({item_name: "传承水晶·绿", count: [5,10]}),
+            new TradeItem({item_name: "牵制-从入门到入土", count: [50,100]}),
+
+
+    ];
+    inventory_templates["Cloudy I"] = 
+    [
+            new TradeItem({item_name: "破空紫蕨", count: [30,150]}),
+            new TradeItem({item_name: "魂晶锭", count: [30,150]}),
+            new TradeItem({item_name: "传承水晶·粉", count: [100,500]}),
+
+
+            new TradeItem({item_name: "魂晶月轮", count: [1], quality: [161, 200]}),
+            new TradeItem({item_name: "盖亚月轮", count: [1], quality: [121, 160]}),
+
+            
+            new TradeItem({item_name: "魂晶头盔", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "魂晶胸甲", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "魂晶腿甲", count: [1], quality: [151, 190]}),
+            new TradeItem({item_name: "魂晶战靴", count: [1], quality: [151, 190]}),
+
+            
+            new TradeItem({item_name: "C1·能量核心", count: [3,8],influ:{min:10,exp:0.4,cap:1000}}),
+            new TradeItem({item_name: "城门之星", count: [3,8],influ:{min:10,exp:0.4,cap:1000}}),
+            new TradeItem({item_name: "力场发生器", count: [2,4],influ:{min:30,exp:0.4,cap:1000}}),
+
+
+
+            new TradeItem({item_name: "盖亚合金锭", count: [1,3],influ:{min:50,exp:0.4,cap:1000}}),
+
+
+    ];
+    inventory_templates["Cloudy II"] = 
+    [
+            new TradeItem({item_name: "血灵液", count: [30,150]}),
+            new TradeItem({item_name: "远古碎片", count: [30,150]}),
+            new TradeItem({item_name: "C1·能量核心", count: [100,500]}),
+            new TradeItem({item_name: "远古合金锭", count: [5,20],influ:{min:100,exp:0.4,cap:1000}}),
+
+
+
+            new TradeItem({item_name: "远古月轮", count: [1], quality: [181, 220]}),
+            new TradeItem({item_name: "源金月轮", count: [1], quality: [141, 180]}),
+            
+            new TradeItem({item_name: "远古头盔", count: [1], quality: [161, 200]}),
+            new TradeItem({item_name: "远古胸甲", count: [1], quality: [161, 200]}),
+            new TradeItem({item_name: "远古腿甲", count: [1], quality: [161, 200]}),
+            new TradeItem({item_name: "远古战靴", count: [1], quality: [161, 200]}),
+
+            
+            new TradeItem({item_name: "云霄级魂魄", count: [5,12],influ:{min:150,exp:0.4,cap:1000}}),
+            new TradeItem({item_name: "爆燃粉末", count: [5,12],influ:{min:200,exp:0.4,cap:1000}}),
+            new TradeItem({item_name: "琥珀金骨", count: [3,10],influ:{min:250,exp:0.4,cap:1000}}),
+
+
+
+            new TradeItem({item_name: "古源金锭", count: [3,8],influ:{min:1000,exp:0.4,cap:1000}}),
+            new TradeItem({item_name: "血灵骨棉", count: [3,8],influ:{min:1000,exp:0.4,cap:1000}}),
+
+
+
+    ];
+    inventory_templates["Box"] = 
+    [
+    ];
+
+
+})();
+export {traders};
