@@ -209,6 +209,7 @@ class Skill {
 						1: "自适应，不死不灭",
 						2: "实时翻译",
 						3: "混沌灵根",
+						4: "灵田",
 						// 后续等级的词条继续加在这里
 					};
 					if (systemRewards[this.current_level]) {
@@ -2175,7 +2176,7 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
     names: {0: "呼吸", 5: "吐纳", 20: "养生"},
     description: "呼~吸~你感受到有某些微量物质通过呼吸进入体内，似乎到达一定程度能改善体质？",
     category: "Activity",
-    base_xp_cost: 10,
+    base_xp_cost: 100,
     xp_scaling: 1.6,
     max_level: 20,
     rewards: {

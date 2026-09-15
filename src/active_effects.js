@@ -79,6 +79,14 @@ effect_templates["饱食 III"] = new ActiveEffect({
     }
 });
 
+effect_templates["初级止血"] = new ActiveEffect({
+    name: "初级止血",
+    effects: {
+        stats: {
+            health_regeneration_flat: {flat: 30},
+        }
+    }
+});
 
 effect_templates["恢复 A1"] = new ActiveEffect({
     name: "恢复 A1",

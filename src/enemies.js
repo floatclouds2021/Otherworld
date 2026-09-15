@@ -265,7 +265,23 @@ class Enemy {
             //0.06C(+0.01C)
         ],
     });
-
+	
+    enemy_templates["训练假人EX"] = new Enemy({
+        name: "训练假人EX", 
+        description: "超级肉的靶子，如果能打死大概有很多的经验", 
+        xp_value: 1, 
+        rank: 1102,
+        image: "image/enemy/E001.png",
+        realm: "<span class=realm_basic><b>凡人境一层</b></span>",
+        size: "small",
+        tags: [],
+        stats: {health: 4e8, attack: 0, agility: 0, attack_speed: 0, defense: 0}, 
+        loot_list: [
+            // {item_name: "稻草", chance: 1},
+            // {item_name: "木头", chance:1},
+            //0.06C(+0.01C)
+        ],
+    });
     enemy_templates["毛茸茸"] = new Enemy({
         name: "毛茸茸", 
         description: "普通的浅色史莱姆", 
@@ -278,7 +294,7 @@ class Enemy {
         stats: {health: 3, attack: 3, agility: 1, attack_speed: 1, defense: 0}, 
         loot_list: [
             {item_name: "凝胶", chance: 0.04},
-            {item_name: "初始黄宝石", chance:0.015},
+            {item_name: "一级妖兽内丹", chance:0.015},
             //0.05C(=)
         ]
     });
@@ -296,7 +312,7 @@ class Enemy {
         loot_list: [
             {item_name: "凝胶", chance: 0.01},
             {item_name: "金属残片", chance:0.01},
-            {item_name: "初始黄宝石", chance:0.015},
+            {item_name: "一级妖兽内丹", chance:0.015},
             //0.06C(+0.01C)
         ],
     });
@@ -314,7 +330,7 @@ class Enemy {
         stats: {health: 5, attack: 6, agility: 1.5, attack_speed: 1.0, defense: 0}, 
         loot_list: [
             {item_name: "凝胶", chance: 0.06},
-            {item_name: "初始黄宝石", chance:0.015},
+            {item_name: "一级妖兽内丹", chance:0.015},
             //0.07C(-0.01C)
         ],
     });
@@ -334,7 +350,7 @@ class Enemy {
         stats: {health: 3, attack: 10, agility: 4, attack_speed: 1.0, defense: 0}, 
         loot_list: [
             {item_name: "飞蛾翅膀", chance: 0.01},
-            {item_name: "初始黄宝石", chance:0.015},
+            {item_name: "一级妖兽内丹", chance:0.015},
             
             //0.09C(+0.01C)
         ],
@@ -355,7 +371,7 @@ class Enemy {
         stats: {health: 12, attack: 7, agility: 1.8, attack_speed: 1.0, defense: 1}, 
         loot_list: [
             {item_name: "骨头", chance: 0.02},
-            {item_name: "初始黄宝石", chance:0.045},
+            {item_name: "一级妖兽内丹", chance:0.045},
             
             //0.15C(-0.02C)
         ],
@@ -374,7 +390,7 @@ class Enemy {
         loot_list: [
             {item_name: "凝胶", chance: 0.06},
             {item_name: "金属残片", chance:0.02},
-            {item_name: "初始黄宝石", chance:0.045},
+            {item_name: "一级妖兽内丹", chance:0.045},
             //0.17C(+0.01C)
         ],
     });
@@ -392,7 +408,7 @@ class Enemy {
         stats: {health: 6, attack: 3, agility: 3, attack_speed: 1.0, defense: 3}, 
         loot_list: [
             {item_name: "魔力碎晶", chance: 0.03},
-            {item_name: "初始黄宝石", chance:0.045},
+            {item_name: "一级妖兽内丹", chance:0.045},
             
             //0.27C(+0.01C)
         ],
@@ -412,7 +428,7 @@ class Enemy {
         loot_list: [
             {item_name: "微尘·凶兽肉块", chance: 0.01},
             {item_name: "骨头", chance: 0.01},
-            {item_name: "初始黄宝石", chance:0.045},
+            {item_name: "一级妖兽内丹", chance:0.045},
 
             //0.27C(+0.01C)
         ],
@@ -432,7 +448,7 @@ class Enemy {
         loot_list: [
             {item_name: "坚硬石块", chance: 0.04},
             {item_name: "魔力碎晶", chance: 0.04},
-            {item_name: "初始黄宝石", chance:0.075},
+            {item_name: "一级妖兽内丹", chance:0.075},
             
             //0.47C(-0.03C)
         ],
@@ -452,7 +468,7 @@ class Enemy {
         loot_list: [
             {item_name: "凝胶", chance: 0.10},
             {item_name: "魔力碎晶", chance: 0.04},
-            {item_name: "初始黄宝石", chance:0.075},
+            {item_name: "一级妖兽内丹", chance:0.075},
             //0.39C(-0.11C)
         ],
     });
@@ -471,7 +487,7 @@ class Enemy {
         loot_list: [
             {item_name: "飞蛾翅膀", chance: 0.04},
             {item_name: "魔力碎晶", chance: 0.06},
-            {item_name: "初始黄宝石", chance:0.075},
+            {item_name: "一级妖兽内丹", chance:0.075},
             //0.73C(-0.07C)
         ],
     });
@@ -490,7 +506,7 @@ class Enemy {
         loot_list: [
             {item_name: "凝胶", chance: 0.1},
             {item_name: "五彩凝胶", chance: 0.01},
-            {item_name: "初始黄宝石", chance:0.075},
+            {item_name: "一级妖兽内丹", chance:0.075},
             //0.90C(+0.01C)
         ],
     });
@@ -510,7 +526,7 @@ class Enemy {
             {item_name: "骨头", chance: 0.1},
             {item_name: "金属残片", chance: 0.08},
             {item_name: "魔力碎晶", chance: 0.05},
-            {item_name: "初始黄宝石", chance:0.075},
+            {item_name: "一级妖兽内丹", chance:0.075},
 
             //1.27C(+0.47C)   
         ],
@@ -529,7 +545,7 @@ class Enemy {
         stats: {health: 33, attack: 18, agility: 8, attack_speed: 1.0, defense: 9}, 
         loot_list: [
             {item_name: "飞蛾翅膀", chance: 0.1},
-            {item_name: "初始黄宝石", chance:0.075},
+            {item_name: "一级妖兽内丹", chance:0.075},
             //0.45C(-0.35C)
         ],
 
@@ -551,7 +567,7 @@ class Enemy {
         loot_list: [
             {item_name: "魔力碎晶", chance: 0.1},
             {item_name: "金属残片", chance: 0.1},
-            {item_name: "初始黄宝石", chance:0.12},
+            {item_name: "一级妖兽内丹", chance:0.12},
             //1.08C(-0.52C)
         ],
     });
@@ -570,7 +586,7 @@ class Enemy {
         loot_list: [
             {item_name: "坚硬石块", chance: 0.2},
             {item_name: "魔力碎晶", chance: 0.04},
-            {item_name: "初始黄宝石", chance:0.12},
+            {item_name: "一级妖兽内丹", chance:0.12},
             //1.32C(-0.28C)
         ],
     });
@@ -587,7 +603,7 @@ class Enemy {
         tags: [],
         stats: {health: 48, attack: 49, agility: 20, attack_speed: 1.1, defense: 12}, 
         loot_list: [
-            {item_name: "初始黄宝石", chance:0.12},
+            {item_name: "一级妖兽内丹", chance:0.12},
             {item_name: "五彩凝胶", chance: 0.04},
             //3.08C(+1.48C)
         ],
@@ -606,7 +622,7 @@ class Enemy {
         stats: {health: 40, attack: 63, agility: 24, attack_speed: 1.1, defense: 14}, 
         loot_list: [
             {item_name: "铜骨", chance: 0.1},
-            {item_name: "初始黄宝石", chance:0.12},
+            {item_name: "一级妖兽内丹", chance:0.12},
             //2.08C(+0.48C)
         ],
     });
@@ -623,7 +639,7 @@ class Enemy {
         stats: {health: 70, attack: 17, agility: 24, attack_speed: 1.1, defense: 17}, 
         loot_list: [
             {item_name: "魔力碎晶", chance: 0.15},
-            {item_name: "初始黄宝石", chance:0.12},
+            {item_name: "一级妖兽内丹", chance:0.12},
             //0.98C(-0.62C)
         ],
     });
@@ -642,7 +658,7 @@ class Enemy {
             {item_name: "凝胶", chance: 0.1},
             {item_name: "五彩凝胶", chance: 0.02},
             {item_name: "金属残片", chance:0.15},
-            {item_name: "初始黄宝石", chance:0.12},
+            {item_name: "一级妖兽内丹", chance:0.12},
             {item_name: "初始蓝宝石", chance:0.015},
 
             //2.30C(-0.26C)
@@ -662,7 +678,7 @@ class Enemy {
         loot_list: [
             {item_name: "微尘·凶兽肉块", chance: 0.2},
             {item_name: "金属残片", chance:0.15},
-            {item_name: "初始黄宝石", chance:0.12},
+            {item_name: "一级妖兽内丹", chance:0.12},
             {item_name: "初始蓝宝石", chance:0.015},
 
             //2.40C(-0.16C)
@@ -684,7 +700,7 @@ class Enemy {
             {item_name: "铜板", chance:0.4},
             {item_name: "铜板", chance:0.4},
             {item_name: "大铜板", chance:0.2},
-            {item_name: "初始黄宝石", chance:0.12},
+            {item_name: "一级妖兽内丹", chance:0.12},
             {item_name: "初始蓝宝石", chance:0.015},
 
             //2.30C(-0.26C)
@@ -705,7 +721,7 @@ class Enemy {
             {item_name: "凝胶", chance: 0.1},
             {item_name: "魔力碎晶", chance: 0.1},
             {item_name: "五彩凝胶", chance: 0.05},
-            {item_name: "初始黄宝石", chance:0.06},
+            {item_name: "一级妖兽内丹", chance:0.06},
             {item_name: "初始蓝宝石", chance:0.045},
             //4.55C(-0.55C)
         ],
@@ -723,7 +739,7 @@ class Enemy {
         stats: {health: 240, attack: 69, agility: 40, attack_speed: 1.1, defense: 35}, 
         loot_list: [
             {item_name: "魔力碎晶", chance: 1},
-            {item_name: "初始黄宝石", chance:0.06},
+            {item_name: "一级妖兽内丹", chance:0.06},
             {item_name: "初始蓝宝石", chance:0.045},
             //4.10C(-0.90C)
         ],
@@ -8834,6 +8850,23 @@ C4 225851433717/365435296162/591286729879
 
 //challenge enemies
 (function(){
+	enemy_templates["史莱姆王[boss]"] = new Enemy({
+        name: "史莱姆王[boss]", 
+        description: "巨大的史莱姆，但是看起来敏捷并不高，似乎体内有个人？？", 
+        add_to_bestiary: true,
+        xp_value: 5, 
+        rank: 1198,
+        image: "image/boss/B001.png",
+        realm: "<span class=realm_basic><b>凡人境五层</b></span>",
+        size: "small",
+        spec: [],
+        tags: [],
+        stats: {health: 300, attack: 30, agility: 4.5, attack_speed: 0.3, defense: 3}, //可能改动
+        loot_list: [
+            {item_name: "二级妖兽内丹", chance:1.0},
+        ],
+    });
+	
     enemy_templates["纳家待从[BOSS]"] = new Enemy({
         name: "纳家待从[BOSS]", 
         description: "用出全部力量的纳家待从。在家里出手就是无所顾忌！", 

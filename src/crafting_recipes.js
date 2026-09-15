@@ -1703,11 +1703,11 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         recipe_level: [8,12],
         recipe_skill: "Alchemy",
     });
-    alchemy_recipes.items["提炼宝石"] = new ItemRecipe({
+/*     alchemy_recipes.items["提炼宝石"] = new ItemRecipe({
         name: "提炼宝石",
         recipe_type: "material",
         materials: [{material_id: "坚硬石块", count: 1},{material_id: "魔力碎晶", count: 1}], 
-        result: {result_id: "初始黄宝石", count: 1},
+        result: {result_id: "一级妖兽内丹", count: 1},
         success_chance: [0.2,1],
         recipe_level: [0,6],
         recipe_skill: "Alchemy",
@@ -1716,7 +1716,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
     alchemy_recipes.items["精炼宝石 I"] = new ItemRecipe({
         name: "精炼宝石 I",
         recipe_type: "material",
-        materials: [{material_id: "初始黄宝石", count: 5},{material_id: "魔力碎晶", count: 2}], 
+        materials: [{material_id: "一级妖兽内丹", count: 5},{material_id: "魔力碎晶", count: 2}], 
         result: {result_id: "初始蓝宝石", count: 1},
         success_chance: [0.3,1],
         recipe_level: [4,8],
@@ -1730,8 +1730,18 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         success_chance: [0.3,1],
         recipe_level: [6,10],
         recipe_skill: "Alchemy",
-    });
-    
+    }); */
+
+    alchemy_recipes.items["止血丹"] = new ItemRecipe({
+        name: "止血丹",
+        recipe_type: "material",
+        materials: [{material_id: "灵血草", count: 1},{material_id: "木根须", count: 1}], 
+        result: {result_id: "止血丹", count: 1},
+        success_chance: [0.5,1],
+        recipe_level: [1,1],
+        recipe_skill: "Alchemy",
+    }); 
+	
     alchemy_recipes.items["地宫恢复药水"] = new ItemRecipe({
         name: "地宫恢复药水",
         recipe_type: "material",

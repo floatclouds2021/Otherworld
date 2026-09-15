@@ -915,6 +915,14 @@ function textline_special(t_key){
             add_xp_to_skill({skill: skills["breathe"], xp_to_add: 1});
 			add_xp_to_skill({skill: skills["system"], xp_to_add: 50});
             //displayed_text += `<br><br> 获取了9999亿【秘法精通】经验值。`;
+        }
+        else if(t_key == "Alchemy"){
+            add_xp_to_skill({skill: skills["Alchemy"], xp_to_add: 10});
+            //displayed_text += `<br><br> 获取了9999亿【秘法精通】经验值。`;
+        }		
+        else if(t_key == "Farming"){
+            add_xp_to_skill({skill: skills["Farming"], xp_to_add: 10});
+            //displayed_text += `<br><br> 获取了9999亿【秘法精通】经验值。`;
         }		
         else if(t_key == "A8-killcount"){
             let killcount = get_enemy_killcount();
@@ -1342,13 +1350,30 @@ function start_textline(textline_key){
             log_message(`${flag_unlock_texts[textline.unlocks.flags[i]]}`, "activity_unlocked");
         }
     }
-    for(let i = 0; i < textline.unlocks.items.length; i++) {
-        let item_id = textline.unlocks.items[i].item_name;
-        log_message(`${character.name} 获取了 "${item_id}"`);
-        
-        if(textline.unlocks.items[i].quality != undefined) add_to_character_inventory([{item: getItem({...item_templates[item_id], quality: textline.unlocks.items[i].quality})}]);
-        else  add_to_character_inventory([{item: item_templates[item_id]}]);
-    }
+	for(let i = 0; i < textline.unlocks.items.length; i++) {
+		const item_data = textline.unlocks.items[i];
+		const item_id = item_data.item_name;
+		const count = item_data.count || 1;
+
+		if(!item_templates[item_id]) {
+			console.error(`[start_textline] item_templates["${item_id}"] 未定义，跳过（对话：${current_dialogue}，行：${textline_key}）`);
+			continue;
+		}
+
+		log_message(`${character.name} 获取了 "${item_id}" x${count}`);
+
+		if(item_data.quality != undefined) {
+			add_to_character_inventory([{
+				item: getItem({...item_templates[item_id], quality: item_data.quality}),
+				count: count
+			}]);
+		} else {
+			add_to_character_inventory([{
+				item: item_templates[item_id],
+				count: count
+			}]);
+		}
+	}
 
     if(textline.unlocks.money && typeof textline.unlocks.money === "number") {
         character.money += textline.unlocks.money;
@@ -2849,6 +2874,13 @@ function add_xp_to_skill({skill, xp_to_add = 1, should_info = true, use_bonus = 
 						log_message("系统词条解锁：混沌灵根", "activity_unlocked");
 					}
 				}
+				if(skill.current_level >= 4) {
+					const line = dialogues["查看系统词条"]?.textlines["灵田"];
+					if(line && !line.is_unlocked) {
+						line.is_unlocked = true;
+						log_message("系统词条解锁：灵田", "activity_unlocked");
+					}
+				}
 			}
 
             update_displayed_skill_bar(skill, true);
@@ -3057,19 +3089,28 @@ function get_location_rewards(location) {
         global_flags[location.repeatable_reward.flags[i]] = true;
     }
 
-    for(let i = 0; i < location.repeatable_reward.textlines?.length; i++) { //unlock textlines
-        var any_unlocked = false;
-        for(let j = 0; j < location.repeatable_reward.textlines[i].lines.length; j++) {
-            if(dialogues[location.repeatable_reward.textlines[i].dialogue].textlines[location.repeatable_reward.textlines[i].lines[j]].is_unlocked == false) {
-                any_unlocked = true;
-                dialogues[location.repeatable_reward.textlines[i].dialogue].textlines[location.repeatable_reward.textlines[i].lines[j]].is_unlocked = true;
-            }
-        }
-        if(any_unlocked) {
-            log_message(`你应该与 ${location.repeatable_reward.textlines[i].dialogue} 对话`, "dialogue_unlocked");
-            //maybe do this only when there's just 1 dialogue with changes?
-        }
-    }
+	for(let i = 0; i < location.repeatable_reward.textlines?.length; i++) { //unlock textlines
+		var any_unlocked = false;
+		const dialogue_key = location.repeatable_reward.textlines[i].dialogue;
+
+		// ★ 顺带解锁 dialogue 本身（修复"对话锁着但 textline 已解锁"的存档兼容问题）
+		if(dialogues[dialogue_key] && !dialogues[dialogue_key].is_unlocked) {
+			dialogues[dialogue_key].is_unlocked = true;
+			any_unlocked = true;
+			log_message(`You can now talk with ${dialogues[dialogue_key].name}`, "activity_unlocked");
+		}
+
+		for(let j = 0; j < location.repeatable_reward.textlines[i].lines.length; j++) {
+			if(dialogues[dialogue_key].textlines[location.repeatable_reward.textlines[i].lines[j]].is_unlocked == false) {
+				any_unlocked = true;
+				dialogues[dialogue_key].textlines[location.repeatable_reward.textlines[i].lines[j]].is_unlocked = true;
+			}
+		}
+		if(any_unlocked) {
+			log_message(`你应该与 ${dialogue_key} 对话`, "dialogue_unlocked");
+			//maybe do this only when there's just 1 dialogue with changes?
+		}
+	}
 
     for(let i = 0; i < location.repeatable_reward.dialogues?.length; i++) { //unlocking dialogues
         const dialogue = dialogues[location.repeatable_reward.dialogues[i]]
@@ -4007,7 +4048,7 @@ function save_to_file() {
  */
 function save_to_localStorage({key, is_manual}) {
     const save = create_save();
-    if(locations["未知平原 - 1"].is_unlocked)
+    if(locations["系统空间"].is_unlocked)
     {
         if(save) {
             localStorage.setItem(key, save);
@@ -4017,6 +4058,7 @@ function save_to_localStorage({key, is_manual}) {
             log_message("手动保存游戏");
             save_counter = 0;
         }
+
         return JSON.parse(save).saved_at;
     }
     else
@@ -6572,7 +6614,9 @@ function update() {
         {
             add_xp_to_skill({skill: skills["Night vision"], xp_to_add: 1});
         }
-
+		if(locations["系统空间"].is_unlocked){
+			add_xp_to_skill({skill: skills["breathe"], xp_to_add: 1,should_info:true,use_bonus:true},);
+		}
         //add xp to proper skills based on location types
         if(current_location) {
             const skills = current_location.gained_skills;

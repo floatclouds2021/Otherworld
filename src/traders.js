@@ -207,6 +207,15 @@ class TradeItem {
         location_name: "系统空间",
         act:1,
     });
+    traders["杂货铺"] = new Trader({
+        name: "杂货铺",
+        inventory_template: "Basic II",
+        is_unlocked: true,
+        location_name: "乡村小镇",
+        profit_margin: 3,
+        act:1,
+    });	
+	
     traders["燕岗杂货铺"] = new Trader({
         name: "燕岗杂货铺",
         inventory_template: "Basic II",

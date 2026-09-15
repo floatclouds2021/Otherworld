@@ -550,11 +550,177 @@ class Textline {
 			"混沌灵根": new Textline({
                 is_unlocked: false,
                 name: "混沌灵根",
-                text: "你可以修习任意类型法术，经验获取速率*1.5",
+                text: "你可以修习任意类型技能",
             }),
+			"灵田": new Textline({
+                is_unlocked: false,
+                name: "灵田",
+                text: "你解锁了灵田，可以在此种植灵草，升级灵田可以缩短种植时间",
+            }),			
         }
     });
-	
+
+	dialogues["灵田种植"] = new Dialogue({
+        name: "灵田种植",
+        textlines: {
+            "灵田种植": new Textline({
+                is_unlocked: true,
+                name: "灵田种植",
+                text: "实际操作：获得种子(主城商店购买）->等待收货（暂定用类似家族的方式，血洛日方式计算）->一键收获->炼丹->自己吃或者出售<br>"+
+				"以上功能均为实现，请期待后续版本<br>",
+            }), 		
+        }
+    });
+/* 	dialogues["思考对策"] = new Dialogue({
+        name: "思考对策",
+		textlines: {
+            "思考对策": new Textline({
+                name: "思考对策",
+                text: "你发现了一个巨大的史莱姆在远处蹦蹦跳跳<br>"+
+				"看起来就是这个区域的领主了，姑且称他为史莱姆王<br>"+
+				"你观察了一会，发现史莱姆王的行动有迟缓，是体型太大的缘故么<br>"+
+				"虽然看不真切，但是你似乎看到史莱姆王体内……有个人？？<br>"+
+				"也许你可以试试在夜间偷偷绕过去？大概需要5点敏捷<br>"+
+				"当然也可以试试正面击破，或许有不错的奖励<br>",
+                unlocks: {
+                    activities: [{location:"未知平原", activity:"偷偷绕过去"}],
+                },
+                locks_lines: ["思考对策"],
+            }),	
+        }
+    }); */
+
+	dialogues["炼丹师林"] = new Dialogue({
+        name: "炼丹师林",
+		is_unlocked: false,
+		textlines: {
+            "救命之恩": new Textline({
+                name: "这怪物体内居然有人？",
+                text: "感谢你把我从这个大家伙里救出来<br>"+
+				"我是一名丹盟的炼丹师，你可以叫我林大师<br>"+
+				"之前来这附近采药的时候被这个大家伙给直接吃进身体里了<br>"+
+				"还好之前吃过丹药，一时半会不会被消化掉<br>"+
+				"你对炼丹术有兴趣么？<br>"+
+				"这不远处就是小镇，有兴趣的话到小镇找我就行<br>",
+                locks_lines: ["救命之恩"],
+            }),	
+        }
+    });	
+
+	dialogues["找村民打听"] = new Dialogue({
+        name: "找村民打听",
+		textlines: {
+            "找村民打听": new Textline({
+                name: "找村民打听",
+                text: "你向村民打听了下小镇的情况<br>"+
+				"知道了学堂和驿站的位置<br>"+
+				"学堂可以查看一些书本知识<br>"+
+				"不过更全面的大概得通过驿站前往主城才能获得<br>",
+                unlocks: {
+					textlines: [{dialogue: "前往驿站", lines: ["去主城"]}],
+					dialogues: ["前往驿站"],
+					locations: ["学堂"],
+                },
+                locks_lines: ["找村民打听"],
+            }),	
+        }
+    });	
+
+	dialogues["和农夫交流"] = new Dialogue({
+        name: "和农夫交流",
+		textlines: {
+            "和农夫交流": new Textline({
+                name: "和农夫交流",
+                text: "唉？想学种田？现在的年轻人居然会对这个有兴趣<br>"+
+				"种田的话不外乎开垦，播种，浇水，除害，收获这几步<br>"+
+				"有一些植物需求环境和季节，比如灵草基本需要灵力环境浓厚的地方才能生长<br>"+
+				"不过这个我接触不到，如果你需要的话可以去问一下旁边的那位看起来像是炼丹师的人<br>"+
+				"<br>……农夫给你演示了种田的方式<br>"+
+				"<br>【完整观摩一次种田过程，耕种经验+10】<br>",
+				unlocks: {
+					spec: "Farming",
+                    textlines: [{dialogue: "和炼丹师林交流", lines: ["灵草种植"]}],
+                },
+                locks_lines: ["和农夫交流"],
+            }),	
+        }
+    });	
+
+	dialogues["和炼丹师林交流"] = new Dialogue({
+        name: "和炼丹师林交流",
+		textlines: {
+            "和炼丹师林交流": new Textline({
+                name: "学习炼丹术",
+                text: "你来了，之前看起来你没有学过炼丹术吧<br>"+
+				"炼丹术通过丹炉把灵草进行提纯、融合，形成丹药<br>"+
+				"丹药大多数都是圆形，可以保证药力均匀分布<br>"+
+				"我先给你演示下炼丹的流程<br>"+
+				"你看着面前的炼丹师从戒指里取出了一些草和其他物体<br>"+
+				"加热丹炉，把材料扔入丹炉后加热，形成不同的液体<br>"+
+				"之后双手掐诀，丹炉里的液体开始缓缓融合，最终成为一枚圆润的丹药<br>"+
+				"<br>……呼，看清楚了么？这就是炼丹，你有兴趣的话我这里还有一些材料和书籍，你可以先学一下<br>"+
+				"丹炉的话我这里有个初学者可用的丹炉，就送你了<br>"+
+				"<br>【完整观摩一次炼丹过程，炼丹经验+10】<br>",
+                unlocks: {
+					spec: "Alchemy",	
+					items: [
+						{ item_name: "初学者丹炉", count: 1 },
+						{ item_name: "丹道入门", count: 1 },
+						{ item_name: "灵草百科", count: 1 },
+						{ item_name: "灵血草", count: 10 },
+						{ item_name: "木根须", count: 10 },
+					],
+                },
+                locks_lines: ["和炼丹师林交流"],
+            }),	
+			"灵草种植": new Textline({
+                is_unlocked: false,
+                name: "灵草种植",			
+                text: "灵草种植？灵气的确是最需要的<br>"+
+				"普通的土地承载不了灵草的生长<br>"+
+				"一般宗门或者学院会在灵脉上单独划一块区域作为灵田<br>"+
+				"部分灵草对环境也有需求，比如火属性的灵草基本和火山岩浆附近才能生长<br>"+
+				"灵草生长年份越长，炼成丹药的效果也会越好<br>"+
+				"炼药师常用的治疗类药材年份大约是5-10年份<br>"+
+				"等你炼丹入门之后最好能找到愿意给你提供药材的供应商<br>"+
+				"或者也可以来丹盟，通过炼药师的考核之后有内部折扣价<br>"+
+				"<br>自己种？也行，种子的话商会基本就有，也便宜<br>"+
+				"我这里还有一些种子，也给你吧<br>",
+                unlocks: {
+					items: [
+						{ item_name: "木根须种子", count: 20 },
+						{ item_name: "灵血草种子", count: 20 },
+					],		
+                },
+                locks_lines: ["灵草种植"],
+            }),
+        }
+    });	
+
+	dialogues["前往驿站"] = new Dialogue({
+        name: "前往驿站",
+		textlines: {
+            "去主城": new Textline({
+                is_unlocked: false,
+                name: "去主城",
+                text: "去主城需要费用1X",
+            }), 			
+        }
+    });	
+
+/* 	dialogues["偷偷绕过去"] = new Dialogue({
+        name: "偷偷绕过去",
+		textlines: {
+            "偷偷绕过去": new Textline({
+                name: "偷偷绕过去",
+                text: "占位符<br>",
+                unlocks: {
+					locations: ["乡村小镇"],
+                },
+                locks_lines: ["思考对策"],
+            }),	
+        }
+    });	 */
 	
     dialogues["秘法石碑 - 1"] = new Dialogue({
         name: "秘法石碑 - 1",

@@ -1015,6 +1015,25 @@ function getItem(item_data) {
 }
 
 //book stats
+book_stats["丹道入门"] = new BookData({
+    required_time: 120,
+    literacy_xp_rate: 1,
+    rewards: {
+        xp_multipliers: {
+            Alchemy: 1.1,
+        }
+    },
+});
+book_stats["灵草百科"] = new BookData({
+    required_time: 120,
+    literacy_xp_rate: 1,
+    rewards: {
+        xp_multipliers: {
+            all: 1.1,
+        }
+    },
+});
+
 book_stats["ABC for kids"] = new BookData({
     required_time: 120,
     literacy_xp_rate: 1,
@@ -1063,7 +1082,17 @@ item_templates["Twist liek a snek"] = new Book({
     description: "This book has a terrible grammar, seemingly written by some uneducated bandit, but despite that it quite well details how to properly evade attacks.",
     value: 200,
 });
+item_templates["丹道入门"] = new Book({
+    name: "丹道入门",
+    description: "介绍炼丹基础的入门书籍。阅读后提升炼金经验获取率。",
+    value: 200,
+});
 
+item_templates["灵草百科"] = new Book({
+    name: "灵草百科",
+    description: "收录常见灵草用途的书籍。阅读后提升全技能经验获取率。",
+    value: 300,
+});
 
 //miscellaneous and loot:
 (function(){
@@ -2285,7 +2314,16 @@ item_templates["Twist liek a snek"] = new Book({
         equip_slot: "sickle",
     });
 
-    
+	item_templates["初学者丹炉"] = new Tool({
+        name: "初学者丹炉",
+        description: "初学者可用的丹炉，可以用于炼丹",
+        value: 1000,
+        equip_slot: "sickle",
+        bonus_skill_levels: {
+            "Alchemy": 1,
+        }
+    });
+	
     item_templates["精钢镐"] = new Tool({
         name: "精钢镐",
         description: "一把普通的精钢镐头，可以用于开采紫铜",
@@ -5710,6 +5748,14 @@ item_templates["Twist liek a snek"] = new Book({
         realmcap:8,
         image: "image/item/O8_cooked_meat.png",
     });
+    item_templates["止血丹"] = new UsableItem({
+        name: "止血丹", 
+        description: "最初级的治疗丹药，好过没有", 
+        value: 200,
+        effects: [{effect: "初级止血", duration: 60}],
+        //realmcap:10,
+        image: "image/item/B8_booster.png",
+    });	
     item_templates["地宫恢复药水"] = new UsableItem({
         name: "地宫恢复药水", 
         description: "它并不十分好喝。悲哀的是，地宫怪物的肉口感更糟...", 
@@ -6045,6 +6091,23 @@ item_templates["Twist liek a snek"] = new Book({
 
 //宝石
 (function(){
+	item_templates["一级妖兽内丹"] = new UsableItem({
+        name: "一级妖兽内丹", 
+        description: "可以强化力量的晶体，使用时随机增加攻击/防御/敏捷1点或生命50点", 
+        value: 1,
+        image: "image/item/gem11_1.png",
+        effects: [],
+        gem_value: 1,
+    });
+    item_templates["二级妖兽内丹"] = new UsableItem({
+        name: "二级妖兽内丹", 
+        description: "可以强化力量的晶体，使用时随机增加攻击/防御/敏捷2点或生命100点",
+        value: 2,
+        image: "image/item/gem12_2.png",
+        effects: [],
+        gem_value: 2,
+    });
+	
     item_templates["初始黄宝石"] = new UsableItem({
         name: "初始黄宝石", 
         description: "可以强化力量的晶体，使用时随机增加攻击/防御/敏捷1点或生命50点", 
@@ -6343,8 +6406,30 @@ item_templates["Twist liek a snek"] = new Book({
         value: 20,
         image: "image/item/copper_bone.png",
     });
-
-
+    item_templates["灵血草"] = new Loot({
+        name: "灵血草", 
+        description: "止血丹的材料", 
+        value: 20,
+        image: "image/item/slient_fern.png",
+    });
+    item_templates["木根须"] = new Loot({
+        name: "木根须", 
+        description: "止血丹的材料", 
+        value: 20,
+        image: "image/item/salix_wood.png",
+    });
+    item_templates["灵血草种子"] = new Loot({
+        name: "灵血草种子", 
+        description: "灵血草的种子，可以种在灵田里", 
+        value: 5,
+        //image: "image/item/slient_fern.png",
+    });
+    item_templates["木根须种子"] = new Loot({
+        name: "木根须种子", 
+        description: "木根须的种子，可以种在灵田里", 
+        value: 5,
+        //image: "image/item/salix_wood.png",
+    });
     //1-2
     item_templates["万物·凶兽肉块"] = new Loot({
         name: "万物·凶兽肉块", 

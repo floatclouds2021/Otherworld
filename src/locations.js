@@ -955,10 +955,30 @@ function get_location_type_penalty(type, stage, stat) {
         connected_locations:[],
         
         description: "一望无际的平原，远处可以看到果冻型的物体在移动……？",
-        dialogues: ["睁开眼睛"],
+        dialogues: ["睁开眼睛","炼丹师林"],
         name: "未知平原", 
     });//1-1
-    locations["练兵场深处"] = new Location({ 
+	locations["乡村小镇"] = new Location({ 
+        connected_locations: [{location: locations["未知平原"], custom_text: "前往史莱姆平原"}], 
+        description: "淳朴的乡村小镇，可以在此通过驿站前往主城",  
+        bgm: 2,
+        dialogues: ["找村民打听","和农夫交流","和炼丹师林交流","前往驿站"],
+        traders: ["杂货铺"],
+        is_unlocked: false,
+        unlock_text: "终于离开了平原，先四处打听下了解下这个世界的情况吧",
+        name: "乡村小镇", 
+    });//1-2
+	locations["学堂"] = new Location({ 
+        connected_locations: [{location: locations["乡村小镇"], custom_text: "回到小镇"}], 
+        description: "学生上课识字的地方",  
+        bgm: 2,
+        //dialogues: ["找村民打听","和农夫交流","和炼丹师林交流"],
+        is_unlocked: false,
+        name: "学堂", 
+    });//1-2	
+	
+	
+/*     locations["练兵场深处"] = new Location({ 
         connected_locations: [{location: locations["未知平原"], custom_text: "返回大厅"}], 
         description: "练兵场深处的一间小木屋",
         
@@ -967,7 +987,7 @@ function get_location_type_penalty(type, stage, stat) {
         is_unlocked: false,
         unlock_text: "前面的路似乎无人值守...会不会这里就是前往外界的通道呢？",
         name: "练兵场深处", 
-    });
+    }); */
 
 
 
@@ -993,12 +1013,10 @@ function get_location_type_penalty(type, stage, stat) {
 				alchemy: 0,
 			}
 		},
-		dialogues: ["查看系统词条"],
+		dialogues: ["查看系统词条","灵田种植"],
 		traders: ["I级商城"],
     })
     
-    locations["未知平原"].connected_locations.push({location: locations["系统空间"]});
-
     locations["Infested field"] = new Combat_zone({
         description: "Field infested with wolf rats. You can see the grain stalks move as these creatures scurry around.", 
         enemy_count: 15, 
@@ -1038,7 +1056,6 @@ function get_location_type_penalty(type, stage, stat) {
         },
         repeatable_reward: {
             xp: 4,
-            
             locations: [{location: "未知平原 - 1"}],
             //解锁地点必须在可重复奖励
         },
@@ -1047,7 +1064,24 @@ function get_location_type_penalty(type, stage, stat) {
         
         unlock_text: "系统空间的训练场已解锁，可以先去试试手熟悉下战斗",
     });
-
+    locations["训练场 - EX"] = new Combat_zone({
+        description: "纯靶子，测试各项技能用",  //MT1
+        enemy_count: 5, 
+        enemies_list: ["训练假人EX"],
+        types: [],
+        enemy_stat_variation: 0.1,
+        is_unlocked: true, 
+        name: "训练场 - EX", 
+        parent_location: locations["系统空间"],
+        first_reward: {
+            xp: 20000,
+        },
+        repeatable_reward: {
+            xp: 10000,
+        },
+        rank:1,
+        bgm:1,
+    });
     locations["未知平原 - 1"] = new Combat_zone({
         description: "有果冻状的物体在移动",  //MT1
         enemy_count: 20, 
@@ -1096,9 +1130,9 @@ function get_location_type_penalty(type, stage, stat) {
     });
 
     locations["未知平原 - 3"] = new Combat_zone({
-        description: "游荡的怪物越来越强了（当前版本终点）", //MT3
+        description: "游荡的怪物越来越强了", //MT3
         enemy_count: 20, 
-        enemies_list: ["骸骨","微尘级野兽","废弃傀儡","黑毛茸茸"],
+        enemies_list: ["小飞蛾","武装红毛茸茸","黑毛茸茸"],
         
         types: [],
         enemy_stat_variation: 0.1,
@@ -1110,14 +1144,33 @@ function get_location_type_penalty(type, stage, stat) {
         },
         repeatable_reward: {
             xp: 8,
-            
-            //locations: [{location: "练兵场深处"}],
+            //textlines: [{dialogue: "思考对策", lines: ["思考对策"]}],
+            locations: [{location: "未知平原 - boss"}],
         },
         rank:3,
         bgm:1,
+
     });
 
-    locations["纳家练兵场 - 4"] = new Combat_zone({
+    locations["未知平原 - boss"] = new Challenge_zone({
+        description: "巨大的怪物立于此处，不过看起来移动并不快，或许可以偷偷溜过去？",
+        enemy_count: 1, 
+        bgm:1,
+        enemies_list: ["史莱姆王[boss]"],
+        enemy_group_size: [1,1],
+        is_unlocked: false, 
+        is_challenge: true,
+        name: "未知平原 - boss", 
+        parent_location: locations["未知平原"],
+        repeatable_reward: {
+			textlines: [{dialogue: "炼丹师林", lines: ["救命之恩"]}],
+			dialogues: ["炼丹师林"],          // ← 新增
+            locations: [{location: "乡村小镇"}],
+        },
+		unlock_text: "远处能看到一个比一般怪物更大的怪物，就是这里的领主了吧，不知道打不打得过",
+    });
+
+   /*  locations["纳家练兵场 - 4"] = new Combat_zone({
         description: "练兵场中的黑暗小道。成长期魔物的实力上了一个台阶", //MT4
         enemy_count: 20, 
         enemies_list: ["黑毛茸茸","荧光飞蛾","橙毛茸茸","大飞蛾","聚灵骸骨"],
@@ -1222,21 +1275,26 @@ function get_location_type_penalty(type, stage, stat) {
             locations: [{location: "燕岗城"}],
         },
         unlock_text: "请留步，小姐。<br>这里禁止大地级之下的子弟随意出入。"
-    });
+    }); */
 
 	locations["系统空间"].connected_locations.push({location: locations["训练场"]});
-    
-    
-    locations["未知平原"].connected_locations.push({location: locations["练兵场深处"]}); 
+ 	locations["系统空间"].connected_locations.push({location: locations["训练场 - EX"]});
 
     locations["未知平原"].connected_locations.push({location: locations["未知平原 - 1"]});
     locations["未知平原"].connected_locations.push({location: locations["未知平原 - 2"]});
     locations["未知平原"].connected_locations.push({location: locations["未知平原 - 3"]});
-    locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - 4"]});
+    locations["未知平原"].connected_locations.push({location: locations["未知平原 - boss"]});
+
+    locations["未知平原"].connected_locations.push({location: locations["系统空间"]});
+    locations["未知平原"].connected_locations.push({location: locations["乡村小镇"]});
+
+	locations["乡村小镇"].connected_locations.push({location: locations["学堂"]});
+	
+/*     locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - 4"]});
     locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - 5"]});
     locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - 6"]});
     locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - 7"]});
-    locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - X"], custom_text: "前往挑战门边的待从"});
+    locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - X"], custom_text: "前往挑战门边的待从"}); */
 
 
 
@@ -1252,7 +1310,7 @@ function get_location_type_penalty(type, stage, stat) {
         unlock_text: "无论见到多少次，城市的繁华仍然令人侧目。但现在，尽快出城才是最重要的！",
         name: "燕岗城", 
     });//1-2
-    locations["练兵场深处"].connected_locations.push({location: locations["燕岗城"]});
+    // locations["练兵场深处"].connected_locations.push({location: locations["燕岗城"]});
 
     locations["燕岗城 - 1"] = new Combat_zone({
         description: "燕岗城14环的普通街道。", //MT11-12
@@ -5840,6 +5898,41 @@ function get_location_type_penalty(type, stage, stat) {
             require_tool: false,
         }),
     };
+/* 	locations["未知平原"].activities = {
+        "偷偷绕过去": new LocationActivity({
+            activity_name: "Running",
+            infinite: false,
+            starting_text: "偷偷绕过去",
+            skill_xp_per_tick: 1,
+            is_unlocked: false,
+			gained_resources: {
+                time_period: [30, 30],
+                skill_required: [0, 10],
+                scales_with_skill: true,
+            },
+        }),
+    } */
+
+    locations["幻境核心·地宫"].activities = {
+        "mining100MGem": new LocationActivity({
+            activity_name: "mining",
+            infinite: true,
+            starting_text: "偷偷用镐子挖出……血杀剑？",
+            skill_xp_per_tick: 1000,
+            is_unlocked: true,
+            exp_scaling: true,
+            scaling_id: "100M",
+            exp_o:1.8,//每完成一次需要的时间指数提升
+            gained_resources: {
+                resources: [{name: "血杀剑", ammount: [[1,1], [1,1]], chance: [1.0, 1.0]}], 
+                time_period: [40, 2],
+                skill_required: [50, 70],
+                scales_with_skill: true,
+            },
+        }),
+    }
+
+	
     locations["郊区河流"].activities = {
         
         "Running": new LocationActivity({
