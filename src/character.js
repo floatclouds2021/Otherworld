@@ -17,6 +17,37 @@ import {item_templates} from "./items.js";
 
 import {get_unlocked_skill_rewards, get_next_skill_milestone } from "./skills.js";
 
+// ======================================================================
+// 护甲套装效果
+// key 必须与 Armor.getSetName() 返回的字符串一致
+// thresholds: 件数 -> { stats: {...}, description: "..." }
+// stats 格式与技能里程碑一致：{ flat, multiplier }
+// 只对 head / torso / legs / feet 4 个槽生效
+// ======================================================================
+const ARMOR_SETS = {
+    "木": {
+        name: "木甲套装",
+        thresholds: {
+            2: {
+                stats: { max_health: { flat: 20 } },
+                description: "生命上限 +20",
+            },
+            4: {
+                stats: { max_health: { flat: 50 }, defense: { flat: 3 } },
+                description: "生命上限 +50，防御 +3",
+            },
+        },
+    },
+    // 想加更多套装，照这个格式继续写就行
+    // 例如给"铁制"系列在 items.js 里加 set_name: "铁制"，然后这里加一条：
+    // "铁制": {
+    //     name: "铁制套装",
+    //     thresholds: {
+    //         2: { stats: { defense: { flat: 5 } }, description: "防御 +5" },
+    //         4: { stats: { defense: { flat: 15 }, max_health: { flat: 100 } }, description: "防御 +15，生命上限 +100" },
+    //     },
+    // },
+};
 
 class Hero extends InventoryHaver {
         constructor() {
@@ -74,28 +105,35 @@ characters.stats.flat为加算加成，multiplier为乘算加成。
 其中有细分加成的来源。
 */
 character.stats.flat = {
-        level: {},
-        skills: {},
-        equipment: {},
-        skill_milestones: {},
-        books: {},
-        light_level: {},
-        environment: {},
-        gems: {},
-        coins: {},
+    level: {},
+    skills: {},
+    equipment: {},
+    skill_milestones: {},
+    books: {},
+    light_level: {},
+    environment: {},
+    gems: {},
+    coins: {},
 };
 
 character.stats.multiplier = {
-        skills: {},
-        skill_milestones: {},
-        equipment: {},
-        books: {},
-        stance: {},
-        light_level: {},
-        environment: {},
-        level: {},
-        coins: {},
+    skills: {},
+    skill_milestones: {},
+    equipment: {},
+    books: {},
+    stance: {},
+    light_level: {},
+    environment: {},
+    level: {},
+    coins: {},
 };
+
+// 套装加成：独立于上面的 flat/multiplier，各自也是 { stat: number } 结构
+character.stats.flat.armor_set = {};
+character.stats.multiplier.armor_set = {};
+
+// 当前激活的套装（{ set_name: { count, threshold, description } }）
+character.active_armor_sets = {};
 
 character.xp_bonuses = {};
 
@@ -445,6 +483,74 @@ character.stats.add_gem_bonus = function(){
         //函数:心境1-3重载
 }
 
+//新增
+character.stats.add_armor_set_bonus = function() {
+    const prev_sets = character.active_armor_sets || {};
+
+    // 清空旧加成
+    character.stats.flat.armor_set = {};
+    character.stats.multiplier.armor_set = {};
+
+    // 统计 4 个主防具槽的套装件数
+    const set_counts = {};
+    const armor_slots = ["head", "torso", "legs", "feet"];
+    for(const slot of armor_slots) {
+        const item = character.equipment[slot];
+        if(!item || typeof item.getSetName !== "function") continue;
+        const set_name = item.getSetName();
+        if(!set_name) continue;
+        set_counts[set_name] = (set_counts[set_name] || 0) + 1;
+    }
+
+    // 对每个达到阈值的套装，取"最高的达成档位"，应用其 stats
+    const new_sets = {};
+    for(const set_name in set_counts) {
+        const set_def = ARMOR_SETS[set_name];
+        if(!set_def) continue;
+        const count = set_counts[set_name];
+        const tiers = Object.keys(set_def.thresholds).map(Number).sort((a, b) => b - a);
+        for(const threshold of tiers) {
+            if(count >= threshold) {
+                const applied = set_def.thresholds[threshold];
+                new_sets[set_name] = { count, threshold, description: applied.description };
+
+                const stats = applied.stats || {};
+                for(const stat in stats) {
+                    if(stats[stat].flat) {
+                        character.stats.flat.armor_set[stat] = (character.stats.flat.armor_set[stat] || 0) + stats[stat].flat;
+                    }
+                    if(stats[stat].multiplier) {
+                        character.stats.multiplier.armor_set[stat] = (character.stats.multiplier.armor_set[stat] || 1) * stats[stat].multiplier;
+                    }
+                }
+                break; // 只取最高的一档
+            }
+        }
+    }
+
+    // 对比前后状态，只在真正变化时打 log
+    for(const set_name in new_sets) {
+        const prev = prev_sets[set_name];
+        const curr = new_sets[set_name];
+        if(!prev) {
+            const set_def = ARMOR_SETS[set_name];
+            log_message(`[${set_def.name}] 激活 ${curr.threshold} 件套：${curr.description}`, "location_unlocked");
+        } else if(prev.threshold !== curr.threshold) {
+            const set_def = ARMOR_SETS[set_name];
+            const verb = curr.threshold > prev.threshold ? "提升到" : "降低为";
+            log_message(`[${set_def.name}] 套装效果${verb} ${curr.threshold} 件套：${curr.description}`, "location_unlocked");
+        }
+    }
+    for(const set_name in prev_sets) {
+        if(!new_sets[set_name]) {
+            const set_def = ARMOR_SETS[set_name];
+            log_message(`[${set_def?.name || set_name}] 套装效果消失`, "enemy_enhanced");
+        }
+    }
+
+    character.active_armor_sets = new_sets;
+};
+
 /**
  * add all stat bonuses from equipment, including def/atk
  * called on equipment changes
@@ -499,7 +605,8 @@ character.stats.add_all_equipment_bonus = function() {
         character.stats.add_weapon_type_bonuses();
         //add weapon speed bonus (technically a bonus related to equipment, so its in this function)
 
-        
+
+		character.stats.add_armor_set_bonus();   // ★ 新增这一行       
 
 }
 

@@ -1405,7 +1405,7 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
 (function(){
     skills["Farming"] = new Skill({skill_id: "Farming", 
                                 names: {0: "Farming"}, 
-                                description: "Even a simple action of plowing some fields, can be performed better with skills and experience",
+                                description: "播种，成熟，收割，种田的快乐与你分享",
                                 base_xp_cost: 40,
                                 category: "Activity",
                                 max_level: 10,
@@ -1415,66 +1415,88 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
                                     milestones: {
                                         1: {
                                             stats: {
+												"max_health": {
+													multiplier: 1.05,
+												}
                                             },
                                         },
                                         2: {
                                             stats: {
-                                                strength: {flat: 1}
+                                                "max_health": {
+													multiplier: 1.05,
+												}
                                             },
                                         },
                                         3: {
                                             stats: {
-                                                dexterity: {flat: 1},
+												"max_health": {
+													multiplier: 1.05,
+												}
                                             }
                                         },
                                         4: {
                                             stats: {
-                                                strength: {flat: 1},
+												"max_health": {
+													multiplier: 1.05,
+												}
                                             }
                                         },
                                         5: {
                                             stats: {
-                                                strength: {flat: 1},
+												"max_health": {
+													multiplier: 1.05,
+												},
+												"health_regeneration_flat": {
+													multiplier: 10,
+												},
+												
                                             },
                                             xp_multipliers: {
-                                                "Herbalism": 1.05,
+												all: 1.05,
+                                                //"Herbalism": 1.05,
                                             }
                                         },
                                         6: {
                                             stats: {
-                                                strength: {flat: 1},
-                                            },
-                                            xp_multipliers: {
-                                                Weightlifting: 1.1,
+												"max_health": {
+													multiplier: 1.05,
+												}
                                             }
                                         },
                                         7: {
                                             stats: {
-                                                dexterity: {flat: 1},
-                                            },
-                                            xp_multipliers: {
-                                                "Unarmed": 1.05,
+												"max_health": {
+													multiplier: 1.05,
+												}
                                             }
                                         },
                                         8: {
                                             stats: {
-                                                strength: {flat: 1},
+												"max_health": {
+													multiplier: 1.05,
+												}
                                             }
                                         },
                                         9: {
                                             stats: {
-                                                strength: {flat: 1},
-                                                dexterity: {flat: 1},
-                                            },
+												"max_health": {
+													multiplier: 1.05,
+												}
+                                            }
                                         },
                                         10: {
                                             stats: {
-                                                strength: {multiplier: 1.05},
-                                                dexterity: {multiplier: 1.05},
+												"max_health": {
+													multiplier: 1.1,
+												},
+												"health_regeneration_flat": {
+													multiplier: 20,
+												},
+												
                                             },
                                             xp_multipliers: {
-                                                "Unarmed": 1.1,
-                                                "Herbalism": 1.1,
+												all: 1.05,
+                                                //"Herbalism": 1.05,
                                             }
                                         }
                                     }

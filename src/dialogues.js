@@ -563,12 +563,23 @@ class Textline {
 	dialogues["灵田种植"] = new Dialogue({
         name: "灵田种植",
         textlines: {
-            "灵田种植": new Textline({
+            "操作方式": new Textline({
                 is_unlocked: true,
-                name: "灵田种植",
-                text: "实际操作：获得种子(主城商店购买）->等待收货（暂定用类似家族的方式，血洛日方式计算）->一键收获->炼丹->自己吃或者出售<br>"+
-				"以上功能均为实现，请期待后续版本<br>",
-            }), 		
+                name: "操作方式",
+                text: "实际操作：获得种子(不同城镇商店购买）<br>"+
+				"选择持有数量大于0的种子，一键播种<br>"+
+				"等待种子成熟后一键收获<br>"+
+				"炼丹之后出售或者自己吃都行<br>"+
+				"<br>设置里有一键播种，只需要保证有足够的种子即可<br>",
+            }),
+			"开始种田": new Textline({ 
+				is_unlocked: true,
+				name: "开始种田",
+				text: "...",
+				unlocks: {
+					spec:"farm",
+				},
+			}),		
         }
     });
 /* 	dialogues["思考对策"] = new Dialogue({

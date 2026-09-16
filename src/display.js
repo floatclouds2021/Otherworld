@@ -2855,8 +2855,13 @@ function update_stat_description(stat) {
         <br>基础值: ${Math.round(100*character.base_stats[stat])/100}`;
     }
 
-    let BreakDownMap = {"level":"境界","skills":"技能","skill_milestones":"技能里程碑","equipment":"装备","environment":"环境","light_level":"光照","gems":"宝石","stance":"秘法","active_effect":"效果","coins":"心之境界"};
-    
+	let BreakDownMap = {
+		level: "境界", skills: "技能", skill_milestones: "技能里程碑",
+		equipment: "装备", environment: "环境", light_level: "光照",
+		gems: "宝石", stance: "秘法", active_effect: "效果", coins: "心之境界",
+		armor_set: "套装",   // ★ 新增
+	};    
+	
     if(stat === "attack_power" && character.equipment.weapon != undefined) {
         target.innerHTML += 
         `<br>武器: +${format_number(character.equipment.weapon.attack_power)}`;

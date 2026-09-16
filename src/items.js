@@ -786,7 +786,19 @@ class Armor extends Equippable {
             return round_item_price(item_templates[this.id].value * ScaledQualityMultiplier(cal_quality));
         }
     } 
-
+	//套装效果
+	getSetName() {
+		if(this._set_name !== undefined) return this._set_name;
+		if(!this.components || !this.components.external) {
+			this._set_name = null;
+		} else {
+			const ext = item_templates[this.components.external];
+			// 优先读显式 set_name，否则 fallback 到 name_prefix
+			this._set_name = ext?.set_name || ext?.name_prefix || null;
+		}
+		return this._set_name;
+	}
+	
     getName() {
         /*
         no external => name after internal.armor_name
@@ -4572,6 +4584,7 @@ item_templates["灵草百科"] = new Book({
         component_tier: 0,
         full_armor_name: "铁制头盔",
         defense_value: 3,
+		set_name: "铁制",   // ★ 加一行
     });
     item_templates["铁制胸甲"] = new ArmorComponent({
         name: "铁制胸甲",
@@ -4581,6 +4594,7 @@ item_templates["灵草百科"] = new Book({
         component_tier: 0,
         full_armor_name: "铁制胸甲",
         defense_value: 5,
+		set_name: "铁制",   // ★ 加一行
     });
     item_templates["铁制腿甲"] = new ArmorComponent({
         name: "铁制腿甲",
@@ -4590,6 +4604,7 @@ item_templates["灵草百科"] = new Book({
         component_tier: 0,
         full_armor_name: "铁制腿甲",
         defense_value: 4,
+		set_name: "铁制",   // ★ 加一行
     });
     item_templates["铁制战靴"] = new ArmorComponent({
         name: "铁制战靴",
@@ -4599,6 +4614,7 @@ item_templates["灵草百科"] = new Book({
         component_tier: 0,
         full_armor_name: "铁制战靴",
         defense_value: 2,
+		set_name: "铁制",   // ★ 加一行
     });
     item_templates["紫铜头盔"] = new ArmorComponent({
         name: "紫铜头盔",

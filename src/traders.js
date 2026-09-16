@@ -458,6 +458,9 @@ class TradeItem {
             new TradeItem({item_name: "异兽背心", count: [1], quality: [61, 100], chance: 0.5}),
             new TradeItem({item_name: "异兽裤子", count: [1], quality: [61, 100], chance: 0.5}),
             new TradeItem({item_name: "异兽袜子", count: [1], quality: [61, 100], chance: 0.5}),
+			
+			new TradeItem({item_name: "灵血草种子", count: [50,50]}),
+			new TradeItem({item_name: "木根须种子", count: [50,50]}),
     ];
 
     inventory_templates["Basic III"] = 

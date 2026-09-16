@@ -383,6 +383,12 @@ function option_combat_autoswitch(option) {
         checkbox.checked = option;
     }
 }
+
+function option_farm_auto() {
+    const cb = document.getElementById("options_farm_auto");
+    if(!inf_combat.FARM) farm_init();
+    inf_combat.FARM.auto = cb.checked;
+}
 const bgm = document.getElementById('bgm');
 
 function musicList(index){ return `bgms/${index}.mp3`}
@@ -1040,6 +1046,10 @@ function textline_special(t_key){
                     }
                 }
         }
+		else if(t_key == "farm"){
+            start_farm_minigame();
+        }
+		
         else if(t_key == "A7-reactor"){
             start_reactor_minigame();
         }
@@ -4814,6 +4824,9 @@ function load(save_data) {
         start_reading(save_data.is_reading);
     }
     update_quests();
+	//种田新增
+	const farm_cb = document.getElementById("options_farm_auto");
+	if(farm_cb) farm_cb.checked = !!(save_data.inf_combat && save_data.inf_combat.FARM && save_data.inf_combat.FARM.auto);
 
     update_displayed_time();
 } //core function for loading
@@ -5521,6 +5534,355 @@ window.leave_digging = leave_digging;
 window.claw_use = claw_use;
 //地层钻探小游戏
 
+// ======================================================================
+// 灵田种植小游戏
+// ======================================================================
+
+// 作物配置。time 单位秒（会被灵田等级的时间倍率修正）。
+// count 是每次收获的数量范围 [min, max]。
+const FARM_CROPS = [
+    { name: "灵血草种子", time: 60,   crop: "灵血草", count: [2, 3], xp: 10,   unlock_level: 1 },
+    { name: "木根须种子", time: 120,  crop: "木根须", count: [2, 3], xp: 20,   unlock_level: 1 },
+    { name: "绝音蕨", time: 360,  crop: "绝音蕨", count: [1, 2], xp: 80,   unlock_level: 3 },
+    { name: "噬芒兰", time: 900,  crop: "噬芒兰", count: [1, 1], xp: 300,  unlock_level: 5 },
+    // { name: "湖鲤鱼", time: 1800, crop: "湖鲤鱼", count: [1, 1], xp: 800,  unlock_level: 7 },
+    // { name: "青花鱼", time: 3600, crop: "青花鱼", count: [1, 1], xp: 2000, unlock_level: 9 },
+];
+
+// 升级到下一级的消耗。key 是当前等级。
+const FARM_UPGRADES = {
+    1:  { money: 1000,    crops: [["灵血草", 5]] },
+    2:  { money: 10000,   crops: [["灵血草", 15], ["木根须", 10]] },
+    3:  { money: 100000,  crops: [["木根须", 20], ["绝音蕨", 5]] },
+    // 4:  { money: 1000000, crops: [["绝音蕨", 15], ["噬芒兰", 3]] },
+    // 5:  { money: 1e7,     crops: [["噬芒兰", 10], ["湖鲤鱼", 3]] },
+    // 6:  { money: 1e8,     crops: [["湖鲤鱼", 10], ["青花鱼", 3]] },
+    // 7:  { money: 1e9,     crops: [["青花鱼", 10]] },
+    // 8:  { money: 1e10,    crops: [["青花鱼", 20]] },
+    // 9:  { money: 1e11,    crops: [["青花鱼", 30]] },
+    // 10: { money: 1e12,    crops: [["青花鱼", 50]] },
+    // 11: { money: 1e13,    crops: [["青花鱼", 80]] },
+};
+const FARM_MAX_LEVEL = 12;
+
+const farm_div = document.getElementById("farm_div");
+let farm_ui_interval = null;
+
+function farm_get_size(level) {
+    // 初始 3x3，每 3 级增加 1 行 1 列
+    return 3 + Math.floor((level - 1) / 3);
+}
+function farm_get_time_mult(level) {
+    // 每级减少 5% 时间，最低 30%
+    return Math.max(0.3, Math.pow(0.95, level - 1));
+}
+
+function farm_init() {
+    if(!inf_combat.FARM) {
+        inf_combat.FARM = { level: 1, plots: [], auto: false, no_seed_warned: false };
+    }
+    const size = farm_get_size(inf_combat.FARM.level);
+    const total = size * size;
+    if(!Array.isArray(inf_combat.FARM.plots) || inf_combat.FARM.plots.length !== total) {
+        const old = Array.isArray(inf_combat.FARM.plots) ? inf_combat.FARM.plots : [];
+        inf_combat.FARM.plots = new Array(total).fill(null);
+        for(let i = 0; i < Math.min(old.length, total); i++) inf_combat.FARM.plots[i] = old[i];
+    }
+    if(typeof inf_combat.FARM.auto !== "boolean") inf_combat.FARM.auto = false;
+    if(typeof inf_combat.FARM.no_seed_warned !== "boolean") inf_combat.FARM.no_seed_warned = false;
+}
+
+function start_farm_minigame() {
+    farm_init();
+    farm_div.style.display = "inherit";
+    action_div.style.display = "none";
+    // 同步 options 复选框状态
+    const cb = document.getElementById("options_farm_auto");
+    if(cb) cb.checked = !!inf_combat.FARM.auto;
+
+    farm_refresh_seed_select();
+    farm_render();
+    if(farm_ui_interval) clearInterval(farm_ui_interval);
+    farm_ui_interval = setInterval(farm_render, 500);
+}
+
+function leave_farm() {
+    if(farm_ui_interval) {
+        clearInterval(farm_ui_interval);
+        farm_ui_interval = null;
+    }
+    farm_div.style.display = "none";
+    action_div.style.display = "";
+    reload_normal_location();
+}
+
+function farm_refresh_seed_select() {
+    const sel = document.getElementById("farm_seed_select");
+    if(!sel) return;
+    const level = inf_combat.FARM.level;
+    const oldVal = sel.value;
+    sel.innerHTML = "";
+    FARM_CROPS.forEach((crop, idx) => {
+        // 等级达到 + 种子物品存在，才显示
+        if(crop.unlock_level <= level && item_templates[crop.name]) {
+            const opt = document.createElement("option");
+            opt.value = idx;
+            const have = character.inventory[item_templates[crop.name].getInventoryKey()]?.count || 0;
+            opt.textContent = `${crop.name}（${crop.time}s, 持有 ${have}）`;
+            sel.appendChild(opt);
+        }
+    });
+    if(oldVal !== "" && Array.from(sel.options).some(o => o.value === oldVal)) {
+        sel.value = oldVal;
+    } else if(sel.options.length > 0) {
+        sel.value = sel.options[0].value;
+    }
+}
+
+function farm_render() {
+    if(!inf_combat.FARM) return;
+    const grid = document.getElementById("farm_grid");
+    if(!grid) return;
+    const size = farm_get_size(inf_combat.FARM.level);
+    grid.style.gridTemplateColumns = `repeat(${size}, 52px)`;
+    grid.innerHTML = "";
+
+    const now = Date.now();
+    const mult = farm_get_time_mult(inf_combat.FARM.level);
+
+    for(let i = 0; i < size * size; i++) {
+        const plot = document.createElement("div");
+        plot.className = "farm_plot";
+        plot.dataset.plot_index = i;
+        const state = inf_combat.FARM.plots[i];
+        if(state) {
+            const crop = FARM_CROPS[state.crop_index];
+            if(now >= state.mature_at) {
+                plot.classList.add("mature");
+                plot.innerHTML = `<div class="farm_plot_label">${crop.name}<br>[成熟]</div>`;
+            } else {
+                const total = state.mature_at - state.planted_at;
+                const pct = Math.max(0, Math.min(100, 100 * (now - state.planted_at) / total));
+                const left = Math.ceil((state.mature_at - now) / 1000);
+                plot.classList.add("seeded");
+                plot.innerHTML = `<div class="farm_plot_label">${crop.name}<br>${left}s</div>
+                    <div class="farm_progress" style="width:${pct}%"></div>`;
+            }
+			// 在 farm_render 的 for 循环里，空地块的显示可以改为：
+			} else {
+				plot.innerHTML = `<div class="farm_plot_label" style="color:#888;">空</div>`;
+			}
+        grid.appendChild(plot);
+    }
+
+    document.getElementById("farm_level").innerText = inf_combat.FARM.level;
+    document.getElementById("farm_size_display").innerText = `${size} x ${size}`;
+    document.getElementById("farm_time_mult").innerText = `${Math.round(mult * 100)}%`;
+
+    farm_render_upgrade_info();
+}
+
+function farm_render_upgrade_info() {
+    const el = document.getElementById("farm_upgrade_info_div");
+    if(!el) return;
+    const level = inf_combat.FARM.level;
+    if(level >= FARM_MAX_LEVEL) {
+        el.innerHTML = "<span style='color:gold'>灵田已达到最高等级</span>";
+        return;
+    }
+    const up = FARM_UPGRADES[level];
+    if(!up) {
+        el.innerHTML = "<span style='color:red'>下一级升级数据未定义</span>";
+        return;
+    }
+    let s = `升级到 Lv.${level + 1}: 花费 ${format_money(up.money)}`;
+    for(const [crop, cnt] of up.crops) {
+        s += ` + ${crop} x${cnt}`;
+    }
+    el.innerHTML = s;
+}
+function farm_sow_all(silent = false) {
+    farm_init();
+
+    const sel = document.getElementById("farm_seed_select");
+    let start_idx = -1;
+    if(sel && sel.value !== "") start_idx = Number(sel.value);
+    if(start_idx < 0 || !FARM_CROPS[start_idx]) start_idx = 0;
+
+    const now = Date.now();
+    const grow_ms_mult = 1000 * farm_get_time_mult(inf_combat.FARM.level);
+
+    // 本地模拟一份"种子的剩余量"，避免每播一株就改一次真实背包
+    const seed_pool = {};    // seed_key -> 剩余数量
+    for(let i = 0; i < FARM_CROPS.length; i++) {
+        const c = FARM_CROPS[i];
+        if(!item_templates[c.name]) continue;
+        if(c.unlock_level > inf_combat.FARM.level) continue;
+        const key = item_templates[c.name].getInventoryKey();
+        if(seed_pool[key] === undefined) {
+            seed_pool[key] = character.inventory[key]?.count || 0;
+        }
+    }
+
+    const used_seeds = {};   // seed_key -> 本次消耗的数量
+    let sown = 0;
+
+    for(let plot_i = 0; plot_i < inf_combat.FARM.plots.length; plot_i++) {
+        if(inf_combat.FARM.plots[plot_i]) continue;
+
+        // 从 start_idx 开始循环查找第一个还有库存的种子
+        let found_idx = -1;
+        let found_key = null;
+        for(let k = 0; k < FARM_CROPS.length; k++) {
+            const i = (start_idx + k) % FARM_CROPS.length;
+            const c = FARM_CROPS[i];
+            if(!item_templates[c.name]) continue;
+            if(c.unlock_level > inf_combat.FARM.level) continue;
+            const key = item_templates[c.name].getInventoryKey();
+            if((seed_pool[key] || 0) > 0) {
+                found_idx = i;
+                found_key = key;
+                break;
+            }
+        }
+        if(found_idx < 0) break; // 所有种子都用完了
+
+        const crop = FARM_CROPS[found_idx];
+        inf_combat.FARM.plots[plot_i] = {
+            crop_index: found_idx,
+            planted_at: now,
+            mature_at: now + crop.time * grow_ms_mult,
+        };
+        seed_pool[found_key]--;
+        used_seeds[found_key] = (used_seeds[found_key] || 0) + 1;
+        sown++;
+
+        // 下一次继续优先用同一种；如果刚好用完，下一次循环会自动往后找
+        start_idx = found_idx;
+    }
+
+    if(sown > 0) {
+        const removal = [];
+        const parts = [];
+        for(const key of Object.keys(used_seeds)) {
+            const id = JSON.parse(key).id;
+            removal.push({ item_key: key, item_count: used_seeds[key] });
+            parts.push(`${id} x${used_seeds[key]}`);
+        }
+        remove_from_character_inventory(removal);
+        log_message(`种植了 ${sown} 株作物（${parts.join("，")}）。`, "gather_loot");
+
+        // 有种子可用，重置"无种子"一次性提示
+        inf_combat.FARM.no_seed_warned = false;
+
+        if(!silent) {
+            farm_refresh_seed_select();
+            farm_render();
+        }
+    } else {
+        if(!silent) {
+            log_message("没有种子或空地可以播种。", "enemy_enhanced");
+        } else {
+            // auto 模式：只在"有地、完全没种子"的情况下提示一次
+            const has_empty_plot = inf_combat.FARM.plots.some(p => !p);
+            if(has_empty_plot && !inf_combat.FARM.no_seed_warned) {
+                log_message("[灵田] 所有种子已用完，自动播种已停止。请补充种子。", "enemy_enhanced");
+                inf_combat.FARM.no_seed_warned = true;
+            }
+        }
+    }
+}
+
+function farm_harvest_all(silent = false) {
+    farm_init();
+    const now = Date.now();
+    const harvest_items = {};
+    let total_xp = 0;
+    let count = 0;
+    for(let i = 0; i < inf_combat.FARM.plots.length; i++) {
+        const state = inf_combat.FARM.plots[i];
+        if(state && now >= state.mature_at) {
+            const crop = FARM_CROPS[state.crop_index];
+            const cnt = crop.count[0] + Math.floor(Math.random() * (crop.count[1] - crop.count[0] + 1));
+            harvest_items[crop.crop] = (harvest_items[crop.crop] || 0) + cnt;
+            total_xp += crop.xp;
+            inf_combat.FARM.plots[i] = null;
+            count++;
+        }
+    }
+    if(count > 0) {
+        for(const [id, cnt] of Object.entries(harvest_items)) {
+            add_to_character_inventory([{ item: item_templates[id], count: cnt }]);
+        }
+        add_xp_to_skill({ skill: skills["Farming"], xp_to_add: total_xp });
+        // ★ 无论 silent 与否都提示
+        log_message(`收获了 ${count} 株作物，获得 ${total_xp} 点种植经验。`, "combat_loot");
+        if(!silent) farm_render();
+    } else if(!silent) {
+        log_message("没有成熟的作物。", "enemy_enhanced");
+    }
+}
+
+function farm_upgrade() {
+    farm_init();
+    const level = inf_combat.FARM.level;
+    if(level >= FARM_MAX_LEVEL) {
+        log_message("灵田已达最高等级。", "enemy_enhanced");
+        return;
+    }
+    const up = FARM_UPGRADES[level];
+    if(!up) {
+        log_message("升级数据未定义。", "enemy_enhanced");
+        return;
+    }
+    if(character.money < up.money) {
+        log_message(`金钱不足！需要 ${format_money(up.money)}。`, "enemy_enhanced");
+        return;
+    }
+    const need_check = [];
+    for(const [crop, cnt] of up.crops) {
+        const key = item_templates[crop].getInventoryKey();
+        const have = character.inventory[key]?.count || 0;
+        if(have < cnt) {
+            log_message(`缺少 ${crop} x${cnt - have}，无法升级。`, "enemy_enhanced");
+            return;
+        }
+        need_check.push([key, cnt]);
+    }
+    character.money -= up.money;
+    update_displayed_money();
+    for(const [key, cnt] of need_check) {
+        remove_from_character_inventory([{ item_key: key, item_count: cnt }]);
+    }
+    inf_combat.FARM.level += 1;
+    log_message(`灵田升级到 Lv.${inf_combat.FARM.level}！（区域 ${farm_get_size(inf_combat.FARM.level)}x${farm_get_size(inf_combat.FARM.level)}，时间倍率 ${Math.round(farm_get_time_mult(inf_combat.FARM.level)*100)}%）`, "location_unlocked");
+    farm_init();
+    farm_refresh_seed_select();
+    farm_render();
+}
+
+// 后台自动模式：即使玩家不打开灵田界面，也会自动收获/播种
+function farm_auto_tick() {
+    if(!inf_combat || !inf_combat.FARM || !inf_combat.FARM.auto) return;
+    farm_init();
+
+    // silent=true 只跳过 UI 重绘，日志照常输出
+    farm_harvest_all(true);
+    farm_sow_all(true);
+
+    // 玩家正好开着灵田界面，同步刷新
+    if(farm_div && farm_div.style.display !== "none") {
+        farm_refresh_seed_select();
+        farm_render();
+    }
+}
+
+window.leave_farm = leave_farm;
+window.farm_sow_all = farm_sow_all;
+window.farm_harvest_all = farm_harvest_all;
+window.farm_upgrade = farm_upgrade;
+window.option_farm_auto = option_farm_auto;
+//种田结束
 
 
 const reactor_div = document.getElementById("reactor_div");
@@ -6921,6 +7283,14 @@ function add_all_stuff_to_inventory(){
 
 update_displayed_equipment();
 sort_displayed_inventory({sort_by: "price", target: "character"});
+
+
+// 灵田后台自动模式的定时器
+setInterval(() => {
+    if(inf_combat && inf_combat.FARM && inf_combat.FARM.auto) {
+        farm_auto_tick();
+    }
+}, 3000);
 
 run();
 

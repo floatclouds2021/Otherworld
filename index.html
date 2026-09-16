@@ -3,6 +3,57 @@
     <head>
 		<meta charset="UTF-8">
         <link rel = "stylesheet" href = "style.css">
+		<!-- 种田样式 -->
+		<style>
+			#farm_div {
+				display: none;
+				padding: 12px;
+				box-sizing: border-box;
+				text-align: center;
+			}
+			#farm_grid {
+				display: grid;
+				gap: 4px;
+				margin: 10px auto;
+				justify-content: center;
+			}
+			.farm_plot {
+				width: 52px;
+				height: 52px;
+				border: 2px solid #666;
+				background-color: #2a1a10;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				position: relative;
+				cursor: pointer;
+				transition: background-color 0.2s;
+				box-sizing: border-box;
+				overflow: hidden;
+			}
+			.farm_plot.seeded { background-color: #4a3a20; }
+			.farm_plot.mature { background-color: #2a5a2a; border-color: #6f6; }
+			.farm_plot .farm_plot_label {
+				font-size: 10px;
+				color: #eee;
+				text-align: center;
+				line-height: 1.15;
+				word-break: break-all;
+				pointer-events: none;
+				z-index: 1;
+			}
+			.farm_plot .farm_progress {
+				position: absolute;
+				bottom: 0;
+				left: 0;
+				height: 4px;
+				background-color: #0f0;
+				width: 0%;
+				z-index: 0;
+			}
+			#farm_controls_div { margin-top: 10px; }
+			#farm_controls_div select { margin-right: 6px; }
+			</style>
         <script>
 		window.addEventListener('error', (e) => {
 			document.getElementById && (document.getElementById("loading_screen").innerText = 
@@ -727,6 +778,31 @@
                         
                             </div>
                         </div>
+						<!-- 种田 -->
+						<div id = "farm_div">
+							<div id = "farm_info_div">
+								<b>= 灵田 = </b> 系统开辟的种植区域，土地具有极高的灵气，可以种植作物并收获材料。<br>
+								<span style="color:lime">作物需要时间成熟，收获时获得种植经验。</span><br>
+							</div>
+							<div id = "farm_stat_div">
+								<span style="font-size:large;color:#c0ffc0">
+									灵田等级: <span id="farm_level">1</span> | 
+									区域: <span id="farm_size_display">3 x 3</span> |
+									种植所需时间: <span id="farm_time_mult">100%</span>
+								</span>
+							</div>
+							<div id = "farm_field_div">
+								<div id="farm_grid"></div>
+							</div>
+							<div id = "farm_controls_div">
+								选择种子: <select id="farm_seed_select"></select>
+								<span class="money_button" onclick = "farm_sow_all()">[一键播种]</span>
+								<span class="money_button" onclick = "farm_harvest_all()">[一键收获]</span>
+								<span class="money_button" onclick = "farm_upgrade()">[升级灵田]</span>
+								<span class="money_button" onclick = "leave_farm()">[离开]</span>
+							</div>
+							<div id = "farm_upgrade_info_div" style="margin-top:8px;"></div>
+						</div>
                     </div>
                     <div id = "location_actions_div">	
                     </div>
@@ -1356,6 +1432,11 @@
                     <input type="checkbox" id="options_format_change" name="options_format_change" value="options_format_change" onclick = "option_format_change()"/>
                     <label for="options_format_change">科学计数法[刷新以全部生效]</label>
                 </div>
+				
+				<div class="options_choice">
+					<input type="checkbox" id="options_farm_auto" name="options_farm_auto" value="options_farm_auto" onclick = "option_farm_auto()"/>
+					<label for="options_farm_auto">灵田自动播种/收获（后台运行）</label>
+				</div>
             </div>
             <div id="close_options" onclick="closeOptions()"> X </div>
             <div id = "backup_load_button" class="options_button" onclick = "loadTheBackup()">加载备份自动存档</div>
@@ -1732,7 +1813,7 @@
 
             function prepareGame() { //called on body loaded
                 //版本号
-                document.getElementById("changelog_button").children[0].innerHTML = "V0.02";
+                document.getElementById("changelog_button").children[0].innerHTML = "V0.03";
 
                 let tooltip_move_ticks = 60;
                 let tooltip_wait = 0;
