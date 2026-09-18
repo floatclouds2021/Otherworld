@@ -1479,6 +1479,16 @@ function update_displayed_health_of_enemies() {
 }
 
 function update_displayed_normal_location(location) {
+	// ★ 清洗：去掉没有 .location 的坏连接项，避免后面到处崩
+    if(Array.isArray(location.connected_locations)) {
+        location.connected_locations = location.connected_locations.filter(entry => entry && entry.location);
+    } else {
+        location.connected_locations = [];
+    }
+	// ★ 先更新位置名和描述，即使后面出错也能看到正确地点
+    location_name_span.innerText = location.name;
+    document.getElementById("location_description_div").innerText = location.getDescription();
+	
     clear_action_div();
     location_types_div.innerHTML = "";
     combat_div.style.display = "none";
@@ -1498,21 +1508,19 @@ function update_displayed_normal_location(location) {
     ////////////////////////////////////
     //add buttons for starting dialogues
 
-    const available_dialogues = location.dialogues.filter(dialogue => {
-        if(!dialogues[dialogue].is_unlocked || dialogues[dialogue].is_finished) {
-            return false;
-        } else {
-            let lines_available = false;
-            Object.keys(dialogues[dialogue].textlines).forEach(line => {
-                if(lines_available) {
-                    return;
-                } else {
-                    lines_available = dialogues[dialogue].textlines[line].is_unlocked && !dialogues[dialogue].textlines[line].is_finished;
-                }
-            });
-            return lines_available;
-        }
-    });
+	const available_dialogues = (location.dialogues ?? []).filter(dialogue => {
+		const d = dialogues[dialogue];
+		if(!d || !d.is_unlocked || d.is_finished) {
+			return false;
+		} else {
+			let lines_available = false;
+			Object.keys(d.textlines).forEach(line => {
+				if(lines_available) return;
+				lines_available = d.textlines[line].is_unlocked && !d.textlines[line].is_finished;
+			});
+			return lines_available;
+		}
+	});
 
     if(available_dialogues.length > 2) {
         //there's multiple -> add a choice to location actions that will show all available dialogues        
@@ -1530,8 +1538,8 @@ function update_displayed_normal_location(location) {
     /////////////////////////
     //add buttons for trading
 
-    const available_traders = location.traders.filter(trader => traders[trader].is_unlocked);
-
+	const available_traders = (location.traders ?? []).filter(trader => traders[trader]?.is_unlocked);
+	
     if(available_traders.length > 2) {     
         const traders_button = document.createElement("div");
         traders_button.setAttribute("data-location", location.name);
@@ -1632,8 +1640,12 @@ function update_displayed_normal_location(location) {
     /////////////////////////////////
     //add butttons to change location
 
-    const available_locations = location.connected_locations.filter(location => {if(location.location.is_unlocked && !location.location.is_finished && !location.location.is_challenge) return true});
-
+	const available_locations = (location.connected_locations ?? []).filter(entry => {
+		return entry?.location?.is_unlocked
+			&& !entry.location.is_finished
+			&& !entry.location.is_challenge;
+	});
+	
     if(available_locations.length > 3 && (location.sleeping + available_trainings.length + available_jobs.length +  available_traders.length + available_dialogues.length) > 2) {
         const locations_button = document.createElement("div");
         locations_button.setAttribute("data-location", location.name);
@@ -1663,7 +1675,10 @@ function update_displayed_normal_location(location) {
  * @return {Array} an array of html nodes presenting the available choices
  */
 function create_location_choices({location, category, add_icons = true, is_combat = false}) {
-    let choice_list = [];
+	if((location.connected_locations ?? []).some(e => !e || !e.location)) {
+		console.warn("[create_location_choices] 发现损坏的 connected_locations 条目:", location.name, location.connected_locations);
+	}
+	let choice_list = [];
     
     if(category === "talk") {
         for(let i = 0; i < location.dialogues.length; i++) { 
@@ -1803,38 +1818,38 @@ function create_location_choices({location, category, add_icons = true, is_comba
         });
     } else if (category === "travel") {
         if(!is_combat){
-            for(let i = 0; i < location.connected_locations.length; i++) { 
-                
-                if(location.connected_locations[i].location.is_unlocked == false || location.connected_locations[i].location.is_finished) { //skip if not unlocked or if finished
-                    continue;
-                }
-                if(location.connected_locations[i].location.is_challenge) {
-                    continue;
-                    //challenges displayed separately
-                }
+			for(let i = 0; i < (location.connected_locations ?? []).length; i++) {
+				const conn = location.connected_locations[i];
+				if(!conn?.location) continue;                 // 跳过损坏/空条目
+				if(conn.location.is_unlocked == false || conn.location.is_finished) {
+					continue;
+				}
+				if(conn.location.is_challenge) {
+					continue;
+				}
 
                 const action = document.createElement("div");
                 
-                if("connected_locations" in location.connected_locations[i].location) {// check again if connected location is normal or combat
+                if("connected_locations" in conn.location) {// check again if connected location is normal or combat
                     action.classList.add("travel_normal");
-                    if("custom_text" in location.connected_locations[i]) {
-                        action.innerHTML = `<i class="material-icons">directions</i> ` + location.connected_locations[i].custom_text;
+                    if("custom_text" in conn) {
+                        action.innerHTML = `<i class="material-icons">directions</i> ` + conn.custom_text;
                     }
                     else {
-                        action.innerHTML = `<i class="material-icons">directions</i>  ` + "前往 [" + location.connected_locations[i].location.name+"]";
+                        action.innerHTML = `<i class="material-icons">directions</i>  ` + "前往 [" + conn.location.name+"]";
                     }
                 } else {
                     action.classList.add("travel_combat");
-                    if("custom_text" in location.connected_locations[i]) {
-                        action.innerHTML = `<span style="color:#ffc0c0"><i class="material-icons">warning_amber</i> ` + location.connected_locations[i].custom_text + `</span>`;
+                    if("custom_text" in conn) {
+                        action.innerHTML = `<span style="color:#ffc0c0"><i class="material-icons">warning_amber</i> ` + conn.custom_text + `</span>`;
                     }
                     else {
-                        action.innerHTML = `<span style="color:#ffc0c0"><i class="material-icons">warning_amber</i>  ` + "进入 [" + location.connected_locations[i].location.name+"]</span>";
+                        action.innerHTML = `<span style="color:#ffc0c0"><i class="material-icons">warning_amber</i>  ` + "进入 [" + conn.location.name+"]</span>";
                     }
                 }
             
                 action.classList.add("action_travel");
-                action.setAttribute("data-travel", location.connected_locations[i].location.name);
+                action.setAttribute("data-travel", conn.location.name);
                 action.setAttribute("onclick", "change_location(this.getAttribute('data-travel'));");
         
                 choice_list.push(action);
@@ -1883,28 +1898,28 @@ function create_location_choices({location, category, add_icons = true, is_comba
         }
 
         choice_list.sort((a,b) => b.classList.contains("travel_normal") - a.classList.contains("travel_normal"));
-    } else if (category === "challenge") {
+		
+} else if (category === "challenge") {
+		const available_challenges = (location.connected_locations ?? []).filter(entry => {
+			return entry?.location?.is_challenge
+				&& entry.location.is_unlocked
+				&& !entry.location.is_finished;
+		});
 
-        const available_challenges = location.connected_locations.filter(location => {if(location.location.is_challenge && location.location.is_unlocked && !location.location.is_finished) return true});
-       
-        for(let i = 0; i < available_challenges.length; i++) { 
-            const action = document.createElement("div");
-
-            action.classList.add("travel_combat");
-            if("custom_text" in available_challenges[i]) {
-                action.innerHTML = `<span style="color:#ff8080"><i class="material-icons icon">warning_amber</i>  ` + available_challenges[i].custom_text + `</span>`;
-            }
-            else {
-                action.innerHTML = `<span style="color:#ff8080"><i class="material-icons">warning_amber</i>  ` + "进入 " + available_challenges[i].location.name + `</span>`;
-            }
-            
-            action.classList.add("action_travel");
-            action.setAttribute("data-travel", available_challenges[i].location.name);
-            action.setAttribute("onclick", "change_location(this.getAttribute('data-travel'));");
-    
-            choice_list.push(action);
-        }
-    }
+		for(let i = 0; i < available_challenges.length; i++) {
+			const action = document.createElement("div");
+			action.classList.add("travel_combat");
+			if("custom_text" in available_challenges[i]) {
+				action.innerHTML = `<span style="color:#ff8080"><i class="material-icons icon">warning_amber</i>  ` + available_challenges[i].custom_text + `</span>`;
+			} else {
+				action.innerHTML = `<span style="color:#ff8080"><i class="material-icons">warning_amber</i>  ` + "进入 " + available_challenges[i].location.name + `</span>`;
+			}
+			action.classList.add("action_travel");
+			action.setAttribute("data-travel", available_challenges[i].location.name);
+			action.setAttribute("onclick", "change_location(this.getAttribute('data-travel'));");
+			choice_list.push(action);
+		}
+	}
 
     return choice_list;
 }
@@ -1946,8 +1961,8 @@ function update_displayed_combat_location(location,disable_switch = false) {
     action = create_location_choices({location: location, category: "travel", is_combat: true});
 
     action_div.append(...action);
-
-    location_name_span.innerText = current_location.name;
+	// 删掉这两行（它们被移到了函数开头）
+    //location_name_span.innerText = current_location.name;
 
     if(current_location.types.length == 0) {
         document.documentElement.style.setProperty('--location_name_div_width', '390px');
@@ -1958,7 +1973,7 @@ function update_displayed_combat_location(location,disable_switch = false) {
     location_tooltip.innerText = current_location.getDescription();
     location_tooltip.classList.add("location_tooltip");
     
-    document.getElementById("location_description_div").innerText = current_location.getDescription();
+    //document.getElementById("location_description_div").innerText = current_location.getDescription();
     create_location_types_display(current_location);
     document.getElementById("S3_current_div").display = 'none';
 }
@@ -4055,8 +4070,8 @@ function add_bestiary_lines(zone)
     //zone 11-> 1-1，rank作为1200处理
     //sorts bestiary_list div by enemy rank
     bestiary_entry_divs[zone] = document.createElement("div");
-    let ZoneNameMap = {11:"未知平原",12:"乡村小镇",13:"燕岗城郊",14:"地宫",15:"地宫核心",21:"荒兽森林",22:"清野江畔",23:"纳家秘境",24:"结界湖",25:"声律城废墟",26:"声律城战场",27:"天外飞船",28:"飞船核心",31:"赫尔沼泽",32:"黑暗森林",33:"纯白冰原",34:"极寒冰宫",35:"时封水牢",36:"传承幻境",37:"幻境核心",41:"城门战",42:"密林战",43:"古墓战",44:"毬毬山谷",45:"鲜血峰",46:"破败之域",47:"破败危壁",48:"灭门战【WIP/需要剧情修正】",51:"枯叶走廊",52:"灰魇【WIP】",53:"灰魇庭院",54:"珍珠海",55:"风雷大会",56:"行道盟审判战",61:"深林【WIP】",62:"血魔海",63:"炎眸【WIP】",64:"葬地【WIP】",65:"冗音圣树",66:"冗音之塔",67:"音界",68:"圣城【WIP】"};//显示名
-    let ZoneTpMap = {11:"未知平原",12:"乡村小镇",13:"燕岗近郊",14:"地宫浅层",15:"地宫深层",21:"荒兽森林",22:"清野江畔",23:"纳家秘境 - 战斗区",24:"结界湖",25:"声律城废墟",26:"声律城战场",27:"天外飞船",28:"飞船核心",31:"赫尔沼泽",32:"黑暗森林",33:"纯白冰原",34:"极寒冰宫",35:"时封水牢",36:"传承幻境",37:"幻境核心·地宫",41:"狩猎大赛·城门战",42:"狩猎大赛·密林战",43:"狩猎大赛·古墓战",44:"毬毬山谷",45:"鲜血峰",46:"破败之域",47:"破败危壁",48:"灭门战【WIP/需要剧情修正】",51:"枯叶走廊",52:"灰魇【WIP】",53:"灰魇庭院",54:"珍珠海",55:"风雷大会",56:"行道盟审判战",61:"深林【WIP】",62:"血魔海",63:"炎眸【WIP】",64:"葬地【WIP】",65:"冗音圣树",66:"冗音之塔",67:"音界",68:"圣城【WIP】"};//TP地点名
+    let ZoneNameMap = {10:"训练场",11:"未知平原",12:"城外墓园",15:"地宫核心",21:"荒兽森林",22:"清野江畔",23:"纳家秘境",24:"结界湖",25:"声律城废墟",26:"声律城战场",27:"天外飞船",28:"飞船核心",31:"赫尔沼泽",32:"黑暗森林",33:"纯白冰原",34:"极寒冰宫",35:"时封水牢",36:"传承幻境",37:"幻境核心",41:"城门战",42:"密林战",43:"古墓战",44:"毬毬山谷",45:"鲜血峰",46:"破败之域",47:"破败危壁",48:"灭门战【WIP/需要剧情修正】",51:"枯叶走廊",52:"灰魇【WIP】",53:"灰魇庭院",54:"珍珠海",55:"风雷大会",56:"行道盟审判战",61:"深林【WIP】",62:"血魔海",63:"炎眸【WIP】",64:"葬地【WIP】",65:"冗音圣树",66:"冗音之塔",67:"音界",68:"圣城【WIP】"};//显示名
+    let ZoneTpMap = {10:"训练场",11:"未知平原",12:"城外墓园",15:"地宫深层",21:"荒兽森林",22:"清野江畔",23:"纳家秘境 - 战斗区",24:"结界湖",25:"声律城废墟",26:"声律城战场",27:"天外飞船",28:"飞船核心",31:"赫尔沼泽",32:"黑暗森林",33:"纯白冰原",34:"极寒冰宫",35:"时封水牢",36:"传承幻境",37:"幻境核心·地宫",41:"狩猎大赛·城门战",42:"狩猎大赛·密林战",43:"狩猎大赛·古墓战",44:"毬毬山谷",45:"鲜血峰",46:"破败之域",47:"破败危壁",48:"灭门战【WIP/需要剧情修正】",51:"枯叶走廊",52:"灰魇【WIP】",53:"灰魇庭院",54:"珍珠海",55:"风雷大会",56:"行道盟审判战",61:"深林【WIP】",62:"血魔海",63:"炎眸【WIP】",64:"葬地【WIP】",65:"冗音圣树",66:"冗音之塔",67:"音界",68:"圣城【WIP】"};//TP地点名
     const name_div = document.createElement("div");
     name_div.innerHTML = `<b><div  onclick="change_location('${ZoneTpMap[zone]}')">【${ZoneNameMap[zone]}】</div></b>`;
     name_div.classList.add("bestiary_entry_name");

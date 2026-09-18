@@ -582,24 +582,6 @@ class Textline {
 			}),		
         }
     });
-/* 	dialogues["思考对策"] = new Dialogue({
-        name: "思考对策",
-		textlines: {
-            "思考对策": new Textline({
-                name: "思考对策",
-                text: "你发现了一个巨大的史莱姆在远处蹦蹦跳跳<br>"+
-				"看起来就是这个区域的领主了，姑且称他为史莱姆王<br>"+
-				"你观察了一会，发现史莱姆王的行动有迟缓，是体型太大的缘故么<br>"+
-				"虽然看不真切，但是你似乎看到史莱姆王体内……有个人？？<br>"+
-				"也许你可以试试在夜间偷偷绕过去？大概需要5点敏捷<br>"+
-				"当然也可以试试正面击破，或许有不错的奖励<br>",
-                unlocks: {
-                    activities: [{location:"未知平原", activity:"偷偷绕过去"}],
-                },
-                locks_lines: ["思考对策"],
-            }),	
-        }
-    }); */
 
 	dialogues["炼丹师林"] = new Dialogue({
         name: "炼丹师林",
@@ -628,7 +610,7 @@ class Textline {
 				"学堂可以查看一些书本知识<br>"+
 				"不过更全面的大概得通过驿站前往主城才能获得<br>",
                 unlocks: {
-					textlines: [{dialogue: "前往驿站", lines: ["去主城"]}],
+					textlines: [{dialogue: "前往驿站", lines: ["去主城费用1X"]}],
 					dialogues: ["前往驿站"],
 					locations: ["学堂"],
                 },
@@ -708,30 +690,152 @@ class Textline {
         }
     });	
 
+	dialogues["翻书"] = new Dialogue({
+        name: "翻书",
+        textlines: {
+            "大陆通解": new Textline({
+                is_unlocked: true,
+                name: "大陆通解",
+                text: "本世界名为仙武大陆，功法以灵气为核心<br>"+
+				"吐纳灵气，增强自身<br>"+
+				"曾有大能在大陆各处铺设阵盘建造了覆盖全大陆的结界<br>"+
+				"然而时间久远，一些天外来客突破结界进入了大陆<br>"+
+				"经过一段时间的努力，有些天外来客被阻隔于世界之外，有些则融入了世界<br>"+
+				"当今形成了人，魔，精灵，兽人等不同种族各自统领一片区域的时代<br>",
+            }), 
+            "境界划分": new Textline({
+                is_unlocked: true,
+                name: "境界划分",
+                text: "各族虽叫法不同，但大同小异<br>"+
+				"以人族为例，凡人境，纳气境，炼气境，御气境，罡气境<br>"+
+				"凡人境主炼体，增加自身灵气容纳上限<br>"+
+				"纳气境开始吸收灵气，将灵气存于自身<br>"+
+				"炼气境以灵气改善自身体质，洗髓伐筋<br>"+
+				"御气境以天地灵气进行战斗，举手投足之江移山填海<br>"+
+				"罡气境掌控灵气环绕自身，万法不侵<br>",
+            }), 
+			"邪修": new Textline({
+                is_unlocked: false,
+                name: "邪修",
+                text: "目前已知的最大邪修组织为崇神教<br>"+
+				"据说该组织的人摒弃灵气修炼，转而通过献祭祭品信仰邪神"+
+				"邪神会赐予奖励，虽然会变得人不人鬼不鬼，但实力突飞猛进",
+            }), 		
+        }
+    });
+
 	dialogues["前往驿站"] = new Dialogue({
         name: "前往驿站",
 		textlines: {
-            "去主城": new Textline({
-                is_unlocked: false,
-                name: "去主城",
+            "去主城费用1X": new Textline({
+                is_unlocked: true,
+                name: "去主城费用1X",
                 text: "去主城需要费用1X",
-            }), 			
+				unlocks: {
+					spec: "maincity",
+                },
+            }),
+			locks_lines: ["去主城费用1X"],   // ← 新增这一行 			
         }
     });	
 
-/* 	dialogues["偷偷绕过去"] = new Dialogue({
-        name: "偷偷绕过去",
+	dialogues["主城驿站"] = new Dialogue({
+        name: "主城驿站",
 		textlines: {
-            "偷偷绕过去": new Textline({
-                name: "偷偷绕过去",
-                text: "占位符<br>",
-                unlocks: {
-					locations: ["乡村小镇"],
+            "去乡村小镇费用1X": new Textline({
+                is_unlocked: true,
+                name: "去乡村小镇费用1X",
+                text: "去乡村小镇需要费用1X",
+				unlocks: {
+					spec: "town",
                 },
-                locks_lines: ["思考对策"],
-            }),	
+            }), 
+			locks_lines: ["去乡村小镇"],   // ← 新增这一行			
         }
-    });	 */
+    });
+
+	dialogues["公告栏"] = new Dialogue({
+        name: "公告栏",
+        textlines: {
+            "招生公告": new Textline({
+                is_unlocked: true,
+                name: "招生公告",
+                text: "近期战斗学院开始招生，凡人境三层以上均可前往中心广场进行测试<br>"+
+				"在战斗中重获新生<br>",
+				unlocks: {
+					textlines: [{dialogue: "招生人员", lines: ["报名"]}],
+					dialogues: ["招生人员"],
+					locations: ["中心广场"],
+                },
+            }), 
+            "精灵商会": new Textline({
+                is_unlocked: true,
+                name: "精灵商会",
+                text: "精灵商会新入住主城，提供特色精灵族特产<br>"+
+				"欢迎各位光临<br>",
+            }), 
+			"有点吓人的骨头": new Textline({
+                is_unlocked: true,
+                name: "有点吓人的骨头",
+                text: "城外墓园那边好像有白骨在游荡<br>"+
+				"是不是有什么不好的事情要发生了？<br>",
+				unlocks: {
+					locations: ["城外墓园"],
+                },
+            }),
+/* 			"一串奇怪的字符": new Textline({
+                is_unlocked: true,
+                name: "一串奇怪的字符",
+                text: "Q群：1030657403，暗号：20c<br>"+
+				"可能是什么组织的暗号？",
+            }), 	 */	
+        }
+    });
+
+	dialogues["招生人员"] = new Dialogue({
+        name: "招生人员",
+		textlines: {
+			"报名": new Textline({
+                name: "报名",
+                text: "战斗学院还没写完<br>"+
+				"<br>等更新之后再对话这个<br>",
+            }),
+/*             "报名": new Textline({
+                name: "报名",
+                text: "在这张表上填写一下基础信息然后领取号牌排队，到你的时候上去测试就是<br>"+
+				"<br>你填完了表格，领取了号牌，119号<br>",
+				unlocks: {
+                    textlines: [{dialogue: "招生人员", lines: ["排队等待"]}],
+                },
+                locks_lines: ["报名"],
+            }),	
+			"排队等待": new Textline({
+                name: "排队等待",
+                text: "……11号凡人境三层，下品灵根……<br>"+
+				"……23号凡人境三层，杂灵根……<br>"+
+				"……35号凡人境三层，无灵根……<br>"+
+				"……43号凡人境五层，天品灵根……周围一阵骚动<br>"+
+				"<br>你看着前面的人排队靠近测灵石，将手放上去之后石头上显示境界和灵根<br>"+
+				"心里默默问系统：我的灵根是啥？<br>",
+				unlocks: {
+					spec: "linggen",
+                    textlines: [{dialogue: "招生人员", lines: ["触摸测灵石"]}],
+                },
+                locks_lines: ["排队等待"],
+            }),
+			"触摸测灵石": new Textline({
+                name: "触摸测灵石",
+                text: "119号上来测试<br>"+
+				"<br>你走上前，将手放在测灵石上，入手一片冰凉<br>"+
+				"测灵石等待了一会，开始发光<br>",
+				unlocks: {
+					spec: "test",
+                    //textlines: [{dialogue: "招生人员", lines: ["触摸测灵石"]}],
+                },
+                locks_lines: ["触摸测灵石"],
+            }), */
+        }
+    });
 	
     dialogues["秘法石碑 - 1"] = new Dialogue({
         name: "秘法石碑 - 1",

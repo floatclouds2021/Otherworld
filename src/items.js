@@ -2694,7 +2694,17 @@ item_templates["灵草百科"] = new Book({
         }
     });
 
-
+    item_templates["生命木雕"] = new Props({
+        name: "生命木雕",
+        id: "生命木雕",
+        description: "蕴含生命力的木雕，带在身边就能感受自然", 
+        value: 3200,
+        stats: {
+            health_regeneration_flat: {
+                multiplier:1.01,
+            },
+        }
+    });
 })();
 
 
@@ -3083,6 +3093,30 @@ item_templates["灵草百科"] = new Book({
         component_tier: 0,    
         attack_value: 2,
 		name_prefix: "木",		
+    });
+	item_templates["生命木弓身"] = new WeaponComponent({
+        name: "生命木弓身", description: "精灵族特有的生命木头做的弓身，具有生命气息",
+        component_type: "bent body",
+        value: 1000,
+        component_tier: 2,    
+        attack_value: 25,
+		name_prefix: "生命木",        
+		stats: {
+            health_regeneration_flat: {
+                flat: 50.00,
+            },
+        }
+    });
+	item_templates["常青藤弓弦"] = new WeaponComponent({
+        name: "常青藤弓弦", description: "常青藤编制的弓弦",
+        component_type: "bowstring",
+        value: 800,
+        component_tier: 2,
+		stats: {
+			agility: {
+                flat:30,
+            }
+        }
     });
 	
 	item_templates["稻草弓弦"] = new WeaponComponent({
@@ -3893,7 +3927,12 @@ item_templates["灵草百科"] = new Book({
             handle: "稻草弓弦",
         }
     });
-	
+	item_templates["生命木弓"] = new Weapon({
+        components: {
+            head: "生命木弓身",
+            handle: "常青藤弓弦",
+        }
+    });	
 	item_templates["木剑"] = new Weapon({
         components: {
             head: "木剑刃",
@@ -4034,7 +4073,7 @@ item_templates["灵草百科"] = new Book({
 })();
 //盔甲部件
 (function(){
-	    item_templates["稻草帽子"] = new Armor({
+	item_templates["稻草帽子"] = new Armor({
         name: "稻草帽子", 
         description: "稻草编制而成的帽子", 
         value: 45,
@@ -4073,6 +4112,47 @@ item_templates["灵草百科"] = new Book({
         component_tier: 0,
 		
 		name_suffix: "草",
+    });
+
+item_templates["常青藤帽子"] = new Armor({
+        name: "常青藤帽子", 
+        description: "常青藤编制而成的帽子，有一定的防御力", 
+        value: 75,
+        component_type: "helmet interior",
+        base_defense: 5,
+        component_tier: 0,
+			
+		name_suffix: "常青藤",
+    });
+    item_templates["常青藤背心"] = new Armor({
+        name: "稻草背心", 
+        description: "常青藤编制而成的帽子，有一定的防御力", 
+        value: 90,
+        component_type: "chestplate interior",
+        base_defense: 6,
+        component_tier: 0,
+		
+		name_suffix: "常青藤",
+    });
+    item_templates["常青藤绑腿"] = new Armor({
+        name: "稻草绑腿", 
+        description: "常青藤编制而成的帽子，有一定的防御力", 
+        value: 75,
+        component_type: "leg armor interior",
+        base_defense: 5,
+        component_tier: 0,
+		
+		name_suffix: "常青藤",
+    });
+    item_templates["常青藤护脚"] = new Armor({
+        name: "常青藤护脚", 
+        description: "常青藤编制而成的护脚，有一定的防御力", 
+        value: 60,
+        component_type: "shoes interior",
+        base_defense: 4,
+        component_tier: 0,
+		
+		name_suffix: "常青藤",
     });
 	
     item_templates["粘合帽子"] = new Armor({
@@ -4574,6 +4654,68 @@ item_templates["灵草百科"] = new Book({
         full_armor_name: "木靴",
         defense_value: 1,
 		name_prefix: "木",
+    });
+
+	item_templates["生命木头盔"] = new ArmorComponent({
+        name: "生命木头盔",
+        description: "生命木制成的头盔，虽然没有高额的防御，但是有不错的生命回复",
+        component_type: "helmet exterior",
+        value: 400,
+        component_tier: 0,
+        full_armor_name: "生命木头盔",
+        defense_value: 4,
+		name_prefix: "生命木",
+		stats: {
+            health_regeneration_flat: {
+                flat: 40.00,
+            },
+        }
+
+    });
+    item_templates["生命木护甲"] = new ArmorComponent({
+        name: "生命木护甲",
+        description: "生命木制成的护甲，虽然没有高额的防御，但是有不错的生命回复",
+        component_type: "chestplate exterior",
+        value: 500,
+        component_tier: 0,
+        full_armor_name: "生命木护甲",
+        defense_value: 5,
+		name_prefix: "生命木",
+		        stats: {
+            health_regeneration_flat: {
+                flat: 60.00,
+            },
+        }
+    });
+    item_templates["生命木腿甲"] = new ArmorComponent({
+        name: "生命木腿甲",
+        description: "生命木制成的腿甲，虽然没有高额的防御，但是有不错的生命回复",
+        component_type: "leg armor exterior",
+        value: 450,
+        component_tier: 0,
+        full_armor_name: "生命木腿甲",
+        defense_value: 4,
+		name_prefix: "生命木",
+		        stats: {
+            health_regeneration_flat: {
+                flat: 40.00,
+            },
+        }
+    });
+    item_templates["生命木战靴"] = new ArmorComponent({
+        name: "生命木战靴",
+        description: "生命木制成的战靴，虽然没有高额的防御，但是有不错的生命回复",
+        component_type: "shoes exterior",
+        value: 400,
+        component_tier: 0,
+        full_armor_name: "生命木战靴",
+        defense_value: 3,
+		name_prefix: "生命木",
+		        stats: {
+            health_regeneration_flat: {
+                flat: 20.00,
+            },
+        }
     });
 
     item_templates["铁制头盔"] = new ArmorComponent({
@@ -5740,6 +5882,14 @@ item_templates["灵草百科"] = new Book({
 
 //消耗品
     (function(){
+	item_templates["生命果"] = new UsableItem({
+        name: "生命果", 
+        description: "精灵族以秘法催生的果子，具有回复效果", 
+        value: 150,
+        effects: [{effect: "饱食", duration: 60}],
+        image: "image/item/ruin_essence.png",
+    });	
+		
     item_templates["微尘·凶兽肉排"] = new UsableItem({
         name: "微尘·凶兽肉排", 
         description: "煮熟的年幼凶兽肉排。食用后每秒回复40点血量，持续60秒",//血药模版 
@@ -5771,7 +5921,15 @@ item_templates["灵草百科"] = new Book({
         effects: [{effect: "初级止血", duration: 60}],
         //realmcap:10,
         image: "image/item/B8_booster.png",
-    });	
+    });
+    item_templates["强体丹"] = new UsableItem({
+        name: "强体丹", 
+        description: "最初级的防御丹药", 
+        value: 200,
+        effects: [{effect: "初级防御加强", duration: 60}],
+        //realmcap:10,
+        image: "image/item/B8_medicine.png",
+    });		
     item_templates["地宫恢复药水"] = new UsableItem({
         name: "地宫恢复药水", 
         description: "它并不十分好喝。悲哀的是，地宫怪物的肉口感更糟...", 
@@ -6090,7 +6248,7 @@ item_templates["灵草百科"] = new Book({
         value: 666e12,
         image: "image/item/mixed_comp06.png",
     });
-    item_templates["绝音蕨"] = new OtherItem({
+/*     item_templates["绝音蕨"] = new OtherItem({
         name: "绝音蕨", 
         description: "本身价值不算高昂，但却是第三幕最佳内甲的必备材料！", 
         value: 24811e9,
@@ -6101,7 +6259,7 @@ item_templates["灵草百科"] = new Book({
         description: "它暗到似乎可以吸收周围的光。幻境阵法中多余的暗元素全数汇入了四重幻境，它就是受益者。", 
         value: 4.5e15,
         image: "image/item/light_absorb_flower.png",
-    });
+    }); */
 
 })();
 
@@ -6123,7 +6281,14 @@ item_templates["灵草百科"] = new Book({
         effects: [],
         gem_value: 2,
     });
-	
+    item_templates["三级妖兽内丹"] = new UsableItem({
+        name: "三级妖兽内丹", 
+        description: "可以强化力量的晶体，使用时随机增加攻击/防御/敏捷5点或生命250点",
+        value: 5,
+        image: "image/item/gem13_5.png",
+        effects: [],
+        gem_value: 5,
+    });	
     item_templates["初始黄宝石"] = new UsableItem({
         name: "初始黄宝石", 
         description: "可以强化力量的晶体，使用时随机增加攻击/防御/敏捷1点或生命50点", 
@@ -6446,6 +6611,48 @@ item_templates["灵草百科"] = new Book({
         value: 5,
         //image: "image/item/salix_wood.png",
     });
+	item_templates["绝音蕨"] = new OtherItem({
+        name: "绝音蕨", 
+        description: "高级药材，可用于制作二级以上的丹药，比如破凡丹", 
+        value: 3000,
+        image: "image/item/slient_fern.png",
+    });
+    item_templates["噬芒兰"] = new OtherItem({
+        name: "噬芒兰", 
+        description: "它暗到似乎可以吸收周围的光。高级药材，可用于制作二级以上的丹药，比如破凡丹", 
+        value: 4500,
+        image: "image/item/light_absorb_flower.png",
+    });	
+    item_templates["绝音蕨种子"] = new Loot({
+        name: "绝音蕨种子", 
+        description: "绝音蕨的种子，可以种在灵田里", 
+        value: 1200,
+        //image: "image/item/slient_fern.png",
+    });
+    item_templates["噬芒兰种子"] = new Loot({
+        name: "噬芒兰种子", 
+        description: "噬芒兰的种子，可以种在灵田里", 
+        value: 1800,
+        //image: "image/item/salix_wood.png",
+    });	
+    item_templates["生命木树种"] = new Loot({
+        name: "生命木树种", 
+        description: "精灵族世界树的子种，可以种在灵田里", 
+        value: 300,
+        //image: "image/item/salix_wood.png",
+    });	
+	item_templates["生命木"] = new Loot({
+        name: "生命木", 
+        description: "精灵族世界树的子种种出来的木材，具有生命气息", 
+        value: 500,
+        //image: "image/item/salix_wood.png",
+    });
+	item_templates["常青藤"] = new Loot({
+        name: "常青藤", 
+        description: "精灵族特有的藤曼，坚韧性极佳", 
+        value: 400,
+        //image: "image/item/salix_wood.png",
+    });
     //1-2
     item_templates["万物·凶兽肉块"] = new Loot({
         name: "万物·凶兽肉块", 
@@ -6691,6 +6898,17 @@ item_templates["灵草百科"] = new Book({
         C_value: 2,
         image: "image/item/evolve_1e11.png",
     });
+	//破凡丹
+	item_templates["破凡丹"] = new  UsableItem({
+        name: "破凡丹", 
+        description: "以高级药材配合妖兽内丹炼制而成，增加6000经验值，可用于突破【纳气境】。(Tips:即必须在凡人境巅峰且已有899以上经验时使用才能突破)", 
+        value: 0,
+        E_value: 6000,
+        effects:[],
+        C_value: 1,
+        image: "image/item/A1_break_trance.png",
+    });
+	
     item_templates["中等进化结晶"] = new  UsableItem({
         name: "中等进化结晶", 
         description: "稀有且常常破碎的能量晶体，纳可借助狗王之腹方才凝聚成一颗完整的。增加10京经验值，可用于突破【云霄级】。(Tips:即必须在已有90京以上经验时使用才能突破)", 

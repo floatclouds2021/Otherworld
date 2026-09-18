@@ -781,11 +781,11 @@
 						<!-- 种田 -->
 						<div id = "farm_div">
 							<div id = "farm_info_div">
-								<b>= 灵田 = </b> 系统开辟的种植区域，土地具有极高的灵气，可以种植作物并收获材料。<br>
+								<b>= 灵田 = </b>可以种植作物并收获材料。<br>
 								<span style="color:lime">作物需要时间成熟，收获时获得种植经验。</span><br>
 							</div>
 							<div id = "farm_stat_div">
-								<span style="font-size:large;color:#c0ffc0">
+								<span style="color:#c0ffc0">
 									灵田等级: <span id="farm_level">1</span> | 
 									区域: <span id="farm_size_display">3 x 3</span> |
 									种植所需时间: <span id="farm_time_mult">100%</span>
@@ -796,9 +796,9 @@
 							</div>
 							<div id = "farm_controls_div">
 								选择种子: <select id="farm_seed_select"></select>
-								<span class="money_button" onclick = "farm_sow_all()">[一键播种]</span>
-								<span class="money_button" onclick = "farm_harvest_all()">[一键收获]</span>
-								<span class="money_button" onclick = "farm_upgrade()">[升级灵田]</span>
+								<span class="money_button" onclick = "farm_sow_all()">[播种]</span>
+								<span class="money_button" onclick = "farm_harvest_all()">[收获]</span>
+								<span class="money_button" onclick = "farm_upgrade()">[升级]</span>
 								<span class="money_button" onclick = "leave_farm()">[离开]</span>
 							</div>
 							<div id = "farm_upgrade_info_div" style="margin-top:8px;"></div>
@@ -1813,7 +1813,7 @@
 
             function prepareGame() { //called on body loaded
                 //版本号
-                document.getElementById("changelog_button").children[0].innerHTML = "V0.03";
+                document.getElementById("changelog_button").children[0].innerHTML = "V0.04";
 
                 let tooltip_move_ticks = 60;
                 let tooltip_wait = 0;

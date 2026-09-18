@@ -185,6 +185,50 @@ class TradeItem {
 
 //create traders
 (function(){
+	traders["I级商城"] = new Trader({
+        name: "I级商城",
+        inventory_template: "Basic I",
+        is_unlocked: true,
+        location_name: "系统空间",
+        act:1,
+    });
+    traders["II级商城"] = new Trader({
+        name: "II级商城",
+        inventory_template: "system II",
+        is_unlocked: true,
+        location_name: "系统空间2",
+        act:1,
+    });	
+	
+    traders["杂货铺"] = new Trader({
+        name: "杂货铺",
+        inventory_template: "Basic II",
+        is_unlocked: true,
+        location_name: "乡村小镇",
+        profit_margin: 3,
+        act:1,
+    });	
+
+    traders["精灵商会"] = new Trader({
+        name: "精灵商会",
+        inventory_template: "Elf I",
+        is_unlocked: true,
+        location_name: "主城",
+        profit_margin: 3,
+        act:1,
+    });
+
+    traders["万药阁"] = new Trader({
+        name: "万药阁",
+        inventory_template: "medicinal I",
+        is_unlocked: true,
+        location_name: "主城",
+        profit_margin: 3,
+        act:1,
+    });	
+	
+	//以下商人未使用--------------------------
+	
     traders["village trader"] = new Trader({
         name: "village trader",
         inventory_template: "Basic",
@@ -200,21 +244,7 @@ class TradeItem {
         profit_margin: 3,
         act:1,
     });
-    traders["I级商城"] = new Trader({
-        name: "I级商城",
-        inventory_template: "Basic I",
-        is_unlocked: true,
-        location_name: "系统空间",
-        act:1,
-    });
-    traders["杂货铺"] = new Trader({
-        name: "杂货铺",
-        inventory_template: "Basic II",
-        is_unlocked: true,
-        location_name: "乡村小镇",
-        profit_margin: 3,
-        act:1,
-    });	
+    
 	
     traders["燕岗杂货铺"] = new Trader({
         name: "燕岗杂货铺",
@@ -489,8 +519,33 @@ class TradeItem {
             new TradeItem({item_name: "紫铜战靴", count: [1], quality: [41, 80], chance: 0.4}),
             //装备
     ];
-
-    
+	//系统空间2
+    inventory_templates["system II"] = 
+    [
+            new TradeItem({item_name: "丹道入门", count: [1,1]}),
+            new TradeItem({item_name: "灵草百科", count: [1,1]}),
+    ];
+	//精灵商会
+    inventory_templates["Elf I"] = 
+    [
+            new TradeItem({item_name: "生命木雕", count: [1], quality: [150, 150], chance: 0.5}),
+            new TradeItem({item_name: "生命木弓", count: [1], quality: [100, 150], chance: 0.5}),
+			new TradeItem({item_name: "生命果", count: [50,50]}),
+			new TradeItem({item_name: "生命木", count: [80,100]}),
+			new TradeItem({item_name: "常青藤", count: [80,200]}),
+			new TradeItem({item_name: "生命木树种", count: [100,100]}),
+    ];
+	//万药阁
+    inventory_templates["medicinal I"] = 
+    [
+            new TradeItem({item_name: "灵血草种子", count: [500,500]}),
+			new TradeItem({item_name: "木根须种子", count: [500,500]}),
+			new TradeItem({item_name: "绝音蕨种子", count: [500,500]}),
+			new TradeItem({item_name: "噬芒兰种子", count: [500,500]}),
+            new TradeItem({item_name: "止血丹", count: [999,999]}),
+			new TradeItem({item_name: "强体丹", count: [999,999]}),
+    ];
+			
     inventory_templates["Terra Palace"] = 
     [
             new TradeItem({item_name: "地宫金属锭", count: [999,999]}),

@@ -253,7 +253,7 @@ class Enemy {
         name: "训练假人", 
         description: "稻草和木头制作的假人，训练用，可掉落合成木剑的材料", 
         xp_value: 1, 
-        rank: 1102,
+        rank: 1001,
         image: "image/enemy/E001.png",
         realm: "<span class=realm_basic><b>凡人境一层</b></span>",
         size: "small",
@@ -268,14 +268,14 @@ class Enemy {
 	
     enemy_templates["训练假人EX"] = new Enemy({
         name: "训练假人EX", 
-        description: "超级肉的靶子，如果能打死大概有很多的经验", 
+        description: "超级肉的靶子，如果能打死大概有很多的经验（可以拿来炼皮肤和轮回）", 
         xp_value: 1, 
-        rank: 1102,
+        rank: 1002,
         image: "image/enemy/E001.png",
         realm: "<span class=realm_basic><b>凡人境一层</b></span>",
         size: "small",
         tags: [],
-        stats: {health: 4e8, attack: 0, agility: 0, attack_speed: 0, defense: 0}, 
+        stats: {health: 4e8, attack: 5000, agility: 5000, attack_speed: 1, defense: 0}, 
         loot_list: [
             // {item_name: "稻草", chance: 1},
             // {item_name: "木头", chance:1},
@@ -286,9 +286,9 @@ class Enemy {
         name: "毛茸茸", 
         description: "普通的浅色史莱姆", 
         xp_value: 1, 
-        rank: 1101,
+        rank: 1102,
         image: "image/enemy/E1101.png",
-        realm: "<span class=realm_basic><b>微尘级初级</b></span>",
+        realm: "<span class=realm_basic><b>凡人境一层</b></span>",
         size: "small",
         tags: [],
         stats: {health: 3, attack: 3, agility: 1, attack_speed: 1, defense: 0}, 
@@ -302,10 +302,10 @@ class Enemy {
     enemy_templates["武装毛茸茸"] = new Enemy({
         name: "武装毛茸茸", 
         description: "获得了剑盾的浅色史莱姆，但是它也被拖累了速度", 
-        xp_value: 1, 
-        rank: 1102,
+        xp_value: 2, 
+        rank: 1103,
         image: "image/enemy/E1102.png",
-        realm: "<span class=realm_basic><b>微尘级初级</b></span>",
+        realm: "<span class=realm_basic><b>凡人境二层</b></span>",
         size: "small",
         tags: [],
         stats: {health: 4, attack: 4, agility: 1, attack_speed: 0.8, defense: 0}, 
@@ -320,10 +320,10 @@ class Enemy {
     enemy_templates["红毛茸茸"] = new Enemy({
         name: "红毛茸茸", 
         description: "变种史莱姆，综合实力比普通史莱姆更强", 
-        xp_value: 1, 
-        rank: 1103,
+        xp_value: 2, 
+        rank: 1104,
         image: "image/enemy/E1103.png",
-        realm: "<span class=realm_basic><b>微尘级初级 +</b></span>",
+        realm: "<span class=realm_basic><b>凡人境二层</b></span>",
         size: "small",
         tags: [],
         
@@ -338,10 +338,10 @@ class Enemy {
     enemy_templates["小飞蛾"] = new Enemy({
         name: "小飞蛾", 
         description: "体型较小的飞蛾，飞行能力使它变得十分灵活", 
-        xp_value: 1, 
-        rank: 1104,
+        xp_value: 2, 
+        rank: 1105,
         image: "image/enemy/E1104.png",
-        realm: "<span class=realm_basic><b>微尘级初级 +</b></span>",
+        realm: "<span class=realm_basic><b>凡人境二层</b></span>",
         size: "small",
         tags: [],
         
@@ -356,34 +356,13 @@ class Enemy {
         ],
     });
 
-    enemy_templates["骸骨"] = new Enemy({
-        name: "骸骨", 
-        description: "最弱小的亡灵生物", 
-        xp_value: 2, 
-        rank: 1105,
-        image: "image/enemy/E1105.png",
-        realm: "<span class=realm_basic><b>微尘级中级</b></span>",
-        size: "small",
-        tags: [],
-        
-        spec: [],
-
-        stats: {health: 12, attack: 7, agility: 1.8, attack_speed: 1.0, defense: 1}, 
-        loot_list: [
-            {item_name: "骨头", chance: 0.02},
-            {item_name: "一级妖兽内丹", chance:0.045},
-            
-            //0.15C(-0.02C)
-        ],
-    });
-
     enemy_templates["武装红毛茸茸"] = new Enemy({
         name: "武装红毛茸茸", 
         description: "获得了剑盾的变种史莱姆，它已经不会被拖累了！", 
-        xp_value: 2, 
+        xp_value: 3, 
         rank: 1106,
         image: "image/enemy/E1106.png",
-        realm: "<span class=realm_basic><b>微尘级中级</b></span>",
+        realm: "<span class=realm_basic><b>凡人境三层</b></span>",
         size: "small",
         tags: [],
         stats: {health: 10, attack: 8, agility: 2.2, attack_speed: 1.0, defense: 2}, 
@@ -395,6 +374,142 @@ class Enemy {
         ],
     });
 
+    enemy_templates["黑毛茸茸"] = new Enemy({
+        name: "黑毛茸茸", 
+        description: "体型大了一圈的变异史莱姆，实力超过它的同类", 
+        xp_value: 3, 
+        rank: 1107,
+        image: "image/enemy/E1110.png",
+        realm: "<span class=realm_basic><b>凡人境三层</b></span>",
+        size: "small",
+        spec: [],
+        tags: [],
+        stats: {health: 8, attack: 16, agility: 6, attack_speed: 1.0, defense: 3}, 
+        loot_list: [
+            {item_name: "凝胶", chance: 0.10},
+            {item_name: "魔力碎晶", chance: 0.04},
+            {item_name: "一级妖兽内丹", chance:0.075},
+            //0.39C(-0.11C)
+        ],
+    });
+	
+	//墓园
+    enemy_templates["骸骨"] = new Enemy({
+        name: "骸骨", 
+        description: "最弱小的亡灵生物", 
+        xp_value: 5, 
+        rank: 1201,
+        image: "image/enemy/E1105.png",
+        realm: "<span class=realm_basic><b>凡人境五层</b></span>",
+        size: "small",
+        tags: [],
+        
+        spec: [],
+
+        stats: {health: 60, attack: 60, agility: 8, attack_speed: 1.0, defense: 10}, 
+        loot_list: [
+            {item_name: "骨头", chance: 0.02},
+            {item_name: "二级妖兽内丹", chance:0.045},
+            {item_name: "铜板", chance: 0.3},
+            //0.15C(-0.02C)
+        ],
+    });
+
+    enemy_templates["聚灵骸骨"] = new Enemy({
+        name: "聚灵骸骨", 
+        description: "它的剑盾是它靠自己的实力抢来的！切莫大意！", 
+        xp_value: 6, 
+        rank: 1202,
+        image: "image/enemy/E1113.png",
+        realm: "<span class=realm_basic><b>凡人境六层</b></span>",
+        size: "small",
+        spec: [],
+        tags: [],
+        stats: {health: 100, attack: 80, agility: 10, attack_speed: 1.0, defense: 18}, 
+        loot_list: [
+            {item_name: "骨头", chance: 0.1},
+            {item_name: "二级妖兽内丹", chance:0.075},
+			{item_name: "铜板", chance: 0.4},
+            //1.27C(+0.47C)   
+        ],
+    });
+
+    enemy_templates["聚魂骸骨"] = new Enemy({
+        name: "聚魂骸骨", 
+        description: "它已经将自身的骨头淬炼至青铜色，可见实力之不俗", 
+        xp_value: 7, 
+        rank: 1203,
+        image: "image/enemy/E1118.png",
+        realm: "<span class=realm_basic><b>凡人境七层</b></span>",
+        size: "small",
+        spec: [4],
+        tags: [],
+        stats: {health: 120, attack: 93, agility: 18, attack_speed: 1.1, defense: 22}, 
+        loot_list: [
+            {item_name: "铜骨", chance: 0.1},
+            {item_name: "二级妖兽内丹", chance:0.12},
+			{item_name: "大铜板", chance: 0.3},
+            //2.08C(+0.48C)
+        ],
+    });
+    enemy_templates["生灵骸骨"] = new Enemy({
+        name: "生灵骸骨", 
+        description: "聚魂的基础上又凝聚了部分血肉的不死族，攻防兼备。", 
+        xp_value: 8, 
+        rank: 1204,
+        image: "image/enemy/E1217.png",
+        realm: "<span class=realm_basic><b>凡人境八层</b></span>",
+        size: "small",
+        spec: [],
+        tags: [],
+        stats: {health: 150, attack: 108, agility: 21, attack_speed: 1.2, defense: 25} , 
+        loot_list: [
+            {item_name: "二级妖兽内丹", chance:0.03},
+            {item_name: "三级妖兽内丹", chance:0.04},
+            {item_name: "铜骨", chance: 0.6},
+            {item_name: "万物·凶兽肉块", chance: 0.15},
+            {item_name: "大铜板", chance: 0.4},
+            //~90C
+        ],
+    });
+    enemy_templates["凝甲骸骨"] = new Enemy({
+        name: "凝甲骸骨", 
+        description: "相比生灵骸骨，在防御上更进一步", 
+        xp_value: 9, 
+        rank: 1205,
+        image: "image/enemy/E1211.png",
+        realm: "<span class=realm_basic><b>凡人境九层</b></span>",
+        size: "small",
+        spec: [2],
+        tags: [],
+        stats: {health: 230, attack: 120, agility: 24, attack_speed: 1.1, defense: 38} , 
+        loot_list: [
+            {item_name: "二级妖兽内丹", chance:0.03},
+            {item_name: "三级妖兽内丹", chance:0.04},
+			{item_name: "铜骨", chance: 0.6},
+            {item_name: "红色刀币", chance: 0.15},
+            //~16C
+        ],
+    });	
+    enemy_templates["缠绕骸骨"] = new Enemy({
+        name: "缠绕骸骨", 
+        description: "生灵骸骨的加强版。它身上的骨头是上好的材料！", 
+        xp_value: 10, 
+        rank: 1206,
+        image: "image/enemy/E1318.png",
+        realm: "<span class=realm_basic><b>凡人境巅峰</b></span>",
+        size: "small",
+        spec: [],
+        tags: [],
+        stats: {health: 260, attack: 150, agility: 30, attack_speed: 1.2, defense: 45}, 
+        loot_list: [
+            {item_name: "二级妖兽内丹", chance:0.03},
+            {item_name: "三级妖兽内丹", chance:0.04},
+            {item_name: "润灵铜骨", chance:0.03},
+			{item_name: "红色刀币", chance: 0.2},
+            //应为900C
+        ],
+    });	
     enemy_templates["少年法师"] = new Enemy({
         name: "少年法师", 
         description: "幼小的法师。魔法攻击可以无视他人的防御，但他本身相当脆弱", 
@@ -454,24 +569,6 @@ class Enemy {
         ],
     });
 
-    enemy_templates["黑毛茸茸"] = new Enemy({
-        name: "黑毛茸茸", 
-        description: "体型大了一圈的变异史莱姆，实力超过它的同类", 
-        xp_value: 3, 
-        rank: 1110,
-        image: "image/enemy/E1110.png",
-        realm: "<span class=realm_basic><b>微尘级高级</b></span>",
-        size: "small",
-        spec: [],
-        tags: [],
-        stats: {health: 8, attack: 16, agility: 6, attack_speed: 1.0, defense: 3}, 
-        loot_list: [
-            {item_name: "凝胶", chance: 0.10},
-            {item_name: "魔力碎晶", chance: 0.04},
-            {item_name: "一级妖兽内丹", chance:0.075},
-            //0.39C(-0.11C)
-        ],
-    });
 
     enemy_templates["荧光飞蛾"] = new Enemy({
         name: "荧光飞蛾", 
@@ -511,26 +608,6 @@ class Enemy {
         ],
     });
 
-    enemy_templates["聚灵骸骨"] = new Enemy({
-        name: "聚灵骸骨", 
-        description: "它的剑盾是它靠自己的实力抢来的！切莫大意！", 
-        xp_value: 3, 
-        rank: 1113,
-        image: "image/enemy/E1113.png",
-        realm: "<span class=realm_basic><b>微尘级高级 +</b></span>",
-        size: "small",
-        spec: [],
-        tags: [],
-        stats: {health: 40, attack: 21, agility: 10, attack_speed: 1.0, defense: 9}, 
-        loot_list: [
-            {item_name: "骨头", chance: 0.1},
-            {item_name: "金属残片", chance: 0.08},
-            {item_name: "魔力碎晶", chance: 0.05},
-            {item_name: "一级妖兽内丹", chance:0.075},
-
-            //1.27C(+0.47C)   
-        ],
-    });
 
     enemy_templates["大飞蛾"] = new Enemy({
         name: "大飞蛾", 
@@ -609,23 +686,6 @@ class Enemy {
         ],
     });
 
-    enemy_templates["聚魂骸骨"] = new Enemy({
-        name: "聚魂骸骨", 
-        description: "它已经将自身的骨头淬炼至青铜色，可见实力之不俗", 
-        xp_value: 5, 
-        rank: 1118,
-        image: "image/enemy/E1118.png",
-        realm: "<span class=realm_basic><b>万物级初等</b></span>",
-        size: "small",
-        spec: [4],
-        tags: [],
-        stats: {health: 40, attack: 63, agility: 24, attack_speed: 1.1, defense: 14}, 
-        loot_list: [
-            {item_name: "铜骨", chance: 0.1},
-            {item_name: "一级妖兽内丹", chance:0.12},
-            //2.08C(+0.48C)
-        ],
-    });
     enemy_templates["青年法师"] = new Enemy({
         name: "青年法师", 
         description: "稍微年长的法师。依然可以无视防御，而且实力强大了许多", 
@@ -940,25 +1000,6 @@ class Enemy {
             //~50C
         ],
     });
-    enemy_templates["百家小卒"] = new Enemy({
-        name: "百家小卒", 
-        description: "没那么拼命的百家小卒，受轻伤就会离去。", 
-        xp_value: 13, 
-        rank: 1211,
-        image: "image/enemy/E1211.png",
-        realm: "<span class=realm_basic><b>万物级巅峰</b></span>",
-        size: "small",
-        spec: [2],
-        tags: [],
-        stats: {health: 660, attack: 144, agility: 90, attack_speed: 1.1, defense: 60} , 
-        loot_list: [
-            {item_name: "初始蓝宝石", chance:0.045},
-            {item_name: "初始红宝石", chance:0.015},
-            {item_name: "银钱", chance: 0.15},
-            {item_name: "金属残片", chance: 0.30},
-            //~16C
-        ],
-    });
     enemy_templates["下位佣兵"] = new Enemy({
         name: "下位佣兵", 
         description: "底层的血洛佣兵，看守着平庸的宝物", 
@@ -1057,26 +1098,7 @@ class Enemy {
             //~90C
         ],
     });
-    enemy_templates["生灵骸骨"] = new Enemy({
-        name: "生灵骸骨", 
-        description: "聚魂的基础上又凝聚了部分血肉的不死族，攻防兼备。", 
-        xp_value: 21, 
-        rank: 1217,
-        image: "image/enemy/E1217.png",
-        realm: "<span class=realm_basic><b>潮汐级初等 +</b></span>",
-        size: "small",
-        spec: [],
-        tags: [],
-        stats: {health: 1120, attack: 236, agility: 160, attack_speed: 1.2, defense: 105} , 
-        loot_list: [
-            {item_name: "初始蓝宝石", chance:0.03},
-            {item_name: "初始红宝石", chance:0.04},
-            {item_name: "铜骨", chance: 0.6},
-            {item_name: "万物·凶兽肉块", chance: 0.15},
-            {item_name: "异兽皮", chance: 0.1},
-            //~90C
-        ],
-    });
+
     enemy_templates["腐蚀质石精"] = new Enemy({
         name: "腐蚀质石精", 
         description: "城外的大石头。敌意不重，轻伤就会离去。", 
@@ -1391,27 +1413,6 @@ class Enemy {
             //应为900C
         ],
     });
-
-    enemy_templates["缠绕骸骨"] = new Enemy({
-        name: "缠绕骸骨", 
-        description: "生灵骸骨的加强版。它身上的骨头是上好的材料！", 
-        xp_value: 55, 
-        rank: 1318,
-        image: "image/enemy/E1318.png",
-        realm: "<span class=realm_basic><b>潮汐级巅峰 +</b></span>",
-        size: "small",
-        spec: [],
-        tags: [],
-        stats: {health: 1350, attack: 960, agility: 400, attack_speed: 1.2, defense: 240}, 
-        loot_list: [
-            {item_name: "初始红宝石", chance:0.02},
-            {item_name: "初始绿宝石", chance:0.04},
-            {item_name: "天蚕丝", chance:0.2},
-            {item_name: "润灵铜骨", chance:0.03},
-            //应为900C
-        ],
-    });
-
     
     enemy_templates["灵蔓茸茸"] = new Enemy({
         name: "灵蔓茸茸", 
@@ -8866,7 +8867,34 @@ C4 225851433717/365435296162/591286729879
             {item_name: "二级妖兽内丹", chance:1.0},
         ],
     });
-	
+    enemy_templates["死灵法师[BOSS]"] = new Enemy({
+        name: "死灵法师[BOSS]", 
+        description: "在偷偷研究巫妖转变的死灵法师", 
+        xp_value: 2000, 
+        rank: 1299,
+        image: "image/boss/B1503.png",
+        realm: "<span class=realm_sky><b>凡人境巅峰</b></span>",
+        size: "small",
+        spec: [0],
+        spec_value:{},
+        tags: [],
+        stats: {health: 3000, attack:180, agility: 45, attack_speed: 1.0, defense: 40}, 
+        loot_list: [],
+    });
+    enemy_templates["缠绕骸骨[BOSS]"] = new Enemy({
+        name: "缠绕骸骨[BOSS]", 
+        description: "被死灵法师复生的加强版缠绕骸骨", 
+        xp_value: 1000, 
+        rank: 1298,
+        image: "image/enemy/E1318.png",
+        realm: "<span class=realm_terra><b>凡人境巅峰</b></span>",
+        size: "small",
+        spec: [],
+        spec_value:{},
+        tags: [],
+        stats: {health: 2600, attack:155, agility: 35, attack_speed: 1.2, defense: 50}, 
+        loot_list: [{item_name:"三级妖兽内丹",chance:1.00}],
+    });	
     enemy_templates["纳家待从[BOSS]"] = new Enemy({
         name: "纳家待从[BOSS]", 
         description: "用出全部力量的纳家待从。在家里出手就是无所顾忌！", 

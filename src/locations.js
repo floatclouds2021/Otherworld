@@ -972,11 +972,51 @@ function get_location_type_penalty(type, stage, stat) {
         connected_locations: [{location: locations["乡村小镇"], custom_text: "回到小镇"}], 
         description: "学生上课识字的地方",  
         bgm: 2,
-        //dialogues: ["找村民打听","和农夫交流","和炼丹师林交流"],
+        dialogues: ["翻书"],
         is_unlocked: false,
         name: "学堂", 
-    });//1-2	
-	
+    });//1-2-1
+
+	locations["主城"] = new Location({ 
+        connected_locations: [], 
+        description: "繁荣的主城，偶尔还能在此看到一些别的种族",  
+        bgm: 3,
+        dialogues: ["公告栏","主城驿站"],
+        traders: ["精灵商会","万药阁"],
+        is_unlocked: false,
+        name: "主城", 
+    });//1-3
+	locations["中心广场"] = new Location({ 
+        connected_locations: [{location: locations["主城"], custom_text: "去其他地方看看"}], 
+        description: "主城中心位置，一些重大事件会在此宣布",  
+        bgm: 3,
+        dialogues: ["招生人员"],
+        is_unlocked: false,
+        name: "中心广场", 
+    });//1-3-1
+    locations["城外墓园"] = new Location({ 
+        bgm: 1,
+        connected_locations:[],
+        description: "一处墓园，埋藏着许多枯骨，不过现在似乎有些骸骨在游荡",
+		is_unlocked: false,
+        name: "城外墓园", 
+    });//1-3-2	
+	locations["战斗学院"] = new Location({ 
+		connected_locations: [],
+        description: "你看到这里分了好多个部门，不同部门各司其职",  
+        bgm: 4,
+        is_unlocked: false,
+        name: "战斗学院", 
+    });//1-3-3
+    // locations["战斗学院"].connected_locations.push({location: locations["阵法楼"]});
+    // locations["战斗学院"].connected_locations.push({location: locations["符篆楼"]});	
+    // locations["战斗学院"].connected_locations.push({location: locations["炼丹楼"]});	
+    // locations["战斗学院"].connected_locations.push({location: locations["炼器楼"]});	
+    // locations["战斗学院"].connected_locations.push({location: locations["盾部"]});
+    // locations["战斗学院"].connected_locations.push({location: locations["影部"]});	
+    // locations["战斗学院"].connected_locations.push({location: locations["战斗组"]});	
+    // locations["战斗学院"].connected_locations.push({location: locations["图书馆"]});	
+	// locations["战斗学院"].connected_locations.push({location: locations["任务阁"]});
 	
 /*     locations["练兵场深处"] = new Location({ 
         connected_locations: [{location: locations["未知平原"], custom_text: "返回大厅"}], 
@@ -1016,6 +1056,38 @@ function get_location_type_penalty(type, stage, stat) {
 		dialogues: ["查看系统词条","灵田种植"],
 		traders: ["I级商城"],
     })
+
+    locations["系统空间2"] = new Location({
+        connected_locations: [{location: locations["主城"], custom_text: "离开系统空间2"}],
+        description: "随着你境界的提升，系统空间里上架了一些新的东西",
+        name: "系统空间2",
+        is_unlocked: true,
+        bgm: 1,
+		sleeping: {
+            text: "睡一会（建议第一次进先点一下）",
+            xp: 2
+        },
+        crafting: {
+           is_unlocked: true, 
+            use_text: "使用工作台[Tier+2]", 
+            tiers: {
+                crafting: 2,
+                forging: 2,
+                smelting: 2,
+                cooking: 2,
+                alchemy: 2,
+            }
+		},
+		dialogues: ["查看系统词条","灵田种植"],
+		traders: ["II级商城"],
+    })
+
+	// —— 主城 连接（所有依赖地点已定义）——
+	locations["主城"].connected_locations.push({location: locations["中心广场"], custom_text: "前往中心广场"});
+	locations["主城"].connected_locations.push({location: locations["城外墓园"], custom_text: "前往城外墓园"});
+	locations["主城"].connected_locations.push({location: locations["系统空间2"], custom_text: "进入系统空间"});
+
+	// 顺手补上反向连接（原代码里"中心广场"和"系统空间2"已分别定义了自己的反向连接，可以不动）
     
     locations["Infested field"] = new Combat_zone({
         description: "Field infested with wolf rats. You can see the grain stalks move as these creatures scurry around.", 
@@ -1124,7 +1196,7 @@ function get_location_type_penalty(type, stage, stat) {
             locations: [{location: "未知平原 - 3"}],
         },
         
-        rank:2,
+        rank:1,
         bgm:1,
         unlock_text: "还不够...不要为了击败最弱的魔物沾沾自喜啊，路还很长！",
     });
@@ -1147,7 +1219,7 @@ function get_location_type_penalty(type, stage, stat) {
             //textlines: [{dialogue: "思考对策", lines: ["思考对策"]}],
             locations: [{location: "未知平原 - boss"}],
         },
-        rank:3,
+        rank:1,
         bgm:1,
 
     });
@@ -1170,115 +1242,117 @@ function get_location_type_penalty(type, stage, stat) {
 		unlock_text: "远处能看到一个比一般怪物更大的怪物，就是这里的领主了吧，不知道打不打得过",
     });
 
-   /*  locations["纳家练兵场 - 4"] = new Combat_zone({
-        description: "练兵场中的黑暗小道。成长期魔物的实力上了一个台阶", //MT4
+locations["城外墓园 - 1"] = new Combat_zone({
+		description: "的确有白骨在游荡，不过这可拦不住你",  //MT1
         enemy_count: 20, 
-        enemies_list: ["黑毛茸茸","荧光飞蛾","橙毛茸茸","大飞蛾","聚灵骸骨"],
-        types: [{type: "dark", stage: 1, xp_gain: 1}],
+        enemies_list: ["骸骨"],
+        types: [],
         enemy_stat_variation: 0.1,
         is_unlocked: true, 
-        name: "纳家练兵场 - 4", 
-        
-        rank:4,
-        bgm:1,
-        parent_location: locations["练兵场深处"],
-        first_reward: {
-            xp: 20,
-        },
-        repeatable_reward: {
-            xp: 3,
-            
-            locations: [{location: "纳家练兵场 - 5"}],
-        }
-    });
-
-    locations["纳家练兵场 - 5"] = new Combat_zone({
-        description: "练兵场中黑暗的通道，亮度已经影响到了战斗", //MT5~6
-        enemy_count: 20, 
-        enemies_list: ["聚灵骸骨","血洛游卒","石精","弱小意念","聚魂骸骨"],
-        types: [{type: "dark", stage: 1, xp_gain: 2}],
-        enemy_stat_variation: 0.1,
-        is_unlocked: false, 
-        name: "纳家练兵场 - 5", 
-        
-        rank:5,
-        bgm:1,
-        parent_location: locations["练兵场深处"],
-        first_reward: {
-            xp: 30,
-        },
-        repeatable_reward: {
-            xp: 5,
-            
-            locations: [{location: "纳家练兵场 - 6"}],
-        },
-        unlock_text: "好黑..好可怕..或许应该打造一些盔甲，防护自己了。",
-    });
-    locations["纳家练兵场 - 6"] = new Combat_zone({
-        description: "黑暗的通道，尽头处似乎传来点点光亮？", //MT7~8
-        enemy_count: 20, 
-        enemies_list: ["弱小意念","聚魂骸骨","青年法师","武装橙毛茸茸","万物级凶兽","习武孩童"],
-        types: [{type: "dark", stage: 1, xp_gain: 2}],
-        enemy_stat_variation: 0.1,
-        is_unlocked: false, 
-        name: "纳家练兵场 - 6", 
-        
-        rank:6,
-        bgm:1,
-        parent_location: locations["练兵场深处"],
+        name: "城外墓园 - 1", 
+        parent_location: locations["城外墓园"],
         first_reward: {
             xp: 40,
         },
         repeatable_reward: {
-            xp: 7,
+            xp: 20,
             
-            locations: [{location: "纳家练兵场 - 7"}],
+            locations: [{location: "城外墓园 - 2"}],
         },
-        unlock_text: "小孩都能混进来了，说明这里肯定是正确的道路哇！好耶！",
+        rank:2,
+        bgm:2,
     });
-    locations["纳家练兵场 - 7"] = new Combat_zone({
-        description: "尽管不再黑暗，却遍布魔物的侧门附近", //MT9~10
+
+    locations["城外墓园 - 2"] = new Combat_zone({
+        description: "开始有一些白骨出现变异了", //MT2
         enemy_count: 20, 
-        enemies_list: ["试炼木偶","聚魂骸骨","荧光飞蛾","出芽茸茸","万物级凶兽","习武孩童"],
-        enemy_group_size: [2,2],
+        enemies_list: ["骸骨","聚灵骸骨"],
         types: [],
         enemy_stat_variation: 0.1,
         is_unlocked: false, 
-        
-        rank:7,
-        bgm:1,
-        name: "纳家练兵场 - 7", 
-        parent_location: locations["练兵场深处"],
+        name: "城外墓园 - 2", 
+        parent_location: locations["城外墓园"],
         first_reward: {
-            xp: 50,
+            xp: 60,
         },
         repeatable_reward: {
-            xp: 10,
-            locations: [{location: "纳家练兵场 - X"}],
+            xp: 30,
+            
+            locations: [{location: "城外墓园 - 3"}],
         },
-        unlock_text: "附近有许多可疑的门！不过想要检查它们的话，必须先击败眼前成群结对的敌人..",
+        
+        rank:2,
+        bgm:2,
     });
-    
-    locations["纳家练兵场 - X"] = new Challenge_zone({
-        description: "一扇厚重的门前。看起来想出去必须把待从打晕过去...",
+
+    locations["城外墓园 - 3"] = new Combat_zone({
+        description: "是因为", //MT2
+        enemy_count: 20, 
+        enemies_list: ["聚灵骸骨","聚魂骸骨"],
+        types: [],
+        enemy_stat_variation: 0.1,
+        is_unlocked: false, 
+		enemy_group_size: [1,2],
+        name: "城外墓园 - 3", 
+        parent_location: locations["城外墓园"],
+        first_reward: {
+            xp: 80,
+        },
+        repeatable_reward: {
+            xp: 40,
+            
+            locations: [{location: "城外墓园 - 4"}],
+        },
+        
+        rank:2,
+        bgm:2,
+    });
+
+    locations["城外墓园 - 4"] = new Combat_zone({
+        description: "突破这里应该就能到源头了", //MT3
+        enemy_count: 20, 
+        enemies_list: ["聚魂骸骨","凝甲骸骨","缠绕骸骨","生灵骸骨"],
+        
+        types: [],
+        enemy_stat_variation: 0.1,
+        is_unlocked: false, 
+		enemy_group_size: [1,2],
+        name: "城外墓园 - 4", 
+        parent_location: locations["城外墓园"],
+        first_reward: {
+            xp: 100,
+        },
+        repeatable_reward: {
+            xp: 50,
+            locations: [{location: "城外墓园 - boss"}],
+        },
+        rank:2,
+        bgm:2,
+
+    });
+
+    locations["城外墓园 - boss"] = new Challenge_zone({
+        description: "看来这就是源头了，不可大意",
         enemy_count: 1, 
-        bgm:1,
-        enemies_list: ["纳家待从[BOSS]"],
-        enemy_group_size: [1,1],
+        bgm:2,
+		enemy_groups_list : [["死灵法师[BOSS]","缠绕骸骨[BOSS]","缠绕骸骨[BOSS]"]],
+        enemy_group_size: [3,3],
         is_unlocked: false, 
         is_challenge: true,
-        name: "纳家练兵场 - X", 
-        leave_text: "听话离去",
-        parent_location: locations["练兵场深处"],
-        repeatable_reward: {
-            //textlines: [{dialogue: "猫妖", lines: ["MT10_clear"]}],
-            locations: [{location: "燕岗城"}],
-        },
-        unlock_text: "请留步，小姐。<br>这里禁止大地级之下的子弟随意出入。"
-    }); */
+        name: "城外墓园 - boss", 
+        parent_location: locations["城外墓园"],
+    });
 
 	locations["系统空间"].connected_locations.push({location: locations["训练场"]});
  	locations["系统空间"].connected_locations.push({location: locations["训练场 - EX"]});
+
+ 	locations["系统空间2"].connected_locations.push({location: locations["训练场 - EX"]});
+
+	locations["城外墓园"].connected_locations.push({location: locations["城外墓园 - 1"]});
+    locations["城外墓园"].connected_locations.push({location: locations["城外墓园 - 2"]});
+    locations["城外墓园"].connected_locations.push({location: locations["城外墓园 - 3"]});
+	locations["城外墓园"].connected_locations.push({location: locations["城外墓园 - 4"]});
+    locations["城外墓园"].connected_locations.push({location: locations["城外墓园 - boss"]});
 
     locations["未知平原"].connected_locations.push({location: locations["未知平原 - 1"]});
     locations["未知平原"].connected_locations.push({location: locations["未知平原 - 2"]});
@@ -1289,12 +1363,8 @@ function get_location_type_penalty(type, stage, stat) {
     locations["未知平原"].connected_locations.push({location: locations["乡村小镇"]});
 
 	locations["乡村小镇"].connected_locations.push({location: locations["学堂"]});
-	
-/*     locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - 4"]});
-    locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - 5"]});
-    locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - 6"]});
-    locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - 7"]});
-    locations["练兵场深处"].connected_locations.push({location: locations["纳家练兵场 - X"], custom_text: "前往挑战门边的待从"}); */
+
+
 
 
 
@@ -5898,20 +5968,6 @@ function get_location_type_penalty(type, stage, stat) {
             require_tool: false,
         }),
     };
-/* 	locations["未知平原"].activities = {
-        "偷偷绕过去": new LocationActivity({
-            activity_name: "Running",
-            infinite: false,
-            starting_text: "偷偷绕过去",
-            skill_xp_per_tick: 1,
-            is_unlocked: false,
-			gained_resources: {
-                time_period: [30, 30],
-                skill_required: [0, 10],
-                scales_with_skill: true,
-            },
-        }),
-    } */
 
     locations["幻境核心·地宫"].activities = {
         "mining100MGem": new LocationActivity({

@@ -1404,11 +1404,11 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
 //work related
 (function(){
     skills["Farming"] = new Skill({skill_id: "Farming", 
-                                names: {0: "Farming"}, 
+                                names: {0: "耕种"}, 
                                 description: "播种，成熟，收割，种田的快乐与你分享",
                                 base_xp_cost: 40,
                                 category: "Activity",
-                                max_level: 10,
+                                max_level: 20,
                                 xp_scaling: 1.6,
                                 max_level_coefficient: 2,
                                 rewards: {
@@ -1447,7 +1447,7 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
 													multiplier: 1.05,
 												},
 												"health_regeneration_flat": {
-													multiplier: 10,
+													multiplier: 1.5,
 												},
 												
                                             },
@@ -1490,7 +1490,7 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
 													multiplier: 1.1,
 												},
 												"health_regeneration_flat": {
-													multiplier: 20,
+													multiplier: 1.5,
 												},
 												
                                             },
@@ -1498,7 +1498,50 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
 												all: 1.05,
                                                 //"Herbalism": 1.05,
                                             }
-                                        }
+                                        },
+										12: {
+                                            stats: {
+												"max_health": {
+													multiplier: 1.05,
+												}
+                                            },
+                                        },
+                                        14: {
+                                            stats: {
+                                                "max_health": {
+													multiplier: 1.05,
+												}
+                                            },
+                                        },
+                                        16: {
+                                            stats: {
+												"max_health": {
+													multiplier: 1.05,
+												}
+                                            }
+                                        },
+                                        18: {
+                                            stats: {
+												"max_health": {
+													multiplier: 1.05,
+												}
+                                            }
+                                        },
+                                        20: {
+                                            stats: {
+												"max_health": {
+													multiplier: 1.05,
+												},
+												"health_regeneration_flat": {
+													multiplier: 2,
+												},
+												
+                                            },
+                                            xp_multipliers: {
+												all: 1.05,
+                                                //"Herbalism": 1.05,
+                                            }
+                                        },
                                     }
                                 }});
 })();
@@ -1767,7 +1810,19 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
     });
 
 
-
+    skills["Traveling"] = new Skill({
+        skill_id: "Traveling",
+        names: {0: "旅行"},
+        description: "驿站马车的行驶经验。每级减少5%旅行时间。",
+        category: "Activity",
+        base_xp_cost: 20,
+        xp_scaling: 1.6,
+        max_level: 40,
+        get_effect_description: () => {
+            const mult = Math.pow(0.95, skills["Traveling"].current_level);
+            return `旅行时间 x ${Math.round(mult*1000)/1000} (减少 ${Math.round((1-mult)*10000)/100}%)`;
+        },
+    });
 
     
     skills["AquaElement"] = new Skill({skill_id: "AquaElement",
@@ -2334,14 +2389,14 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
     }); 
     skills["Literacy"] = new Skill({
         skill_id: "Literacy", 
-        names: {0: "Literacy"}, 
-        description: "Ability to read and understand written text",
+        names: {0: "读书"}, 
+        description: "阅读和理解书面文本的能力",
         category: "Character",
         base_xp_cost: 120,
         max_level: 10,
         xp_scaling: 2,
         get_effect_description: ()=> {
-            return `Allows reading harder books`;
+            return `允许阅读更难的书籍`;
         },
         rewards: {
             milestones: {
@@ -2350,7 +2405,7 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
                         hero: 1.05,
                     }
                 },
-                2: {
+                5: {
                     xp_multipliers: {
                         all_skill: 1.05,
                     }

@@ -92,16 +92,16 @@ window.REALMS=[
 [8,"凡人境九层",16,400,800,"basic"],
 [9,"凡人境巅峰",18,450,900,"basic"],
 
-[10,"大地级一阶",550,120000,60000000,"terra"],
-[11,"大地级二阶",1000,250000,80000000,"terra"],
-[12,"大地级三阶",2000,550000,1.6e8,"terra"],
-[13,"大地级四阶",3000,1000000,4.8e8,"terra"],//200w
-[14,"大地级五阶",5000,1500000,12e8,"terra"],//350w
-[15,"大地级六阶",9000,2500000,36e8,"terra"],//600w
-[16,"大地级七阶",15000,6500000,108e8,"terra"],//1250w
-[17,"大地级八阶",36000,12500000,216e8,"terra"],//2500w
-[18,"大地级巅峰",72000,22500000,432e8,"terra"],
-[19,"大地级破限",126000,32500000,1080e8,"terra"],
+[10,"纳气境一层",550,120000,60000000,"terra"],
+[11,"纳气境二层",1000,250000,80000000,"terra"],
+[12,"纳气境三层",2000,550000,1.6e8,"terra"],
+[13,"纳气境四层",3000,1000000,4.8e8,"terra"],//200w
+[14,"纳气境五层",5000,1500000,12e8,"terra"],//350w
+[15,"纳气境六层",9000,2500000,36e8,"terra"],//600w
+[16,"纳气境七层",15000,6500000,108e8,"terra"],//1250w
+[17,"纳气境八层",36000,12500000,216e8,"terra"],//2500w
+[18,"纳气境九层",72000,22500000,432e8,"terra"],
+[19,"纳气境巅峰",126000,32500000,1080e8,"terra"],
 
 [20,"天空级一阶",180000,1.2e8,10000e8,"sky"],//2e
 [21,"天空级二阶",550000,3e8,4e12,"sky"],//5e
@@ -479,6 +479,89 @@ function change_location(location_name) {
 }
 
 window.change_location = change_location;
+
+// ====================== 旅行进度条 ======================
+let current_traveling = null;
+let travel_interval = null;
+
+/**
+ * 启动一段旅行：显示进度条，跑完后 change_location 到目的地
+ * @param {Object} params
+ * @param {String} params.destination 目的地 location name
+ * @param {Number} [params.duration] 基础时长（秒），默认20
+ * @param {String} [params.text] 显示文字
+ */
+function start_traveling({destination, duration = 20, text = "旅途中..."}) {
+    if(current_traveling) return; // 已有旅行在进行中，忽略
+
+    // 按旅行技能等级缩短时间
+    const speed_mult = Math.pow(0.95, skills["Traveling"].current_level);
+    const actual_duration = duration * speed_mult;
+
+    // 关闭对话
+    current_dialogue = null;
+    end_activity_animation();
+
+    const action_div = document.getElementById("location_actions_div");
+    while(action_div.lastElementChild) action_div.removeChild(action_div.lastElementChild);
+
+    // 标题
+    const status_div = document.createElement("div");
+    status_div.id = "action_status_div";
+    status_div.innerText = text;
+    action_div.appendChild(status_div);
+
+    // 进度条
+    const progress_max = document.createElement("div");
+    progress_max.id = "gathering_progress_bar_max";
+    const progress_bar = document.createElement("div");
+    progress_bar.id = "gathering_progress_bar";
+    progress_bar.style.width = "0px";
+    progress_max.appendChild(progress_bar);
+    action_div.appendChild(progress_max);
+
+    // 剩余时间 / 技能信息
+    const time_div = document.createElement("div");
+    time_div.id = "action_xp_div";
+    action_div.appendChild(time_div);
+
+    function refresh_time_text(remain_sec) {
+        let s = "";
+        if(skills["Traveling"].current_level > 0) {
+            s += `旅行 lv.${skills["Traveling"].current_level} : 时长 ${duration}s -> ${actual_duration.toFixed(2)}s (x${speed_mult.toFixed(3)})<br>`;
+        }
+        s += `预计 ${remain_sec.toFixed(1)} 秒后到达...`;
+        time_div.innerHTML = s;
+    }
+    refresh_time_text(actual_duration);
+
+    const start_time = Date.now();
+    const total_ms = actual_duration * 1000;
+    current_traveling = {destination};
+
+    travel_interval = setInterval(() => {
+        const elapsed = Date.now() - start_time;
+        const pct = Math.min(elapsed / total_ms, 1);
+        progress_bar.style.width = (385 * pct) + "px";
+        const remain = Math.max(0, (total_ms - elapsed) / 1000);
+        refresh_time_text(remain);
+
+        if(elapsed >= total_ms) {
+            clearInterval(travel_interval);
+            travel_interval = null;
+            const dest = current_traveling.destination;
+            current_traveling = null;
+
+            // 加经验: duration/20 (传原始 duration，不受技能缩短影响)
+            add_xp_to_skill({
+                skill: skills["Traveling"],
+                xp_to_add: actual_duration / 2,
+            });
+
+            change_location(dest);
+        }
+    }, 100);
+}
 
 /**
  * 
@@ -929,7 +1012,23 @@ function textline_special(t_key){
         else if(t_key == "Farming"){
             add_xp_to_skill({skill: skills["Farming"], xp_to_add: 10});
             //displayed_text += `<br><br> 获取了9999亿【秘法精通】经验值。`;
-        }		
+        }	
+		else if(t_key == "linggen"){
+			if(skills["system"].current_level <3){
+				displayed_text += `【无灵根，不过可以回训练场杀敌解锁灵根】<br>`;
+            }else{
+				displayed_text += `【混沌灵根，世间绝无仅有的品质，放心测】<br>`;
+			}
+        }
+		else if(t_key == "test"){
+			if(skills["system"].current_level <3){
+				displayed_text += `119号无灵根<br>`;
+			}else{
+				displayed_text += `这是……变异灵根？119号……混沌灵根!<br>`;
+			}
+			displayed_text += `${window.REALMS[character.xp.current_level][1]}.<br>`;
+		}
+		
         else if(t_key == "A8-killcount"){
             let killcount = get_enemy_killcount();
             displayed_text += `目前为止，${character.name} <br>已经制造了 ${killcount} 份杀戮。<br><br>`;
@@ -1147,6 +1246,56 @@ function textline_special(t_key){
                 }
             }
         }
+		
+		else if(t_key == 'maincity'){
+			let C_money = 1000;
+			if(character.money < C_money)
+			{
+				displayed_text += `你的钱不够啊<br>`;
+			}
+			else
+			{
+				character.money -= C_money;
+				update_displayed_money();
+				displayed_text += `坐好了，这就送你到主城`;
+				locations["主城"].is_unlocked = true;
+				add_xp_to_skill({skill: skills["Traveling"], xp_to_add: 1});
+
+				// 用 setTimeout 延迟到当前 start_textline 调用栈结束（
+				// 也就是 start_dialogue + update_displayed_textline_answer 跑完）
+				// 之后再显示旅行进度条，否则会被对话 UI 覆盖
+				setTimeout(() => {
+					start_traveling({
+						destination: "主城",
+						duration: 20,      // ← 想要不同地方不同时长，改这里就行
+						text: "驿站马车行驶中...",
+					});
+				}, 0);
+			}
+		}
+		else if(t_key == 'town'){
+			let C_money = 1000;
+			if(character.money < C_money)
+			{
+				displayed_text += `你的钱不够啊<br>`;
+			}
+			else
+			{
+				character.money -= C_money;
+				update_displayed_money();
+				displayed_text += `出发，回小镇~`;
+				locations["乡村小镇"].is_unlocked = true;
+
+				setTimeout(() => {
+					start_traveling({
+						destination: "乡村小镇",
+						duration: 20,   // ← 同样，改这里即可
+						text: "驿站马车行驶中...",
+					});
+				}, 0);
+			}
+		}
+		
         else if(t_key.includes("pz")){
             let T_S = t_key;
             let pz_map = {"pz-Bq":"紫色刀币","pz-my":"秘银锭","pz-bs":"史诗黄宝石"};//凭证
@@ -2218,9 +2367,7 @@ function get_enemy_realm(enemy){
     let realm_f = enemy.realm[realm_index + 3];//first
     let realm_l = enemy.realm[realm_index + 6];//last
     switch (realm_f){
-        case "微":
-            realm_e += 0;
-            break;
+        case "凡": realm_e += 0; break;
         case "万":
             realm_e += 3;
             break;
@@ -2244,6 +2391,7 @@ function get_enemy_realm(enemy){
             break;  
     }
     switch (realm_l){
+		case "峰": realm_e += 9; break; // 或者根据你的预期设定合理的数值
         case "初":
             realm_e += 0;
             break;
@@ -2254,7 +2402,7 @@ function get_enemy_realm(enemy){
             realm_e += 1;
             break;
         case "巅":
-            realm_e += 2;
+            realm_e += 9;
             break;
         case "一":
             realm_e += 0;
@@ -2279,7 +2427,10 @@ function get_enemy_realm(enemy){
             break;  
         case "八":
             realm_e += 7;
-            break;  
+            break; 
+		case "九":
+            realm_e += 8;
+            break; 	
     }
     if(realm_l == "高" && realm_e == 1) realm_e += 1;//微尘高级 特判
     if(realm_l == "巅" && realm_e >= 11) realm_e += 6;//大地级以上巅峰指九阶而不是三阶
@@ -4843,7 +4994,7 @@ function load_from_file(save_string) {
         } else {
             localStorage.setItem(save_key, decodeURIComponent(atob(save_string)));
         }        
-        window.location.reload(false);
+        window.location.reload(true);  // 强制从服务器重新获取，忽略缓存
     } catch (error) {
         console.error("Something went wrong on preparing to load from file!");
         console.error(error);
@@ -4903,7 +5054,7 @@ function load_backup() {
         if(is_on_dev()) {
             if(localStorage.getItem(dev_backup_key)){
                 localStorage.setItem(dev_save_key, localStorage.getItem(dev_backup_key));
-                window.location.reload(false);
+                window.location.reload(true);  // 强制从服务器重新获取，忽略缓存
             } else {
                 console.log("Can't load backup as there is none yet.");
                 log_message("Can't load backup as there is none yet.");
@@ -4911,7 +5062,7 @@ function load_backup() {
         } else {
             if(localStorage.getItem(backup_key)){
                 localStorage.setItem(save_key, localStorage.getItem(backup_key));
-                window.location.reload(false);
+                window.location.reload(true);  // 强制从服务器重新获取，忽略缓存
             } else {
                 console.log("Can't load backup as there is none yet.")
                 log_message("Can't load backup as there is none yet.");
@@ -4929,7 +5080,7 @@ function load_other_release_save() {
         if(is_on_dev()) {
             if(localStorage.getItem(save_key)){
                 localStorage.setItem(dev_save_key, localStorage.getItem(save_key));
-                window.location.reload(false);
+                window.location.reload(true);  // 强制从服务器重新获取，忽略缓存
             } else {
                 console.log("There are no saves on the other release.")
                 log_message("There are no saves on the other release.");
@@ -4937,7 +5088,7 @@ function load_other_release_save() {
         } else {
             if(localStorage.getItem(dev_save_key)){
                 localStorage.setItem(save_key, localStorage.getItem(dev_save_key));
-                window.location.reload(false);
+                window.location.reload(true);  // 强制从服务器重新获取，忽略缓存
             } else {
                 console.log("There are no saves on the other release.");
                 log_message("There are no saves on the other release.");
@@ -5543,20 +5694,21 @@ window.claw_use = claw_use;
 const FARM_CROPS = [
     { name: "灵血草种子", time: 60,   crop: "灵血草", count: [2, 3], xp: 10,   unlock_level: 1 },
     { name: "木根须种子", time: 120,  crop: "木根须", count: [2, 3], xp: 20,   unlock_level: 1 },
-    { name: "绝音蕨", time: 360,  crop: "绝音蕨", count: [1, 2], xp: 80,   unlock_level: 3 },
-    { name: "噬芒兰", time: 900,  crop: "噬芒兰", count: [1, 1], xp: 300,  unlock_level: 5 },
-    // { name: "湖鲤鱼", time: 1800, crop: "湖鲤鱼", count: [1, 1], xp: 800,  unlock_level: 7 },
+    { name: "绝音蕨种子", time: 360,  crop: "绝音蕨", count: [1, 2], xp: 80,   unlock_level: 3 },
+    { name: "噬芒兰种子", time: 900,  crop: "噬芒兰", count: [1, 1], xp: 300,  unlock_level: 3 },
+	{ name: "生命木树种", time: 1800, crop: "生命木", count: [1, 3], xp: 800,  unlock_level: 5 },
+    //{ name: "常青藤种子", time: 1800, crop: "常青藤", count: [1, 2], xp: 800,  unlock_level: 5 },
     // { name: "青花鱼", time: 3600, crop: "青花鱼", count: [1, 1], xp: 2000, unlock_level: 9 },
 ];
 
 // 升级到下一级的消耗。key 是当前等级。
 const FARM_UPGRADES = {
     1:  { money: 1000,    crops: [["灵血草", 5]] },
-    2:  { money: 10000,   crops: [["灵血草", 15], ["木根须", 10]] },
-    3:  { money: 100000,  crops: [["木根须", 20], ["绝音蕨", 5]] },
-    // 4:  { money: 1000000, crops: [["绝音蕨", 15], ["噬芒兰", 3]] },
-    // 5:  { money: 1e7,     crops: [["噬芒兰", 10], ["湖鲤鱼", 3]] },
-    // 6:  { money: 1e8,     crops: [["湖鲤鱼", 10], ["青花鱼", 3]] },
+    2:  { money: 2000,   crops: [["灵血草", 15], ["木根须", 10]] },
+    3:  { money: 4000,  crops: [["木根须", 20], ["绝音蕨", 5]] },
+    4:  { money: 8000, crops: [["绝音蕨", 15], ["噬芒兰", 3]] },
+    5:  { money: 16000,     crops: [["噬芒兰", 10], ["生命木", 3]] },
+    6:  { money: 32000,     crops: [["生命木", 20]] },
     // 7:  { money: 1e9,     crops: [["青花鱼", 10]] },
     // 8:  { money: 1e10,    crops: [["青花鱼", 20]] },
     // 9:  { money: 1e11,    crops: [["青花鱼", 30]] },
@@ -6480,15 +6632,16 @@ function unlock_influ_related(influ){
 const baby_num = document.getElementById("baby_born_num");
 baby_num.addEventListener("change", () => family_data.baby = (Number(baby_num.value)!=Number(baby_num.value))?0:baby_num.value);
 const realm_rate =[
-    [1.0,2e-4,0.01,"微尘级初级","realm_basic"],
-    [0.4,2e-4,0.0215,"微尘级中级","realm_basic"],
-    [0.15,2e-4,0.0465,"微尘级高级","realm_basic"],
-    [0.05,2e-4,0.1,"万物级初等","realm_basic"],
-    [0.02,2e-4,0.215,"万物级高等","realm_basic"],
-    [0.01,2e-4,0.465,"万物级巅峰","realm_basic"],
-    [4e-3,2e-4,1.0,"潮汐级初等","realm_basic"],
-    [1e-3,2e-4,2.15,"潮汐级高等","realm_basic"],
-    [1e-4,2e-4,4.65,"潮汐级巅峰","realm_basic"],
+    [1.0,2e-4,0.01,"凡人境一层","realm_basic"],
+    [0.4,2e-4,0.0215,"凡人境二层","realm_basic"],
+    [0.15,2e-4,0.0465,"凡人境三层","realm_basic"],
+    [0.05,2e-4,0.1,"凡人境四层","realm_basic"],
+    [0.02,2e-4,0.215,"凡人境五层","realm_basic"],
+    [0.01,2e-4,0.465,"凡人境六层","realm_basic"],
+    [4e-3,2e-4,1.0,"凡人境七层","realm_basic"],
+    [1e-3,2e-4,2.15,"凡人境八层","realm_basic"],
+    [1e-4,2e-4,4.65,"凡人境九层","realm_basic"],
+	[1e-4,2e-4,4.65,"凡人境巅峰","realm_basic"],
     [3e-4,2e-5,100,"大地级一阶","realm_terra"],
     [3e-4,2e-5,215,"大地级二阶","realm_terra"],
     [3e-4,2e-5,465,"大地级三阶","realm_terra"],

@@ -87,7 +87,14 @@ effect_templates["初级止血"] = new ActiveEffect({
         }
     }
 });
-
+effect_templates["初级防御加强"] = new ActiveEffect({
+    name: "初级防御加强",
+    effects: {
+        stats: {
+            defense: {flat: 20},
+        }
+    }
+});
 effect_templates["恢复 A1"] = new ActiveEffect({
     name: "恢复 A1",
     effects: {

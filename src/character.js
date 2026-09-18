@@ -248,13 +248,13 @@ character.add_xp = function ({xp_to_add, use_bonus = true},ignore_cap) {
         while(character.xp.current_xp >= window.REALMS[character.xp.current_level+1][4])
         {
                 let gains = "";
-                if(character.xp.current_level == 8){
+                if(character.xp.current_level == 9){
                         //character.xp.total_xp -= character.xp.current_xp - 99999999 ;
                         if(ignore_cap <= 0){
                                 character.xp.current_xp = 59999999;
-                                return `<b>被<span class="realm_terra">大地级瓶颈</span>限制 - 经验已锁定</b>`
+                                return `<b>被<span class="realm_terra">纳气境瓶颈</span>限制 - 经验已锁定</b>`
                         }
-                        else character.upgrade_effects(9);
+                        else character.upgrade_effects(10);
                 }
                 if(character.xp.current_level == 18){
                         //character.xp.total_xp -= character.xp.current_xp - 99999999 ;
@@ -303,7 +303,7 @@ character.add_xp = function ({xp_to_add, use_bonus = true},ignore_cap) {
                 gains += `防御,敏捷提高了${format_number(this_realm[2])}<br>`;
                 gains += `生命上限提高了${format_number(this_realm[3])}<br>`;
                 if(realm_spd_gain != 0) gains += `小阶段突破，攻击速度额外增加${realm_spd_gain}<br>`;
-                if(this_realm[0]==9)
+                if(this_realm[0]==11)
                 {
                         //add_to_character_inventory([{item: item_templates["微火"], count: 1}]);
                         gains += `大境界突破，获取特殊能力<span style="color:#ff8080">【微火】</span>！<br>`;
