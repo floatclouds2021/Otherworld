@@ -383,6 +383,16 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         item_type: "Component",
         recipe_skill: "Forging"
     });
+    forging_recipes.components["弓身"] = new ComponentRecipe({
+        name: "弓身",
+        materials: [
+            {material_id: "生命木", count: 3, result_id: "生命木弓身"}, 
+            //未完待续
+        ],
+        item_type: "Component",
+        recipe_skill: "Forging"
+    });
+
 
     forging_recipes.components["弓弦"] = new ComponentRecipe({
         name: "弓弦",
@@ -393,6 +403,15 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         item_type: "Component",
         recipe_skill: "Forging"
     });	
+    forging_recipes.components["弓弦"] = new ComponentRecipe({
+        name: "弓弦",
+        materials: [
+            {material_id: "常青藤", count: 3, result_id: "常青藤弓弦"}, 
+            //未完待续
+        ],
+        item_type: "Component",
+        recipe_skill: "Forging"
+    });
 	
     forging_recipes.components["轮锋"] = new ComponentRecipe({
         name: "轮锋",
@@ -471,6 +490,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         name: "头部外甲",
         materials: [
 			{material_id: "木头", count: 3, result_id: "木盔"}, 
+			{material_id: "生命木", count: 3, result_id: "生命木头盔"}, 
             {material_id: "铁锭", count: 3, result_id: "铁制头盔"}, 
             {material_id: "紫铜锭", count: 3, result_id: "紫铜头盔"}, 
             {material_id: "地宫金属锭", count: 3, result_id: "地宫头盔"}, 
@@ -493,6 +513,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         name: "头部内甲",
         materials: [
 			{material_id: "稻草", count: 3, result_id: "稻草帽子"},
+			{material_id: "常青藤", count: 3, result_id: "常青藤帽子"},
             {material_id: "粘合织料", count: 3, result_id: "粘合帽子"},
             {material_id: "异兽皮", count: 3, result_id: "异兽帽子"},
             {material_id: "活性织料", count: 3, result_id: "活性帽子"},
@@ -512,6 +533,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         name: "胸部外甲",
         materials: [
 			{material_id: "木头", count: 4, result_id: "木甲"}, 
+			{material_id: "生命木", count: 4, result_id: "生命木胸甲"}, 
             {material_id: "铁锭", count: 4, result_id: "铁制胸甲"}, 
             {material_id: "紫铜锭", count: 4, result_id: "紫铜胸甲"}, 
             {material_id: "地宫金属锭", count: 4, result_id: "地宫胸甲"}, 
@@ -534,6 +556,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         name: "胸部内甲",
         materials: [
 			{material_id: "稻草", count: 4, result_id: "稻草背心"},
+			{material_id: "常青藤", count: 3, result_id: "常青藤背心"},
             {material_id: "粘合织料", count: 4, result_id: "粘合背心"},
             {material_id: "异兽皮", count: 4, result_id: "异兽背心"},
             {material_id: "活性织料", count: 4, result_id: "活性背心"},
@@ -553,6 +576,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         name: "腿部外甲",
         materials: [
 			{material_id: "木头", count: 4, result_id: "木腿"}, 
+			{material_id: "生命木", count: 4, result_id: "生命木腿甲"}, 			
             {material_id: "铁锭", count: 4, result_id: "铁制腿甲"}, 
             {material_id: "紫铜锭", count: 4, result_id: "紫铜腿甲"}, 
             {material_id: "地宫金属锭", count: 4, result_id: "地宫腿甲"}, 
@@ -575,6 +599,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         name: "腿部内甲",
         materials: [
 			{material_id: "稻草", count: 4, result_id: "稻草绑腿"},
+			{material_id: "常青藤", count: 4, result_id: "常青藤绑腿"},			
             {material_id: "粘合织料", count: 4, result_id: "粘合裤子"},
             {material_id: "异兽皮", count: 4, result_id: "异兽裤子"},
             {material_id: "活性织料", count: 4, result_id: "活性裤子"},
@@ -595,6 +620,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         name: "脚部外甲",
         materials: [
 			{material_id: "木头", count: 4, result_id: "木靴"}, 
+			{material_id: "生命木", count: 3, result_id: "生命木战靴"}, 						
             {material_id: "铁锭", count: 2, result_id: "铁制战靴"}, 
             {material_id: "紫铜锭", count: 2, result_id: "紫铜战靴"}, 
             {material_id: "地宫金属锭", count: 2, result_id: "地宫战靴"}, 
@@ -617,6 +643,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         name: "脚部内甲",
         materials: [
 			{material_id: "稻草", count: 4, result_id: "稻草袜子"},
+			{material_id: "常青藤", count: 4, result_id: "常青藤护脚"},						
             {material_id: "粘合织料", count: 2, result_id: "粘合袜子"},
             {material_id: "异兽皮", count: 2, result_id: "异兽袜子"},
             {material_id: "活性织料", count: 2, result_id: "活性袜子"},
@@ -1407,24 +1434,25 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
 
 (function(){
     
-    cooking_recipes.items["微尘级·烤肉"] = new ItemRecipe({
+/*     cooking_recipes.items["微尘级·烤肉"] = new ItemRecipe({
         name: "微尘级·烤肉",
         recipe_type: "material",
         materials: [{material_id: "微尘·凶兽肉块", count: 1},{material_id: "魔力碎晶", count: 1}], 
         result: {result_id: "微尘·凶兽肉排", count: 1},
         success_chance: [0.5,1],
         recipe_level: [0,3],
-        recipe_skill: "Cooking",
-    });cooking_recipes.items["万物级·烤肉"] = new ItemRecipe({
+        recipe_skill: "Cooking", 
+    });*/
+	cooking_recipes.items["万物级·烤肉"] = new ItemRecipe({
         name: "万物级·烤肉",
         recipe_type: "material",
-        materials: [{material_id: "万物·凶兽肉块", count: 1},{material_id: "魔力碎晶", count: 3}], 
+        materials: [{material_id: "万物·凶兽肉块", count: 1}], 
         result: {result_id: "万物·凶兽肉排", count: 1},
         success_chance: [0.5,1],
-        recipe_level: [2,5],
+        recipe_level: [1,3],
         recipe_skill: "Cooking",
     });
-    cooking_recipes.items["潮汐级·烤肉"] = new ItemRecipe({
+    /* cooking_recipes.items["潮汐级·烤肉"] = new ItemRecipe({
         name: "潮汐级·烤肉",
         recipe_type: "material",
         materials: [{material_id: "潮汐·凶兽肉块", count: 1},{material_id: "煤炭", count: 1}], 
@@ -1441,7 +1469,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         success_chance: [0.5,1],
         recipe_level: [12,12],
         recipe_skill: "Cooking",
-    });
+    }); */
     cooking_recipes.items2["大地级·烤肉 II"] = new ItemRecipe({
         name: "大地级·烤肉 II",
         recipe_type: "material",

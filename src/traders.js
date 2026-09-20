@@ -534,6 +534,7 @@ class TradeItem {
 			new TradeItem({item_name: "生命木", count: [80,100]}),
 			new TradeItem({item_name: "常青藤", count: [80,200]}),
 			new TradeItem({item_name: "生命木树种", count: [100,100]}),
+			new TradeItem({item_name: "常青藤种子", count: [100,100]}),
     ];
 	//万药阁
     inventory_templates["medicinal I"] = 

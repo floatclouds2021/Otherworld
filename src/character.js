@@ -38,6 +38,19 @@ const ARMOR_SETS = {
             },
         },
     },
+    "生命木": {
+        name: "生命木套装",
+        thresholds: {
+            2: {
+                stats: { max_health: { flat: 150 } },
+                description: "生命上限 +100",
+            },
+            4: {
+                stats: { max_health: { flat: 300 }, health_regeneration_flat: { flat: 40 } },
+                description: "生命上限 +300，生命回复 +40",
+            },
+        },
+    },	
     // 想加更多套装，照这个格式继续写就行
     // 例如给"铁制"系列在 items.js 里加 set_name: "铁制"，然后这里加一条：
     // "铁制": {

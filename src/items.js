@@ -4125,7 +4125,7 @@ item_templates["常青藤帽子"] = new Armor({
 		name_suffix: "常青藤",
     });
     item_templates["常青藤背心"] = new Armor({
-        name: "稻草背心", 
+        name: "常青藤背心", 
         description: "常青藤编制而成的帽子，有一定的防御力", 
         value: 90,
         component_type: "chestplate interior",
@@ -4135,7 +4135,7 @@ item_templates["常青藤帽子"] = new Armor({
 		name_suffix: "常青藤",
     });
     item_templates["常青藤绑腿"] = new Armor({
-        name: "稻草绑腿", 
+        name: "常青藤绑腿", 
         description: "常青藤编制而成的帽子，有一定的防御力", 
         value: 75,
         component_type: "leg armor interior",
@@ -4672,13 +4672,13 @@ item_templates["常青藤帽子"] = new Armor({
         }
 
     });
-    item_templates["生命木护甲"] = new ArmorComponent({
-        name: "生命木护甲",
-        description: "生命木制成的护甲，虽然没有高额的防御，但是有不错的生命回复",
+    item_templates["生命木胸甲"] = new ArmorComponent({
+        name: "生命木胸甲",
+        description: "生命木制成的胸甲，虽然没有高额的防御，但是有不错的生命回复",
         component_type: "chestplate exterior",
         value: 500,
         component_tier: 0,
-        full_armor_name: "生命木护甲",
+        full_armor_name: "生命木胸甲",
         defense_value: 5,
 		name_prefix: "生命木",
 		        stats: {
@@ -6625,20 +6625,26 @@ item_templates["常青藤帽子"] = new Armor({
     });	
     item_templates["绝音蕨种子"] = new Loot({
         name: "绝音蕨种子", 
-        description: "绝音蕨的种子，可以种在灵田里", 
+        description: "绝音蕨的种子，可以种在灵田里，需要灵田等级3以上", 
         value: 1200,
         //image: "image/item/slient_fern.png",
     });
     item_templates["噬芒兰种子"] = new Loot({
         name: "噬芒兰种子", 
-        description: "噬芒兰的种子，可以种在灵田里", 
+        description: "噬芒兰的种子，可以种在灵田里，需要灵田等级3以上", 
         value: 1800,
         //image: "image/item/salix_wood.png",
     });	
     item_templates["生命木树种"] = new Loot({
         name: "生命木树种", 
-        description: "精灵族世界树的子种，可以种在灵田里", 
+        description: "精灵族世界树的子种，可以种在灵田里，需要灵田等级5以上", 
         value: 300,
+        //image: "image/item/salix_wood.png",
+    });
+    item_templates["常青藤种子"] = new Loot({
+        name: "常青藤种子", 
+        description: "精灵族世界树伴生的藤曼种子，可以种在灵田里，需要灵田等级5以上", 
+        value: 250,
         //image: "image/item/salix_wood.png",
     });	
 	item_templates["生命木"] = new Loot({

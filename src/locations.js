@@ -996,7 +996,7 @@ function get_location_type_penalty(type, stage, stat) {
     });//1-3-1
     locations["城外墓园"] = new Location({ 
         bgm: 1,
-        connected_locations:[],
+        connected_locations: [{location: locations["主城"], custom_text: "回到主城"}], 
         description: "一处墓园，埋藏着许多枯骨，不过现在似乎有些骸骨在游荡",
 		is_unlocked: false,
         name: "城外墓园", 
@@ -1154,6 +1154,24 @@ function get_location_type_penalty(type, stage, stat) {
         rank:1,
         bgm:1,
     });
+    locations["训练场 - EX2"] = new Combat_zone({
+        description: "纯靶子，测试各项技能用",  //MT1
+        enemy_count: 5, 
+        enemies_list: ["训练假人EX"],
+        types: [],
+        enemy_stat_variation: 0.1,
+        is_unlocked: true, 
+        name: "训练场 - EX2", 
+        parent_location: locations["系统空间2"],
+        first_reward: {
+            xp: 40000,
+        },
+        repeatable_reward: {
+            xp: 20000,
+        },
+        rank:1,
+        bgm:1,
+    });	
     locations["未知平原 - 1"] = new Combat_zone({
         description: "有果冻状的物体在移动",  //MT1
         enemy_count: 20, 
@@ -1346,7 +1364,7 @@ locations["城外墓园 - 1"] = new Combat_zone({
 	locations["系统空间"].connected_locations.push({location: locations["训练场"]});
  	locations["系统空间"].connected_locations.push({location: locations["训练场 - EX"]});
 
- 	locations["系统空间2"].connected_locations.push({location: locations["训练场 - EX"]});
+ 	locations["系统空间2"].connected_locations.push({location: locations["训练场 - EX2"]});
 
 	locations["城外墓园"].connected_locations.push({location: locations["城外墓园 - 1"]});
     locations["城外墓园"].connected_locations.push({location: locations["城外墓园 - 2"]});

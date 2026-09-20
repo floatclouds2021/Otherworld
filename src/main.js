@@ -5694,10 +5694,10 @@ window.claw_use = claw_use;
 const FARM_CROPS = [
     { name: "灵血草种子", time: 60,   crop: "灵血草", count: [2, 3], xp: 10,   unlock_level: 1 },
     { name: "木根须种子", time: 120,  crop: "木根须", count: [2, 3], xp: 20,   unlock_level: 1 },
-    { name: "绝音蕨种子", time: 360,  crop: "绝音蕨", count: [1, 2], xp: 80,   unlock_level: 3 },
-    { name: "噬芒兰种子", time: 900,  crop: "噬芒兰", count: [1, 1], xp: 300,  unlock_level: 3 },
-	{ name: "生命木树种", time: 1800, crop: "生命木", count: [1, 3], xp: 800,  unlock_level: 5 },
-    //{ name: "常青藤种子", time: 1800, crop: "常青藤", count: [1, 2], xp: 800,  unlock_level: 5 },
+    { name: "绝音蕨种子", time: 180,  crop: "绝音蕨", count: [1, 2], xp: 150,   unlock_level: 3 },
+    { name: "噬芒兰种子", time: 210,  crop: "噬芒兰", count: [1, 1], xp: 160,  unlock_level: 3 },
+	{ name: "生命木树种", time: 240, crop: "生命木", count: [1, 3], xp: 600,  unlock_level: 5 },
+	{ name: "常青藤种子", time: 240, crop: "常青藤", count: [1, 3], xp: 600,  unlock_level: 5 },
     // { name: "青花鱼", time: 3600, crop: "青花鱼", count: [1, 1], xp: 2000, unlock_level: 9 },
 ];
 
