@@ -556,6 +556,11 @@ class Textline {
                 is_unlocked: false,
                 name: "灵田",
                 text: "你解锁了灵田，可以在此种植灵草，升级灵田可以缩短种植时间",
+            }),		
+			"空间锚点": new Textline({
+                is_unlocked: false,
+                name: "空间锚点",
+                text: "你去过的地方会产生锚点，可以在任意锚点之间传送",
             }),			
         }
     });
@@ -715,7 +720,7 @@ class Textline {
 				"罡气境掌控灵气环绕自身，万法不侵<br>",
             }), 
 			"邪修": new Textline({
-                is_unlocked: false,
+                is_unlocked: true,
                 name: "邪修",
                 text: "目前已知的最大邪修组织为崇神教<br>"+
 				"据说该组织的人摒弃灵气修炼，转而通过献祭祭品信仰邪神"+
@@ -751,6 +756,36 @@ class Textline {
                 },
             }), 
 			locks_lines: ["去乡村小镇"],   // ← 新增这一行			
+        }
+    });
+
+	dialogues["主城飞舟点"] = new Dialogue({
+        name: "主城飞舟点",
+		textlines: {
+            "去学院（特别免费）": new Textline({
+                is_unlocked: false,
+                name: "去学院（特别免费）",
+                text: "去学院（特别免费）",
+				unlocks: {
+					spec: "college",
+                },
+            }), 
+			locks_lines: ["去学院（特别免费）"],   // ← 新增这一行			
+        }
+    });	
+
+	dialogues["学院飞舟点"] = new Dialogue({
+        name: "学院飞舟点",
+		textlines: {
+            "去主城（特别免费）": new Textline({
+                is_unlocked: true,
+                name: "去主城（特别免费）",
+                text: "去主城（特别免费）",
+				unlocks: {
+					spec: "collegetomain",
+                },
+            }), 
+			locks_lines: ["去主城（特别免费）"],   // ← 新增这一行			
         }
     });
 
@@ -795,12 +830,12 @@ class Textline {
 	dialogues["招生人员"] = new Dialogue({
         name: "招生人员",
 		textlines: {
-			"报名": new Textline({
+/* 			"报名": new Textline({
                 name: "报名",
                 text: "战斗学院还没写完<br>"+
 				"<br>等更新之后再对话这个<br>",
-            }),
-/*             "报名": new Textline({
+            }), */
+            "报名": new Textline({
                 name: "报名",
                 text: "在这张表上填写一下基础信息然后领取号牌排队，到你的时候上去测试就是<br>"+
 				"<br>你填完了表格，领取了号牌，119号<br>",
@@ -810,6 +845,7 @@ class Textline {
                 locks_lines: ["报名"],
             }),	
 			"排队等待": new Textline({
+				is_unlocked: false,
                 name: "排队等待",
                 text: "……11号凡人境三层，下品灵根……<br>"+
 				"……23号凡人境三层，杂灵根……<br>"+
@@ -824,16 +860,203 @@ class Textline {
                 locks_lines: ["排队等待"],
             }),
 			"触摸测灵石": new Textline({
+				is_unlocked: false,
                 name: "触摸测灵石",
                 text: "119号上来测试<br>"+
 				"<br>你走上前，将手放在测灵石上，入手一片冰凉<br>"+
 				"测灵石等待了一会，开始发光<br>",
 				unlocks: {
 					spec: "test",
-                    //textlines: [{dialogue: "招生人员", lines: ["触摸测灵石"]}],
+                    textlines: [{dialogue: "招生人员", lines: ["混沌灵根"]}],
                 },
                 locks_lines: ["触摸测灵石"],
-            }), */
+            }),
+			"混沌灵根": new Textline({
+				is_unlocked: false,
+                name: "混沌灵根",
+                text: "混沌灵根？！（旁边登记的人员呆滞了几分钟）<br>"+
+				"（之后回过神来）亿万人之中才会出现一个！<br>"+
+				"正式介绍一下，我是战斗学院赵主任<br>"+
+				"如果你愿意加入战斗学院，修炼方面的设备器材全部免费用<br>"+
+				"贡献点10万，可兑换各种丹药和功法<br>"+
+				"甚至可以为你提供学院研发的武器<br>"+
+				"你觉得如何？<br>",
+				unlocks: {
+                    textlines: [{dialogue: "招生人员", lines: ["提出要求"]}],
+                },
+                locks_lines: ["混沌灵根"],
+            }),
+			"提出要求": new Textline({
+				is_unlocked: false,
+                name: "能去各个地方战斗么？",
+                text: "当然能，战斗学院本来就是在血与火中成长的<br>"+
+				"深渊魔族，天外异族，邪教，只要你想要的都能给你找到<br>"+
+				"所以你同意了么？<br>",
+				unlocks: {
+                    textlines: [{dialogue: "招生人员", lines: ["点头"]}],
+                },
+                locks_lines: ["提出要求"],
+            }),
+			"点头": new Textline({
+				is_unlocked: false,
+                name: "点头",
+                text: "那好，我现在就回学院安排<br>"+
+				"（交代其他人）把剩下的人测完<br>"+
+				"（转回来）你现在就和我去学院么？<br>"+
+				"<br>你点头<br>"+
+				"（放出飞舟）那上来把，我现在就带你过去<br>",
+				unlocks: {
+                    textlines: [{dialogue: "招生人员", lines: ["去学院"]}],
+                },
+                locks_lines: ["点头"],
+            }),
+			"去学院": new Textline({
+				is_unlocked: false,
+                name: "去学院",
+                text: "……",
+				unlocks: {
+					textlines: [{dialogue: "主城飞舟点", lines: ["去学院（特别免费）"]}],
+					dialogues: ["主城飞舟点"],
+					spec: "college",
+                },
+                locks_lines: ["去学院"],
+            }),
+        }
+    });
+
+	dialogues["与接待员对话"] = new Dialogue({
+        name: "与接待员对话",
+		textlines: {
+			"介绍丹盟": new Textline({
+                name: "介绍丹盟",
+                text: "这里是炼丹师们的聚集地，可以在此参与炼丹师等级考核<br>"+
+				"<br>最初是由一名以丹入道的大能发起的人族炼丹场所<br>"+
+				"<br>在经过一些事件之后，开始和其他种族交流合作<br>"+
+				"<br>到现在各大种族都在这里成为一份子，成为了名副其实的丹盟<br>"+
+				"<br>每隔几年这里也会召开炼丹大会，各族比拼炼丹技术，获胜者能获得丹盟提供的奖励<br>"+
+				"<br>强烈推荐到时候你来现场参与或者观看比赛<br>",
+				locks_lines: ["介绍丹盟"],
+            }),
+			"找林大师": new Textline({
+				name: "找林大师",
+				text: "林大师？稍等我去通报下<br>"+
+					"<br>请上二楼会客室，林大师在等你<br>",
+
+				unlocks: {
+					dialogues: ["与林大师对话"],
+					textlines: [
+						{
+							dialogue: "与林大师对话",
+							lines: ["炼丹考核"]
+						}
+					],
+				},
+
+				locks_lines: ["找林大师"],
+			}),
+        }
+    });
+
+	dialogues["与林大师对话"] = new Dialogue({
+		name: "与林大师对话",
+		is_unlocked: false,
+
+		textlines: {
+			"炼丹考核": new Textline({
+				name: "炼丹考核",
+				is_unlocked: false,
+				text: "小友你来了，再次感谢当时出生救我一命<br>"+
+					"这是一瓶三品的聚气丹，里面有10颗，可以快速吸收天地灵气<br>"+
+					"丹药分一至九品，对应炼丹师一至九级，越往上越难升级<br>"+
+					"常见的止血丹就是一品丹药，至于九品目前只有极少数炼丹师可以炼制了<br>"+
+					"<br>炼丹考核？小友已经读完那本丹道入门了么<br>"+
+					"一级炼丹师的难度不高，丹盟会提供一份丹方和3份对应药材<br>"+
+					"只要能炼制成功就行，需要参加的话填下这个表格就行，考核费我替你出<br>",
+				unlocks: {
+					items: [
+						{ item_name: "聚气丹", count: 10 },
+					],
+					textlines: [
+						{
+							dialogue: "与林大师对话",
+							lines: ["开始考核"]
+						}
+					],
+				},
+				locks_lines: ["炼丹考核"],
+			}),
+
+			"开始考核": new Textline({
+				name: "开始考核",
+				is_unlocked: false,
+				text: "你填完了报表递给林大师<br>"+
+					"进去之后会看到一张丹方<br>"+
+					"阅读丹方然后炼制相应丹药即可通过考核<br>"+
+					"考核通过后你会拿到一枚代表你等级的徽章，别丢了<br>"+
+					"后续如果还需要考核的话让接待员通知我就行，考核费都给你减免了<br>",
+				unlocks: {
+					locations: ["一级炼丹考核"],
+				},
+				locks_lines: ["开始考核"],
+			}),			
+		}
+	});
+
+	dialogues["拿起丹方"] = new Dialogue({
+        name: "拿起丹方",
+		textlines: {
+			"拿起丹方": new Textline({
+                name: "拿起丹方",
+				is_unlocked: true,
+                text: "……",
+				unlocks: {
+                    items: [
+						{ item_name: "强体丹配方", count: 1 },
+						{ item_name: "大力参", count: 3 },
+						{ item_name: "虎骨藤", count: 3 },
+						{ item_name: "铁线草", count: 3 },
+					],
+                },
+				locks_lines: ["拿起丹方"],
+            }),
+        }
+    });
+
+	dialogues["结束一级考核"] = new Dialogue({
+        name: "结束一级考核",
+		textlines: {
+			"结束一级考核": new Textline({
+                name: "结束一级考核",
+				is_unlocked: true,
+                text: "阅读丹方，炼制一枚强体丹即可通过",
+				unlocks: {
+					spec: "end1",	
+                },
+            }),
+        }
+    });
+
+	dialogues["与赵主任对话"] = new Dialogue({
+        name: "与赵主任对话",
+		textlines: {
+			"欢迎": new Textline({
+                name: "欢迎",
+                text: "到了，这就是战斗学院了<br>"+
+				"我已经和导师们都打过招呼了，需要锻炼或者学习直接去对应部门就行<br>"+
+				"无需任何费用，如果想去主城的话去飞舟点乘坐飞舟就好了，费用算我头上<br>"+
+				"这瓶聚气丹你先拿着，应该能助你快速突破<br>"+
+				"贡献点我现在就去申请，过几天就会送到你手上<br>"+
+				"武器你可以考虑下擅长用啥，不急<br>"+
+				"你可以先拿着这张地图去学院转转<br>"+
+				"见到导师的时候告诉他们你是我赵主任特招的新生，说不定会得到一些见面礼<br>",
+				unlocks: {
+					 items: [
+						{ item_name: "战斗学院地图", count: 1 },
+						{ item_name: "聚气丹", count: 10 },
+					],
+                },
+				locks_lines: ["欢迎"],
+            }),
         }
     });
 	

@@ -74,21 +74,41 @@ class ItemRecipe extends Recipe {
         return 0.85**level_d;
         }
 
-    get_availability() {
-        for(let i = 0; i < this.materials.length; i++) {
-            if(item_templates[this.materials[i].material_id] != undefined){
-                const key = item_templates[this.materials[i].material_id].getInventoryKey();
-                if(!character.inventory[key] || character.inventory[key].count < this.materials[i].count) {
-                    return false;
-                }
-            }
-            else{
-                
-                throw new Error(`物品 ${this.materials[i].material_id} 不存在!`);
-            }
-        }
-        return true;
-    }
+		get_availability() {
+			for(let i = 0; i < this.materials.length; i++) {
+				const material = this.materials[i];
+
+				if(!material) {
+					console.error(
+						`[Recipe] Invalid material entry in "${this.id}"`,
+						{
+							recipe: this,
+							material_index: i
+						}
+					);
+					return false;
+				}
+
+				const item_template = item_templates[material.material_id];
+
+				if(item_template != undefined) {
+					const key = item_template.getInventoryKey();
+
+					if(
+						!character.inventory[key] ||
+						character.inventory[key].count < material.count
+					) {
+						return false;
+					}
+				} else {
+					throw new Error(
+						`配方 "${this.id}" 中的物品 ${material.material_id} 不存在!`
+					);
+				}
+			}
+
+			return true;
+		}
 
     get_is_any_material_present() {
         for(let i = 0; i < this.materials.length; i++) {
@@ -1742,6 +1762,17 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         recipe_level: [4,10],
         recipe_skill: "Alchemy",
     });
+	
+    alchemy_recipes.items["强体丹"] = new ItemRecipe({
+        name: "强体丹",
+        recipe_type: "material",
+        materials: [{material_id: "大力参", count: 1},{material_id: "虎骨藤", count: 1},{material_id: "铁线草", count: 1}], 
+        result: {result_id: "强体丹", count: 1},
+        success_chance: [0.5,1],
+        recipe_level: [5,9],
+        recipe_skill: "Alchemy",
+		is_unlocked: false, // ★ 新增这一行
+    }); 	
 	
 /*    alchemy_recipes.items["粘合织料"] = new ItemRecipe({
         name: "粘合织料",

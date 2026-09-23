@@ -101,8 +101,26 @@ class Trader extends InventoryHaver {
         }
         let object_mul = 1;//局部乘数
         for (let i = 0; i < inventory_template.length; i++) {
-            if (inventory_template[i].chance >= Math.random()) {
-                object_mul = 1;
+			
+			const trade_entry = inventory_template[i];
+            
+			if (inventory_template[i].chance >= Math.random()) {
+				
+				const item_template = item_templates[trade_entry.item_name];
+				if (!item_template) {
+					console.error(
+						`[Trader] Missing item template:`,
+						{
+							trader: this.name,
+							inventory_template: this.inventory_template,
+							index: i,
+							item_name: trade_entry.item_name
+						}
+					);
+					continue;
+				}
+		
+				object_mul = 1;
                 if(inventory_template[i].influ.min >= 5){
                     if(family_data.influ >= inventory_template[i].influ.min){
                         object_mul *= Math.min(inventory_template[i].influ.cap,(family_data.influ / inventory_template[i].influ.min) ** inventory_template[i].influ.exp);//影响力充足，计算倍数
@@ -117,16 +135,43 @@ class Trader extends InventoryHaver {
                 item_count *= object_mul;
                 item_count = Math.ceil(item_count);
 
-                if(inventory_template[i].quality[0] >= 10) {
-                    let quality = Math.round(Math.random() *
-                        (inventory_template[i].quality[1] - inventory_template[i].quality[0]) + inventory_template[i].quality[0] + quality_fix);
+				let item;
 
-                    const item = getItem({...item_templates[inventory_template[i].item_name], quality});
-                    inventory[item.getInventoryKey()] = { item: item, count: item_count_q };
-                } else {
-                    inventory[item_templates[inventory_template[i].item_name].getInventoryKey()] = { item: getItem(item_templates[inventory_template[i].item_name]), count: item_count };
+				if (trade_entry.quality[0] >= 10) {
+					const quality = Math.round(
+						Math.random() *
+						(trade_entry.quality[1] - trade_entry.quality[0]) +
+						trade_entry.quality[0] +
+						quality_fix
+					);
 
-                }
+					item = getItem({
+						...item_template,
+						quality
+					});
+				} else {
+					item = getItem(item_template);
+				}
+
+				if (!item || typeof item.getInventoryKey !== "function") {
+					console.error(
+						`[Trader] Failed to create item:`,
+						{
+							trader: this.name,
+							inventory_template: this.inventory_template,
+							item_name: trade_entry.item_name,
+							item_template
+						}
+					);
+					continue;
+				}
+
+				inventory[item.getInventoryKey()] = {
+					item,
+					count: trade_entry.quality[0] >= 10
+						? item_count_q
+						: item_count
+				};
             }
 
 
@@ -226,7 +271,15 @@ class TradeItem {
         profit_margin: 3,
         act:1,
     });	
-	
+
+    traders["炼丹师小铺"] = new Trader({
+        name: "炼丹师小铺",
+        inventory_template: "Alchemy I",
+        is_unlocked: true,
+        location_name: "主城",
+        profit_margin: 2.8,
+        act:1,
+    });		
 	//以下商人未使用--------------------------
 	
     traders["village trader"] = new Trader({
@@ -524,6 +577,7 @@ class TradeItem {
     [
             new TradeItem({item_name: "丹道入门", count: [1,1]}),
             new TradeItem({item_name: "灵草百科", count: [1,1]}),
+			new TradeItem({item_name: "融血秘法", count: [1,1]}),
     ];
 	//精灵商会
     inventory_templates["Elf I"] = 
@@ -545,7 +599,19 @@ class TradeItem {
 			new TradeItem({item_name: "噬芒兰种子", count: [500,500]}),
             new TradeItem({item_name: "止血丹", count: [999,999]}),
 			new TradeItem({item_name: "强体丹", count: [999,999]}),
+			new TradeItem({item_name: "主城地图", count: [1,1]}),
     ];
+	//炼丹师小铺
+    inventory_templates["Alchemy I"] = 
+    [
+            new TradeItem({item_name: "虎骨藤种子", count: [200,999]}),
+			new TradeItem({item_name: "大力参种子", count: [200,999]}),
+			new TradeItem({item_name: "铁线草种子", count: [200,999]}),
+			new TradeItem({item_name: "虎骨藤", count: [80,200]}),
+			new TradeItem({item_name: "大力参", count: [80,100]}),
+			new TradeItem({item_name: "铁线草", count: [80,200]}),
+    ];	
+	
 			
     inventory_templates["Terra Palace"] = 
     [
@@ -802,6 +868,27 @@ class TradeItem {
     [
     ];
 
-
 })();
+
+function validateTraderInventoryTemplates() {
+    Object.entries(inventory_templates).forEach(([template_name, entries]) => {
+        entries.forEach((entry, index) => {
+            if (!item_templates[entry.item_name]) {
+                console.error(
+                    `[Trader template error] "${entry.item_name}" does not exist`,
+                    {
+                        inventory_template: template_name,
+                        index,
+                        item_name: entry.item_name
+                    }
+                );
+            }
+        });
+    });
+}
+
+window.addEventListener("load", () => {
+    validateTraderInventoryTemplates();
+}, { once: true });
+
 export {traders};

@@ -269,19 +269,19 @@ character.add_xp = function ({xp_to_add, use_bonus = true},ignore_cap) {
                         }
                         else character.upgrade_effects(10);
                 }
-                if(character.xp.current_level == 18){
+                if(character.xp.current_level == 19){
                         //character.xp.total_xp -= character.xp.current_xp - 99999999 ;
                         if(ignore_cap <= 1){
                                 character.xp.current_xp = 9999.9999e8;
                                 return `<b>被<span class="realm_sky">天空级瓶颈</span>限制 - 经验已锁定</b>`
                         }
-                        else character.upgrade_effects(19);
+                        else character.upgrade_effects(20);
                 }
                 if(character.xp.current_level == 28){
                         //character.xp.total_xp -= character.xp.current_xp - 99999999 ;
                         if(ignore_cap <= 2){
-                                character.xp.current_xp = 99.9999e16;
-                                return `<b>被<span class="realm_cloudy">云霄级瓶颈</span>限制 - 经验已锁定</b>`
+							character.xp.current_xp = 21.5999e16;   // [29][4] 稍微减一点
+							return `<b>被<span class="realm_cloudy">云霄级瓶颈</span>限制 - 经验已锁定</b>`
                         }
                         else character.upgrade_effects(29);
                 }
@@ -316,7 +316,7 @@ character.add_xp = function ({xp_to_add, use_bonus = true},ignore_cap) {
                 gains += `防御,敏捷提高了${format_number(this_realm[2])}<br>`;
                 gains += `生命上限提高了${format_number(this_realm[3])}<br>`;
                 if(realm_spd_gain != 0) gains += `小阶段突破，攻击速度额外增加${realm_spd_gain}<br>`;
-                if(this_realm[0]==11)
+                if(this_realm[0]==10)
                 {
                         //add_to_character_inventory([{item: item_templates["微火"], count: 1}]);
                         gains += `大境界突破，获取特殊能力<span style="color:#ff8080">【微火】</span>！<br>`;
@@ -330,10 +330,10 @@ character.add_xp = function ({xp_to_add, use_bonus = true},ignore_cap) {
                         character.stats.flat.level.attack_mul = ( character.stats.flat.level.attack_mul || 0) + A_mul_gain;
                         gains += `<span style="color:#66ccff">普攻倍率</span>增加了${A_mul_gain.toFixed(2)}<br>`;
                 }
-                if(this_realm[0]==19)
+                if(this_realm[0]==20)
                 {
                         //add_to_character_inventory([{item: item_templates["微火"], count: 1}]);
-                        if(skills["Neko_Realm"].current_level <= 19){
+                        if(skills["Neko_Realm"].current_level <= 20){
                                 gains += `大境界突破，【燃灼术】获取了9999兆经验！<br>`;
                         }
                         else{

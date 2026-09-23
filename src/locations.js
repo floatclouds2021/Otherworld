@@ -981,7 +981,7 @@ function get_location_type_penalty(type, stage, stat) {
         connected_locations: [], 
         description: "繁荣的主城，偶尔还能在此看到一些别的种族",  
         bgm: 3,
-        dialogues: ["公告栏","主城驿站"],
+        dialogues: ["公告栏","主城驿站","主城飞舟点"],
         traders: ["精灵商会","万药阁"],
         is_unlocked: false,
         name: "主城", 
@@ -994,6 +994,30 @@ function get_location_type_penalty(type, stage, stat) {
         is_unlocked: false,
         name: "中心广场", 
     });//1-3-1
+	locations["丹盟"] = new Location({ 
+        connected_locations: [{location: locations["主城"], custom_text: "去其他地方看看"}], 
+        description: "炼丹师们的聚集地，可以参加炼丹师考核，也可在此购买一些不常见的药材",  
+        bgm: 3,
+        dialogues: ["与接待员对话","与林大师对话"],
+		traders: ["炼丹师小铺"],
+        is_unlocked: false,
+        name: "丹盟", 
+    });//1-3-3		一级炼丹考核
+	locations["一级炼丹考核"] = new Location({ 
+        connected_locations: [{location: locations["丹盟"], custom_text: "离开考场"}], 
+        description: "炼丹师考核点",  
+        bgm: 3,
+        dialogues: ["拿起丹方","结束一级考核"],
+		crafting: {
+           is_unlocked: true, 
+            use_text: "考核用炼丹炉", 
+            tiers: {
+                alchemy: 2,
+            }
+		},
+        is_unlocked: false,
+        name: "一级炼丹考核", 
+    });//1-3-3	
     locations["城外墓园"] = new Location({ 
         bgm: 1,
         connected_locations: [{location: locations["主城"], custom_text: "回到主城"}], 
@@ -1004,19 +1028,111 @@ function get_location_type_penalty(type, stage, stat) {
 	locations["战斗学院"] = new Location({ 
 		connected_locations: [],
         description: "你看到这里分了好多个部门，不同部门各司其职",  
+		dialogues: ["与赵主任对话","学院飞舟点"],
         bgm: 4,
         is_unlocked: false,
         name: "战斗学院", 
     });//1-3-3
-    // locations["战斗学院"].connected_locations.push({location: locations["阵法楼"]});
-    // locations["战斗学院"].connected_locations.push({location: locations["符篆楼"]});	
-    // locations["战斗学院"].connected_locations.push({location: locations["炼丹楼"]});	
-    // locations["战斗学院"].connected_locations.push({location: locations["炼器楼"]});	
-    // locations["战斗学院"].connected_locations.push({location: locations["盾部"]});
-    // locations["战斗学院"].connected_locations.push({location: locations["影部"]});	
-    // locations["战斗学院"].connected_locations.push({location: locations["战斗组"]});	
-    // locations["战斗学院"].connected_locations.push({location: locations["图书馆"]});	
-	// locations["战斗学院"].connected_locations.push({location: locations["任务阁"]});
+	locations["主城"].connected_locations.push({location: locations["丹盟"]});
+	locations["丹盟"].connected_locations.push({location: locations["一级炼丹考核"]});
+
+    locations["阵法楼"] = new Location({
+        connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
+        description: "阵法楼",
+        name: "阵法楼",
+        is_unlocked: false,
+        bgm: 1,
+    })
+    locations["符篆楼"] = new Location({
+        connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
+        description: "符篆楼",
+        name: "符篆楼",
+        is_unlocked: false,
+        bgm: 1,
+    })
+    locations["炼丹楼"] = new Location({
+        connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
+        description: "炼丹楼",
+        name: "炼丹楼",
+        is_unlocked: false,
+        bgm: 1,
+    })
+    locations["炼器楼"] = new Location({
+        connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
+        description: "炼器楼",
+        name: "炼器楼",
+        is_unlocked: false,
+        bgm: 1,
+    })
+    locations["盾部"] = new Location({
+        connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
+        description: "盾部",
+        name: "盾部",
+        is_unlocked: false,
+        bgm: 1,
+    })
+    locations["影部"] = new Location({
+        connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
+        description: "影部",
+        name: "影部",
+        is_unlocked: false,
+        bgm: 1,
+    })
+    locations["图书馆"] = new Location({
+        connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
+        description: "图书馆",
+        name: "图书馆",
+        is_unlocked: false,
+        bgm: 1,
+    })
+    locations["任务阁"] = new Location({
+        connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
+        description: "任务阁",
+        name: "任务阁",
+        is_unlocked: false,
+        bgm: 1,
+    })
+    locations["你的住宅"] = new Location({
+        connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
+        description: "你的住宅",
+        name: "你的住宅",
+        is_unlocked: false,
+        bgm: 1,
+        sleeping: {
+            text: "睡一会",
+            xp: 32},
+		crafting: {
+			is_unlocked: true, 
+            use_text: "使用工作台[Tier+3]", 
+			tiers: {
+				crafting: 3,
+				forging: 3,
+				smelting: 3,
+				cooking: 3,
+				alchemy: 3,
+			}
+		},
+    })	
+
+    locations["空间锚点"] = new Location({
+		connected_locations: [],
+        description: "空间锚点",
+        name: "空间锚点",
+        is_unlocked: false,
+        bgm: 1,
+    })
+
+    locations["战斗学院"].connected_locations.push({location: locations["阵法楼"]});
+    locations["战斗学院"].connected_locations.push({location: locations["符篆楼"]});	
+    locations["战斗学院"].connected_locations.push({location: locations["炼丹楼"]});	
+    locations["战斗学院"].connected_locations.push({location: locations["炼器楼"]});	
+    locations["战斗学院"].connected_locations.push({location: locations["盾部"]});
+    locations["战斗学院"].connected_locations.push({location: locations["影部"]});	
+    locations["战斗学院"].connected_locations.push({location: locations["战斗组"]});	
+    locations["战斗学院"].connected_locations.push({location: locations["图书馆"]});	
+	locations["战斗学院"].connected_locations.push({location: locations["任务阁"]});
+	locations["战斗学院"].connected_locations.push({location: locations["你的住宅"]});	
+
 	
 /*     locations["练兵场深处"] = new Location({ 
         connected_locations: [{location: locations["未知平原"], custom_text: "返回大厅"}], 
@@ -1138,7 +1254,7 @@ function get_location_type_penalty(type, stage, stat) {
     });
     locations["训练场 - EX"] = new Combat_zone({
         description: "纯靶子，测试各项技能用",  //MT1
-        enemy_count: 5, 
+        enemy_count: 1, 
         enemies_list: ["训练假人EX"],
         types: [],
         enemy_stat_variation: 0.1,
@@ -1156,7 +1272,7 @@ function get_location_type_penalty(type, stage, stat) {
     });
     locations["训练场 - EX2"] = new Combat_zone({
         description: "纯靶子，测试各项技能用",  //MT1
-        enemy_count: 5, 
+        enemy_count: 1, 
         enemies_list: ["训练假人EX"],
         types: [],
         enemy_stat_variation: 0.1,
@@ -5480,6 +5596,27 @@ locations["城外墓园 - 1"] = new Combat_zone({
 /* 
 */
 
+
+	locations["空间锚点"].connected_locations.push({location: locations["未知平原"]});	
+	locations["空间锚点"].connected_locations.push({location: locations["乡村小镇"]});		
+	locations["空间锚点"].connected_locations.push({location: locations["主城"]});	
+	locations["空间锚点"].connected_locations.push({location: locations["城外墓园"]});	
+	locations["空间锚点"].connected_locations.push({location: locations["战斗学院"]});	
+	locations["空间锚点"].connected_locations.push({location: locations["系统空间2"]});	
+
+	// —— 特定地点 → 空间锚点 ——
+	[
+		"未知平原", "乡村小镇", "战斗学院", "主城",
+		"城外墓园", "系统空间2",
+	].forEach(name => {
+		if(locations[name]) {
+			locations[name].connected_locations.push({
+				location: locations["空间锚点"],
+				custom_text: "使用【空间锚点】传送",
+			});
+		}
+	});
+
     locations["Nearby cave"] = new Location({ 
         connected_locations: [{location: locations["Village"], custom_text: "Go outside and to the village"}], 
         getDescription: function() {
@@ -6033,6 +6170,23 @@ locations["城外墓园 - 1"] = new Combat_zone({
             skill_xp_per_tick: 32,
             is_unlocked: true,
         }),
+    }
+
+    locations["盾部"].activities = {
+        "Swimming": new LocationActivity({
+            activity_name: "Swimming",
+            infinite: true,
+            starting_text: "去后山瀑布中逆流而上",
+            skill_xp_per_tick: 10,
+            is_unlocked: true,
+        }),
+        "Running": new LocationActivity({
+            activity_name: "Running",
+            infinite: true,
+            starting_text: "在训练场中跑圈",
+            skill_xp_per_tick: 10,
+            is_unlocked: true,
+        }),		
     }
     
     locations["燕岗矿井"].activities = {

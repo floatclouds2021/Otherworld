@@ -63,6 +63,7 @@ import { end_activity_animation,
          clear_levelary_tooltip,
          update_displayed_family,
          update_displayed_family_members,
+		 unlock_displayed_crafting_recipe,   // ★ 加这一行（注意末尾逗号）
         } from "./display.js";
 import { compare_game_version, get_hit_chance } from "./misc.js";
 import { stances } from "./combat_stances.js";
@@ -275,6 +276,13 @@ time_field.innerHTML = current_game_time.toString();
     });
 })();
 
+/**
+ * 检查当前武器是否带有某个战斗词条（把词条的 name 当作效果名用）
+ */
+function heroHasTrait(traitName) {
+    const w = character.equipment.weapon;
+    return w?.traits?.some(t => t.name === traitName) ?? false;
+}
 
 function option_bed_return(option) {
     const checkbox = document.getElementById("options_bed_return");
@@ -803,15 +811,89 @@ function end_reading() {
     update_displayed_book(book_id);
 }
 
+/**
+ * 处理书籍阅读完成后的解锁奖励
+ * @param {String} book_id 书籍的 id
+ */
+function apply_book_unlocks(book_id) {
+    const unlocks = book_stats[book_id]?.unlocks;
+    if(!unlocks) return;
+
+    // 1. 解锁配方
+	if(unlocks.recipes && unlocks.recipes.length > 0) {
+		Object.keys(recipes).forEach(category => {
+			Object.keys(recipes[category]).forEach(subcategory => {
+				Object.keys(recipes[category][subcategory]).forEach(recipe_id => {
+					const recipe = recipes[category][subcategory][recipe_id];
+					// 按 id 或 name 匹配
+					if(unlocks.recipes.includes(recipe_id) || unlocks.recipes.includes(recipe.name)) {
+						if(!recipe.is_unlocked) {
+							unlock_displayed_crafting_recipe({category, subcategory, recipe_id});
+							log_message(`通过阅读解锁新配方: ${recipe.name}`, "activity_unlocked");
+						}
+					}
+				});
+			});
+		});
+	}
+
+    // 2. 解锁地点
+    if(unlocks.locations && unlocks.locations.length > 0) {
+        unlocks.locations.forEach(loc_id => {
+            if(locations[loc_id]) {
+                unlock_location(locations[loc_id]);
+            } else {
+                console.warn(`书籍解锁地点失败：找不到地点 "${loc_id}"`);
+            }
+        });
+    }
+
+    // 3. 解锁对话
+    if(unlocks.dialogues && unlocks.dialogues.length > 0) {
+        unlocks.dialogues.forEach(dial_id => {
+            if(dialogues[dial_id]) {
+                dialogues[dial_id].is_unlocked = true;
+                log_message(`解锁新对话: ${dialogues[dial_id].name}`, "activity_unlocked");
+            }
+        });
+    }
+
+    // 4. 解锁商人
+    if(unlocks.traders && unlocks.traders.length > 0) {
+        unlocks.traders.forEach(trader_id => {
+            if(traders[trader_id]) {
+                traders[trader_id].is_unlocked = true;
+                log_message(`解锁新商人: ${traders[trader_id].name}`, "activity_unlocked");
+            }
+        });
+    }
+
+    // 5. 解锁姿态（秘法）
+    if(unlocks.stances && unlocks.stances.length > 0) {
+        unlocks.stances.forEach(stance_id => {
+            unlock_combat_stance(stance_id); // 这个函数在 main.js 里已经有定义
+        });
+    }
+}
+
 function do_reading() {
     item_templates[is_reading].addProgress();
-
     update_displayed_book(is_reading);
-
     add_xp_to_skill({skill: skills["Literacy"], xp_to_add: book_stats.literacy_xp_rate});
+    
     if(book_stats[is_reading].is_finished) {
         log_message(`Finished the book "${is_reading}"`);
+        
+        // ★ 先结束阅读，再执行解锁逻辑（反过来也不会卡了）
+        const finished_book = is_reading;
         end_reading();
+        
+        try {
+            apply_book_unlocks(finished_book);
+        } catch(error) {
+            console.error("apply_book_unlocks 出错：", error);
+        }
+        
         update_character_stats();
     }
 }
@@ -1028,7 +1110,32 @@ function textline_special(t_key){
 			}
 			displayed_text += `${window.REALMS[character.xp.current_level][1]}.<br>`;
 		}
-		
+        else if(t_key == "end1"){
+			let h_cnt = 0;
+            if(character.inventory["{\"id\":\""+"一级炼丹师徽章"+"\"}"] != undefined){
+                h_cnt = character.inventory["{\"id\":\""+"一级炼丹师徽章"+"\"}"].count;
+            }
+			if(h_cnt >= 1){
+				displayed_text += `都有一级炼丹师徽章了就不用来参加一级考核了吧……<br>`;
+			}else{			
+				let S_cnt = 0;
+				if(character.inventory["{\"id\":\""+"强体丹"+"\"}"] != undefined){
+					S_cnt = character.inventory["{\"id\":\""+"强体丹"+"\"}"].count;
+				}
+				if(S_cnt >= 1){
+					remove_from_character_inventory([{ 
+						item_key: ("{\"id\":\""+"强体丹"+"\"}"),           
+						item_count: 1,
+					}]);
+					displayed_text += `考核通过，可以离开考场了<br>`;
+					displayed_text += `林大师：我就知道你能过的，恭喜小友成为一级炼丹师<br>`;
+					displayed_text += `这是获得一级炼丹师徽章，希望小友再接再厉<br>`;
+					add_to_character_inventory([{ "item": getItem(item_templates["一级炼丹师徽章"]), "count": 1}]);
+					locations["一级炼丹考核"].is_unlocked = false;
+					locations["一级炼丹考核"].is_finished = true;
+				}
+			}
+        }		
         else if(t_key == "A8-killcount"){
             let killcount = get_enemy_killcount();
             displayed_text += `目前为止，${character.name} <br>已经制造了 ${killcount} 份杀戮。<br><br>`;
@@ -1246,7 +1353,32 @@ function textline_special(t_key){
                 }
             }
         }
-		
+		else if(t_key == 'college'){
+			locations["战斗学院"].is_unlocked = true;
+			// 用 setTimeout 延迟到当前 start_textline 调用栈结束（
+			// 也就是 start_dialogue + update_displayed_textline_answer 跑完）
+			// 之后再显示旅行进度条，否则会被对话 UI 覆盖
+			setTimeout(() => {
+				start_traveling({
+					destination: "战斗学院",
+					duration: 40,      // ← 想要不同地方不同时长，改这里就行
+					text: "飞舟行驶中...",
+				});
+			}, 0);
+		}
+		else if(t_key == 'collegetomain'){
+			locations["主城"].is_unlocked = true;
+			// 用 setTimeout 延迟到当前 start_textline 调用栈结束（
+			// 也就是 start_dialogue + update_displayed_textline_answer 跑完）
+			// 之后再显示旅行进度条，否则会被对话 UI 覆盖
+			setTimeout(() => {
+				start_traveling({
+					destination: "主城",
+					duration: 40,      // ← 想要不同地方不同时长，改这里就行
+					text: "飞舟行驶中...",
+				});
+			}, 0);
+		}		
 		else if(t_key == 'maincity'){
 			let C_money = 1000;
 			if(character.money < C_money)
@@ -1667,7 +1799,7 @@ function set_new_combat({enemies} = {}) {
         //console.log("标记了第",id,"位敌人")
     }
     clear_all_enemy_attack_loops();
-
+    apply_weapon_spawn_traits();   // ★ 新增，放在这里
     let character_attack_cooldown = 1/(character.stats.full.attack_speed);
     enemy_attack_cooldowns = [...current_enemies.map(x => 1/x.stats.attack_speed)];
 
@@ -1742,6 +1874,13 @@ let cd_needed = [0,0,0,0,0,0,0,0];
 let cur_cd = [0,0,0,0,0,0,0,0];
 function do_enemy_attack_loop(enemy_id, count, E_round = 1,isnew = false) {//E_round:回合数
     count = count || 0;
+	
+	// ★ 新增：current_enemies 已被清空时直接退出
+    if(!current_enemies || !current_enemies[enemy_id]) {
+        clear_enemy_attack_loop(enemy_id);
+        return;
+    }
+	
     if(!current_enemies[enemy_id].is_alive || !current_enemies[enemy_id]){
         clear_enemy_attack_loop(current_enemies[enemy_id]);
         return;
@@ -1819,7 +1958,12 @@ function do_enemy_attack_loop(enemy_id, count, E_round = 1,isnew = false) {//E_r
     let frametime = 25;
     clearTimeout(enemy_attack_loops[enemy_id]);
     enemy_attack_loops[enemy_id] = setTimeout(() => {
-        
+		// ★ 新增同样的判空
+        if(!current_enemies || !current_enemies[enemy_id]) {
+            clear_enemy_attack_loop(enemy_id);
+            return;
+        }
+		
         if(!current_enemies[enemy_id].is_alive || !current_enemies[enemy_id]){
             clear_enemy_attack_loop(current_enemies[enemy_id]);
             return;
@@ -1990,7 +2134,7 @@ function do_character_attack_loop({base_cooldown, actual_cooldown, attack_power,
             for(let i = 0; i < targets.length; i++) {
                 let alive_targets = current_enemies.filter(enemy => enemy.is_alive);
                 let cur_pos = targets[i].pos;//目前攻击判定位
-                if(active_effects["回风 A9"]!=undefined || active_effects["烈日祝福·艮"]!=undefined)
+                if(active_effects["回风 A9"]!=undefined || active_effects["烈日祝福·艮"]!=undefined || heroHasTrait("回风"))
                 {
                     do_character_combat_action({target: targets[i], attack_power}, cur_pos,0.8,"[回风-弱]");
                     alive_targets = current_enemies.filter(enemy => enemy.is_alive);
@@ -2368,6 +2512,7 @@ function get_enemy_realm(enemy){
     let realm_l = enemy.realm[realm_index + 6];//last
     switch (realm_f){
         case "凡": realm_e += 0; break;
+		case "炼": realm_e += 10; break;
         case "万":
             realm_e += 3;
             break;
@@ -2602,8 +2747,32 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
         else {
             critted = false;
         }
-        let proto_d = damage_dealt;
-        damage_dealt = Math.ceil(10*Math.max(damage_dealt - target.stats.defense,0))/10;
+		// ★ 先把防御按破甲调整
+		let effective_defense = target.stats.defense;
+		if(heroHasTrait("破甲")) {
+			effective_defense *= 0.8;
+			Spec_E += "[破甲]";
+		}
+		
+		if(heroHasTrait("衰弱")) {
+			effective_defense *= 0.9;
+			Spec_E += "[衰弱]";
+		}
+		
+		if(active_effects["异界之门 B9"]!=undefined || heroHasTrait("异界之门"))
+		{
+			target.stats.spec_value ||= {};
+			// 用同一个计数器，两个来源共用
+			target.stats.spec_value[-1] ??= 0;                 // 累计"击数"
+			const mult = (target.stats.spec_value[-1] + 1) * 0.1;  // 0.1x, 0.2x, 0.3x...
+			sdmg_mul *= mult;
+			target.stats.spec_value[-1] += 1;
+			Spec_E += "[异界之门]";
+		}
+		
+		// ★ 只减一次防
+		let proto_d = damage_dealt;
+		damage_dealt = Math.ceil(10*Math.max(damage_dealt - effective_defense, 0))/10;
 
         if(active_effects["魔攻 A9"]!=undefined && damage_dealt < proto_d * 0.1)
         {
@@ -2625,16 +2794,7 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
             sdmg_mul *= Math.min(character.stats.full.defense / (target.stats.defense + 0.0001) * 0.8,10);
             Spec_E += "[牵制·祝福]";
         }
-        
-        if(active_effects["异界之门 B9"]!=undefined)
-        {
-            target.stats.spec_value ||= {};
-            
-            target.stats.spec_value[-1] ||= 1;
-            sdmg_mul *= target.stats.spec_value[-1];
-            target.stats.spec_value[-1] += 1;
-            Spec_E += "[异界之门]";
-        }
+		
         if(active_effects["压制 C6"]!=undefined)
         {
             sdmg_mul *= 1.25 * (character.stats.full.defense+character.stats.full.attack_power) / (target.stats.defense+target.stats.attack);
@@ -2673,6 +2833,21 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
         }
         let b_health = target.stats.health;
         target.stats.health -= damage_dealt;
+
+		// ★ 新增：武器词条 - 流血（目标还活着才挂）
+		if(target.stats.health > 0 && target.is_alive) {
+			const weapon = character.equipment.weapon;
+			if(weapon?.hasTrait?.("bleed")) {
+				const bleed = weapon.getTrait("bleed");
+				if(bleed?.params) {
+					target.bleed_effect = {
+						remaining: bleed.params.duration,
+						percent:   bleed.params.percent,
+					};
+				}
+			}
+		}
+		
         let filter = false;
         if(options.option_combat_filter && ((damage_dealt == 0) || (target.stats.health <= 0))) filter = true;
         if(critted) {
@@ -2885,14 +3060,26 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
             add_xp_to_skill({skill: skills['Neko_Realm'], xp_to_add: Realm_XP});//战斗领悟(领域)
             update_neko_realm();
         }
-        if(current_stance == 'SR_Blood'){
-            let extract_blood = skills["ReflectStarSkyRainbow"].current_level * 0.001 + 0.01;//吸血倍率
-            let pre_health = character.stats.full.health
-            character.stats.full.health += damage_dealt * extract_blood;
-            character.stats.full.health = Math.min(character.stats.full.health,character.stats.full.max_health);
+		
+		let extract_blood = 0;
+		let ls_label = "";
+		if(current_stance == 'SR_Blood') {
+			extract_blood = skills["ReflectStarSkyRainbow"].current_level * 0.001 + 0.01;
+			ls_label = `[吸血${(1+skills["ReflectStarSkyRainbow"].current_level*0.1).toFixed(1)}%]`;
+		} else if(heroHasTrait("吸血")) {
+			const ls = character.equipment.weapon.getTrait("吸血");
+			extract_blood = ls?.params?.percent ?? 0.05;
+			ls_label = `[吸血·武器]`;
+		}
 
-            log_message(`${character.name} 恢复了 ${format_number(character.stats.full.health - pre_health)} 点血量[吸血${(1+skills["ReflectStarSkyRainbow"].current_level*0.1).toFixed(1)}%]`, "hero_regened");
-        }
+		if(extract_blood > 0) {
+			let pre_health = character.stats.full.health;
+			character.stats.full.health = Math.min(
+				character.stats.full.health + damage_dealt * extract_blood,
+				character.stats.full.max_health
+			);
+			log_message(`${character.name} 恢复了 ${format_number(character.stats.full.health - pre_health)} 点血量${ls_label}`, "hero_regened");
+		}
 
         if(target.spec.includes(32)){
             let {damage_taken, fainted} = character.take_damage([],{damage_value: damage_dealt*0.2},0);
@@ -3042,6 +3229,18 @@ function add_xp_to_skill({skill, xp_to_add = 1, should_info = true, use_bonus = 
 						log_message("系统词条解锁：灵田", "activity_unlocked");
 					}
 				}
+				if(skill.current_level >= 5) {
+					const line = dialogues["查看系统词条"]?.textlines["空间锚点"];
+					if(line && !line.is_unlocked) {
+						line.is_unlocked = true;
+						log_message("系统词条解锁：空间锚点", "activity_unlocked");
+					}
+					// ★ 新增：真正解锁空间锚点地点
+					if(!locations["空间锚点"].is_unlocked) {
+						locations["空间锚点"].is_unlocked = true;
+						log_message("【空间锚点】已激活！可通过任意特定地点进入。", "location_unlocked");
+					}
+				}
 			}
 
             update_displayed_skill_bar(skill, true);
@@ -3119,6 +3318,64 @@ function add_xp_to_skill({skill, xp_to_add = 1, should_info = true, use_bonus = 
     }
 
     return leveled;
+}
+
+/**
+ * 敌人入场 / 换波时触发的武器词条
+ * 在 set_new_combat 里、cooldown 初始化之前调用
+ */
+function apply_weapon_spawn_traits() {
+    const weapon = character.equipment.weapon;
+    if(!weapon || !weapon.traits || weapon.traits.length === 0) return;
+    if(!current_enemies || current_enemies.length === 0) return;
+
+    // 狩猎
+    if(weapon.hasTrait("hunt")) {
+        const hunt = weapon.getTrait("hunt");
+        if(hunt?.params?.multiplier) {
+            const atk = character.get_attack_power();
+            const rawDmg = atk * hunt.params.multiplier;
+            let anyHit = false;
+            current_enemies.forEach(enemy => {
+                if(!enemy || !enemy.is_alive || !enemy.stats) return;
+                // 保 1 血，避免绕过击杀流程
+                const actual = Math.min(rawDmg, enemy.stats.health - 1);
+                if(actual > 0) {
+                    enemy.stats.health -= actual;
+                    log_message(`${enemy.name} 因【狩猎】受到 ${format_number(actual)} 点伤害`,
+                                "enemy_attacked_critically");
+                    anyHit = true;
+                }
+            });
+            if(anyHit) update_displayed_health_of_enemies();
+        }
+    }
+}
+
+/**
+ * 每秒结算敌人身上的流血 DoT
+ */
+function processBleedEffects() {
+    if(!current_enemies || current_enemies.length === 0) return;
+    let anyChange = false;
+    for(const enemy of current_enemies) {
+        if(!enemy || !enemy.is_alive || !enemy.stats) continue;
+        if(!enemy.bleed_effect) continue;
+        if(enemy.stats.health <= 0) continue;
+
+        const dmg = enemy.stats.max_health * enemy.bleed_effect.percent;
+        // 保 1 血，让玩家补刀
+        enemy.stats.health = Math.max(1, enemy.stats.health - dmg);
+        log_message(`${enemy.name} 因【流血】受到 ${format_number(dmg)} 点伤害`,
+                    "enemy_attacked");
+        anyChange = true;
+
+        enemy.bleed_effect.remaining -= 1;
+        if(enemy.bleed_effect.remaining <= 0) {
+            delete enemy.bleed_effect;
+        }
+    }
+    if(anyChange) update_displayed_health_of_enemies();
 }
 
 /**
@@ -4160,7 +4417,19 @@ function create_save() {
         save_data["enemy_killcount"] = enemy_killcount;
 
         save_data["loot_sold_count"] = loot_sold_count;
-
+		
+		// ★ 新增：保存配方解锁状态
+		save_data["recipe_unlocks"] = {};
+		Object.keys(recipes).forEach(category => {
+			Object.keys(recipes[category]).forEach(subcategory => {
+				Object.keys(recipes[category][subcategory]).forEach(recipe_id => {
+					if(recipes[category][subcategory][recipe_id].is_unlocked) {
+						save_data["recipe_unlocks"][recipe_id] = true;
+					}
+				});
+			});
+		});
+		
         save_data["last_combat_location"] = last_combat_location;
         save_data["last_location_with_bed"] = last_location_with_bed;
 
@@ -4865,11 +5134,19 @@ function load(save_data) {
                 });
                 
             }
-            traders[trader].refresh(); 
-            traders[trader].inventory = {};
-            add_to_trader_inventory(trader, trader_item_list);
+			// Restore trader state
+			traders[trader].inventory = {};
+			traders[trader].last_refresh =
+				save_data.traders[trader].last_refresh ?? -1;
 
-            traders[trader].last_refresh = save_data.traders[trader].last_refresh; 
+			if (save_data.traders[trader].inventory) {
+				// Save contains an actual trader inventory, restore it directly.
+				add_to_trader_inventory(trader, trader_item_list);
+			} else {
+				// Inventory was intentionally not saved because this trader
+				// was due for refresh.
+				traders[trader].refresh();
+			}
         }
         else {
             console.warn(`Trader "${trader} couldn't be found!`);
@@ -4943,7 +5220,24 @@ function load(save_data) {
             create_new_levelary_entry(level_name);
         } 
     });
-    
+
+	// ★ 新增：恢复配方解锁状态
+	if(save_data["recipe_unlocks"]) {
+		Object.keys(save_data["recipe_unlocks"]).forEach(recipe_id => {
+			let found = false;
+			// 遍历寻找对应的配方并解锁
+			Object.keys(recipes).forEach(category => {
+				Object.keys(recipes[category]).forEach(subcategory => {
+					if(recipes[category][subcategory][recipe_id]) {
+						recipes[category][subcategory][recipe_id].is_unlocked = true;
+						found = true;
+					}
+				});
+			});
+		});
+	}
+
+	// 重新渲染配方界面
     create_displayed_crafting_recipes();
     change_location(save_data["current location"]);
 
@@ -5696,6 +5990,9 @@ const FARM_CROPS = [
     { name: "木根须种子", time: 120,  crop: "木根须", count: [2, 3], xp: 20,   unlock_level: 1 },
     { name: "绝音蕨种子", time: 180,  crop: "绝音蕨", count: [1, 2], xp: 150,   unlock_level: 3 },
     { name: "噬芒兰种子", time: 210,  crop: "噬芒兰", count: [1, 1], xp: 160,  unlock_level: 3 },
+    { name: "大力参种子", time: 180,  crop: "大力参", count: [1, 2], xp: 150,   unlock_level: 3 },
+    { name: "虎骨藤种子", time: 210,  crop: "虎骨藤", count: [1, 2], xp: 160,  unlock_level: 3 },
+    { name: "铁线草种子", time: 180,  crop: "铁线草", count: [1, 2], xp: 150,   unlock_level: 3 },
 	{ name: "生命木树种", time: 240, crop: "生命木", count: [1, 3], xp: 600,  unlock_level: 5 },
 	{ name: "常青藤种子", time: 240, crop: "常青藤", count: [1, 3], xp: 600,  unlock_level: 5 },
     // { name: "青花鱼", time: 3600, crop: "青花鱼", count: [1, 1], xp: 2000, unlock_level: 9 },
@@ -6941,6 +7238,7 @@ function update() {
 
         if("parent_location" in current_location){ //if it's a combat_zone
             //nothing here i guess?
+			processBleedEffects();   // ★ 新增
         } else { //everything other than combat
             if(is_sleeping) {
                 do_sleeping();

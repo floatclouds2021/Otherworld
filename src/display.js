@@ -2144,11 +2144,18 @@ function create_displayed_crafting_recipes() {
                 crafting_pages[recipe_category][recipe_subcategory].innerHTML = "";
             }
             Object.keys(recipes[recipe_category][recipe_subcategory]).forEach(recipe => {
-                if(!((recipe == '月轮' ) && (!global_flags["is_moonwheel_unlocked"]))) add_crafting_recipe_to_display({category: recipe_category, subcategory: recipe_subcategory, recipe_id: recipe});
+                // 月轮保持原逻辑
+                if((recipe == '月轮') && !global_flags["is_moonwheel_unlocked"]) {
+                    return;
+                }
+                // ★ 未解锁的配方，不创建 DOM
+                if(!recipes[recipe_category][recipe_subcategory][recipe].is_unlocked) {
+                    return;
+                }
+                add_crafting_recipe_to_display({category: recipe_category, subcategory: recipe_subcategory, recipe_id: recipe});
             });
         });
     });
-
     update_item_recipe_visibility();
 }
 
@@ -2162,6 +2169,31 @@ function unlock_moonwheel() {
     });
     update_item_recipe_visibility();
 }//解锁月轮
+
+/**
+ * 给指定配方解锁并在制作界面显示出来（如果尚未显示）
+ * @param {String} category 
+ * @param {String} subcategory 
+ * @param {String} recipe_id 
+ */
+function unlock_displayed_crafting_recipe({category, subcategory, recipe_id}) {
+    const recipe = recipes[category]?.[subcategory]?.[recipe_id];
+    if(!recipe) return;
+
+    recipe.is_unlocked = true;
+
+    // 已经在 UI 上，就不重复添加
+    const existing = crafting_pages[category]?.[subcategory]?.querySelector(`[data-recipe_id="${recipe_id}"]`);
+    if(existing) {
+        update_displayed_crafting_recipe({category, subcategory, recipe_id});
+        return;
+    }
+
+    // 未显示的话，添加进来
+    add_crafting_recipe_to_display({category, subcategory, recipe_id});
+    update_item_recipe_visibility();
+    update_item_recipe_tooltips();
+}
 
 
 function add_crafting_recipe_to_display({category, subcategory, recipe_id}) {
@@ -2441,14 +2473,78 @@ function create_recipe_tooltip_content({category, subcategory, recipe_id, materi
         const success_chance = Math.round(100*recipe.get_success_chance(station_tier));
         tooltip += `配方等级：${recipe.recipe_level[1]}<br>`
         tooltip += `成功率: <b><span style="color:${success_chance > 74?"lime":success_chance>49?"yellow":success_chance>24?"orange":"red"}">${success_chance}%</span></b><br><br>材料:<br>`;
-        for(let i = 0; i < recipe.materials.length; i++) {
-            const key = item_templates[recipe.materials[i].material_id].getInventoryKey();
-            if(character.inventory[key]?.count >= recipe.materials[i].count) {
-                tooltip += `<span style="color:lime"><b>${item_templates[recipe.materials[i].material_id].getName()} x${character.inventory[key]?.count || 0}/${recipe.materials[i].count}</b></span><br>`;
-            } else {
-                tooltip += `<span style="color:red"><b>${item_templates[recipe.materials[i].material_id].getName()} x${character.inventory[key]?.count || 0}/${recipe.materials[i].count}</b></span><br>`;
-            }
-        }
+		
+		
+		for(let i = 0; i < recipe.materials.length; i++) {
+			const material = recipe.materials[i];
+
+			// 配方材料数组里存在空项 / undefined
+			if(!material) {
+				console.error(
+					"[Crafting recipe error] Invalid material entry:",
+					{
+						category,
+						subcategory,
+						recipe_id,
+						recipe_name: recipe.name,
+						material_index: i,
+						materials: recipe.materials
+					}
+				);
+
+				tooltip += `<span style="color:red"><b>⚠ 配方材料配置错误（位置 ${i}）</b></span><br>`;
+				continue;
+			}
+
+			// material_id 本身没填
+			if(!material.material_id) {
+				console.error(
+					"[Crafting recipe error] Material has no material_id:",
+					{
+						category,
+						subcategory,
+						recipe_id,
+						recipe_name: recipe.name,
+						material_index: i,
+						material
+					}
+				);
+
+				tooltip += `<span style="color:red"><b>⚠ 配方材料 ID 缺失</b></span><br>`;
+				continue;
+			}
+
+			const item_template = item_templates[material.material_id];
+
+			// material_id 有，但是 items.js 没这个物品
+			if(!item_template) {
+				console.error(
+					`[Crafting recipe error] Missing item template "${material.material_id}"`,
+					{
+						category,
+						subcategory,
+						recipe_id,
+						recipe_name: recipe.name,
+						material_index: i,
+						material
+					}
+				);
+
+				tooltip += `<span style="color:red"><b>⚠ 未找到材料：${material.material_id}</b></span><br>`;
+				continue;
+			}
+
+			const key = item_template.getInventoryKey();
+			const owned = character.inventory[key]?.count || 0;
+
+			if(owned >= material.count) {
+				tooltip += `<span style="color:lime"><b>${item_template.getName()} x${owned}/${material.count}</b></span><br>`;
+			} else {
+				tooltip += `<span style="color:red"><b>${item_template.getName()} x${owned}/${material.count}</b></span><br>`;
+			}
+		}
+		
+		
         //console.log(recipe.Q_able);
         if(recipe.Q_able > 0) tooltip += `<br>产物:<br><div class="recipe_result">${create_item_tooltip_content({item: item_templates[recipe.getResult().result_id], options: {quality:recipe.Q_able,skip_quality:false}})}</div>`;
         else tooltip += `<br>产物:<br><div class="recipe_result">${create_item_tooltip_content({item: item_templates[recipe.getResult().result_id], options: {skip_quality: true}})}</div>`;
@@ -4469,4 +4565,5 @@ export {
     update_displayed_family,
     update_displayed_family_members,
     format_numberL,
+	unlock_displayed_crafting_recipe,
 }

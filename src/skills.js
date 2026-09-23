@@ -210,7 +210,7 @@ class Skill {
 						2: "实时翻译",
 						3: "混沌灵根",
 						4: "灵田",
-						// 后续等级的词条继续加在这里
+						5: "空间锚点",
 					};
 					if (systemRewards[this.current_level]) {
 						message += `<br>${systemRewards[this.current_level]}`;
@@ -2343,7 +2343,7 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
     });
     skills["Alchemy"] = new Skill({
         skill_id: "Alchemy", 
-        names: {0: "炼金"}, 
+        names: {0: "炼金", 10: "一级炼丹师",20:"二级炼丹师",30:"三级炼丹师",40:"四级炼丹师",50:"五级炼丹师",60:"六级炼丹师",70:"七级炼丹师",80:"八级炼丹师",90:"九级炼丹师"}, 
         description: "提炼和升华原料中的有效成分",
         category: "Crafting",
         base_xp_cost: 40,

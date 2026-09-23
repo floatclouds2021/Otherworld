@@ -62,6 +62,7 @@ class Enemy {
         this.stats = null;
         this.realm = null;
         this.is_alive = false;
+		this.bleed_effect = null;   // ★ 新增
     }
     get_loot() {
         // goes through items and calculates drops
@@ -269,10 +270,10 @@ class Enemy {
     enemy_templates["训练假人EX"] = new Enemy({
         name: "训练假人EX", 
         description: "超级肉的靶子，如果能打死大概有很多的经验（可以拿来炼皮肤和轮回）", 
-        xp_value: 1, 
+        xp_value: 5000, 
         rank: 1002,
         image: "image/enemy/E001.png",
-        realm: "<span class=realm_basic><b>凡人境一层</b></span>",
+        realm: "<span class=realm_basic><b>炼气境巅峰</b></span>",
         size: "small",
         tags: [],
         stats: {health: 4e8, attack: 5000, agility: 5000, attack_speed: 1, defense: 0}, 

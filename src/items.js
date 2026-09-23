@@ -344,6 +344,9 @@ class WeaponComponent extends ItemComponent {
 
         this.name_prefix = item_data.name_prefix; //to create a name of an item, e.g. "Sharp iron" used to create spear results in "Sharp iron spear"
 
+		// ★ 新增：词条
+        this.traits = item_data.traits || [];
+
         this.tags["weapon component"] = true;
         this.tags["component"] = true;
     }
@@ -873,13 +876,58 @@ class Weapon extends Equippable {
             this.weapon_type = "moonwheel";
             throw new Error(`Combination of elements of types ${item_templates[this.components.handle].component_type} and ${item_templates[this.components.head].component_type} does not exist!`);
         }
-	
+
+		        // ★ 新增：聚合词条（按 name 去重，head 优先）
+        this.traits = [];
+        const headTraits   = item_templates[this.components.head]?.traits   || [];
+        const handleTraits = item_templates[this.components.handle]?.traits || [];
+        const seen = new Set();
+        for(const t of [...headTraits, ...handleTraits]) {
+            if(!t || !t.name || seen.has(t.name)) continue;
+            seen.add(t.name);
+            this.traits.push(t);
+        }
+        // 名字后缀：·狩·血
+        this.trait_suffix = this.traits.length
+            ? "·" + this.traits.map(t => t.suffix || t.displayName[0]).join("·")
+            : "";
+
         this.tags["weapon"] = true;
         this.tags[this.weapon_type] = true;
         if(!this.id) {
             this.id = this.getName();
+			// ★ 把词条描述写进 description 属性，让 tooltip 直接读到
+			if(this.traits.length > 0) {
+				const traitText = this.traits
+					.map(t => `<b>【${t.displayName}】</b>${t.description}`)
+					.join("<br>");
+				const base = item_data.description || "";
+				this.description = base ? base + "<br>" + traitText : traitText;
+			}
         }
     }
+
+    // ★ 新增：外部查询接口
+    hasTrait(name) { return this.traits.some(t => t.name === name); }
+    getTrait(name) { return this.traits.find(t => t.name === name); }
+
+    getName() {
+        let WTM = {"sword":"剑","trident":"匕首","moonwheel":"月轮","bow":"弓","31":"32"};
+        const base = `${item_templates[this.components.head].name_prefix} ${
+            this.weapon_type === "hammer" ? "战锤" : WTM[this.weapon_type]
+        }`;
+        return base + this.trait_suffix;   // ★ 后缀
+    }
+
+/*     // ★ 新增：描述里展示词条
+    getDescription() {
+        const base = this.description || "";
+        if(this.traits.length === 0) return base;
+        const traitText = this.traits
+            .map(t => `<b>【${t.displayName}】</b>${t.description}`)
+            .join("<br>");
+        return base ? base + "<br>" + traitText : traitText;
+    } */
 
     getAttack(quality){
         if(!quality) {
@@ -908,11 +956,6 @@ class Weapon extends Equippable {
         }
         return round_item_price(this.value);
     } 
-
-    getName() {
-        let WTM = {"sword":"剑","trident":"匕首","moonwheel":"月轮","bow":"弓","31":"32"}
-        return `${item_templates[this.components.head].name_prefix} ${this.weapon_type === "hammer" ? "战锤" : WTM[this.weapon_type]}`;
-    }
 }
 
 //////////////////////////////
@@ -925,6 +968,7 @@ class BookData{
         literacy_xp_rate = 1,
         finish_reward = {},
         rewards = {},
+		unlocks = {}, // ★ 新增：解锁配置
     }) {
         this.required_time = required_time;
         this.accumulated_time = 0;
@@ -933,6 +977,8 @@ class BookData{
         this.finish_reward = finish_reward;
         this.is_finished = false;
         this.rewards = rewards;
+		
+		this.unlocks = unlocks;
     }
 }
 
@@ -1045,6 +1091,56 @@ book_stats["灵草百科"] = new BookData({
         }
     },
 });
+book_stats["主城地图"] = new BookData({
+    required_time: 60,
+    literacy_xp_rate: 1,
+    unlocks: {
+        locations: ["丹盟"],        // 解锁地点（需要填入地点名字）
+    }
+});
+book_stats["战斗学院地图"] = new BookData({
+    required_time: 60,
+    literacy_xp_rate: 1,
+    unlocks: {
+        locations: ["阵法楼","符篆楼","炼丹楼","炼器楼","盾部","影部","图书馆","任务阁","你的住宅"],        // 解锁地点（需要填入地点名字）
+    }
+});
+
+book_stats["强体丹配方"] = new BookData({
+    required_time: 30,
+    literacy_xp_rate: 1,
+    unlocks: {
+        recipes: ["强体丹"], // 解锁配方（需要填入配方对应的 id/name）
+    }
+});
+
+book_stats["融血秘法"] = new BookData({
+    required_time: 180,
+    literacy_xp_rate: 5,
+    rewards: {
+        xp_multipliers: {
+            MergeBlood: 1.1,
+        }
+    },
+	unlocks: {
+        stances: ["MB_Power","MB_Speed"],         // 解锁战斗姿态
+    }
+});
+
+/* book_stats["古墓笔记"] = new BookData({
+    required_time: 320,
+    literacy_xp_rate: 2,
+    rewards: {
+        xp_multipliers: { Combat: 1.2 },
+    },
+    unlocks: {
+        recipes: ["熔炼精钢", "地宫合金"], // 解锁配方（需要填入配方对应的 id/name）
+        locations: ["古墓战 - I"],        // 解锁地点（需要填入地点名字）
+        dialogues: ["神秘商人"],           // 解锁对话
+        traders: ["废墟商人"],             // 解锁商人
+        stances: ["SR_Blood"]             // 解锁战斗姿态
+    }
+}); */
 
 book_stats["ABC for kids"] = new BookData({
     required_time: 120,
@@ -1104,6 +1200,30 @@ item_templates["灵草百科"] = new Book({
     name: "灵草百科",
     description: "收录常见灵草用途的书籍。阅读后提升全技能经验获取率。",
     value: 300,
+});
+
+item_templates["主城地图"] = new Book({
+    name: "主城地图",
+    description: "记录主城及周边区域的地图",
+    value: 300, // 按你的经济平衡自行调整
+});
+
+item_templates["战斗学院地图"] = new Book({
+    name: "战斗学院地图",
+    description: "记录战斗学院各部门的位置，特别标注了你的别墅",
+    value: 0, // 按你的经济平衡自行调整
+});
+
+item_templates["强体丹配方"] = new Book({
+    name: "强体丹配方",
+    description: "记录强体丹炼制方法的配方书",
+    value: 0, // 自行调整
+});
+
+item_templates["融血秘法"] = new Book({
+    name: "融血秘法",
+    description: "平行世界的功法之一",
+    value: 9999, // 自行调整
 });
 
 //miscellaneous and loot:
@@ -3085,6 +3205,52 @@ item_templates["灵草百科"] = new Book({
 
 //NekoRPG items below
 //武器部件
+// ========== 词条模板 ==========
+const TRAIT_BLEED = {
+    name: "bleed",
+    displayName: "流血",
+    suffix: "血",
+    description: "命中后每秒令敌人损失其最大生命值 0.2% 的血量，持续 3 秒，重复命中刷新持续时间。",
+    params: { duration: 3, percent: 0.002 }
+};
+
+const TRAIT_HUNT = {
+    name: "hunt",
+    displayName: "狩猎",
+    suffix: "狩",
+    description: "敌人入场时立刻受到玩家攻击力×2 的伤害（不会致死，最低保留 1 血）。",
+    params: { multiplier: 2.0 }
+};
+
+const TRAIT_PORTAL = {
+    name: "异界之门",
+    displayName: "异界",
+    suffix: "界",
+    description: "每次命中同一目标，伤害倍率依次为 1x、2x、3x……（每个目标独立累计）。",
+};
+
+const TRAIT_REWIND = {
+    name: "回风",
+    displayName: "回风",
+    suffix: "风",
+    description: "每次攻击改为 0.8x + 1.2x 两段伤害。",
+};
+
+const TRAIT_LIFESTEAL = {
+    name: "吸血",
+    displayName: "吸血",
+    suffix: "噬",
+    description: "每次造成伤害后，按伤害的 5% 回复生命。",
+	params: { percent: 0.05 }
+};
+
+const TRAIT_ArmorPenetration = {
+    name: "破甲",
+    displayName: "破甲",
+    suffix: "破",
+    description: "攻击时忽略敌方20%护甲",
+};
+
 (function(){
 	item_templates["木弓身"] = new WeaponComponent({
         name: "木弓身", description: "木头做的弓身，估计射不远",
@@ -3105,7 +3271,9 @@ item_templates["灵草百科"] = new Book({
             health_regeneration_flat: {
                 flat: 50.00,
             },
-        }
+        },
+		traits: [TRAIT_HUNT]       // ★
+		//traits: [TRAIT_HUNT,TRAIT_BLEED,TRAIT_ArmorPenetration]
     });
 	item_templates["常青藤弓弦"] = new WeaponComponent({
         name: "常青藤弓弦", description: "常青藤编制的弓弦",
@@ -3116,7 +3284,8 @@ item_templates["灵草百科"] = new Book({
 			agility: {
                 flat:30,
             }
-        }
+        },
+		//traits: [TRAIT_PORTAL,TRAIT_REWIND,TRAIT_LIFESTEAL]       // ★
     });
 	
 	item_templates["稻草弓弦"] = new WeaponComponent({
@@ -3134,6 +3303,7 @@ item_templates["灵草百科"] = new Book({
         component_tier: 0,
         name_prefix: "木",
         attack_value: 2,
+		traits: [TRAIT_BLEED]      // ★
     });
 	
     item_templates["铁剑刃"] = new WeaponComponent({
@@ -5733,6 +5903,16 @@ item_templates["常青藤帽子"] = new Armor({
         material_type: "metal",
         image: "image/item/blomond_ingot.png",
     });
+	
+	
+	item_templates["一级炼丹师徽章"] = new Material({
+        id: "一级炼丹师徽章",
+        name: "一级炼丹师徽章", 
+        description: "一级炼丹师徽章的凭证,二级炼丹师考核的入场券，可不要丢了", 
+        value: 0,
+        material_type: "metal",
+        //image: "image/item/blomond_ingot.png",
+    });
 })();
 //矿石
 (function(){
@@ -6599,18 +6779,6 @@ item_templates["常青藤帽子"] = new Armor({
         value: 20,
         image: "image/item/salix_wood.png",
     });
-    item_templates["灵血草种子"] = new Loot({
-        name: "灵血草种子", 
-        description: "灵血草的种子，可以种在灵田里", 
-        value: 5,
-        //image: "image/item/slient_fern.png",
-    });
-    item_templates["木根须种子"] = new Loot({
-        name: "木根须种子", 
-        description: "木根须的种子，可以种在灵田里", 
-        value: 5,
-        //image: "image/item/salix_wood.png",
-    });
 	item_templates["绝音蕨"] = new OtherItem({
         name: "绝音蕨", 
         description: "高级药材，可用于制作二级以上的丹药，比如破凡丹", 
@@ -6622,6 +6790,37 @@ item_templates["常青藤帽子"] = new Armor({
         description: "它暗到似乎可以吸收周围的光。高级药材，可用于制作二级以上的丹药，比如破凡丹", 
         value: 4500,
         image: "image/item/light_absorb_flower.png",
+    });	
+    item_templates["虎骨藤"] = new Loot({
+        name: "虎骨藤", 
+        description: "强体丹的材料", 
+        value: 80,
+        //image: "image/item/slient_fern.png",
+    });
+    item_templates["大力参"] = new Loot({
+        name: "大力参", 
+        description: "强体丹的材料", 
+        value: 85,
+        //image: "image/item/slient_fern.png",
+    });
+    item_templates["铁线草"] = new Loot({
+        name: "铁线草", 
+        description: "强体丹的材料", 
+        value: 80,
+        //image: "image/item/slient_fern.png",
+    });	
+
+    item_templates["灵血草种子"] = new Loot({
+        name: "灵血草种子", 
+        description: "灵血草的种子，可以种在灵田里", 
+        value: 5,
+        //image: "image/item/slient_fern.png",
+    });
+    item_templates["木根须种子"] = new Loot({
+        name: "木根须种子", 
+        description: "木根须的种子，可以种在灵田里", 
+        value: 5,
+        //image: "image/item/salix_wood.png",
     });	
     item_templates["绝音蕨种子"] = new Loot({
         name: "绝音蕨种子", 
@@ -6635,6 +6834,26 @@ item_templates["常青藤帽子"] = new Armor({
         value: 1800,
         //image: "image/item/salix_wood.png",
     });	
+	
+    item_templates["虎骨藤种子"] = new Loot({
+        name: "虎骨藤种子", 
+        description: "虎骨藤的种子，可以种在灵田里，需要灵田等级3以上", 
+        value: 40,
+        //image: "image/item/slient_fern.png",
+    });
+    item_templates["大力参种子"] = new Loot({
+        name: "大力参种子", 
+        description: "大力参的种子，可以种在灵田里，需要灵田等级3以上", 
+        value: 45,
+        //image: "image/item/slient_fern.png",
+    });
+    item_templates["铁线草种子"] = new Loot({
+        name: "铁线草种子", 
+        description: "铁线草的种子，可以种在灵田里，需要灵田等级3以上", 
+        value: 40,
+        //image: "image/item/slient_fern.png",
+    });		
+	
     item_templates["生命木树种"] = new Loot({
         name: "生命木树种", 
         description: "精灵族世界树的子种，可以种在灵田里，需要灵田等级5以上", 
@@ -6907,14 +7126,22 @@ item_templates["常青藤帽子"] = new Armor({
 	//破凡丹
 	item_templates["破凡丹"] = new  UsableItem({
         name: "破凡丹", 
-        description: "以高级药材配合妖兽内丹炼制而成，增加6000经验值，可用于突破【纳气境】。(Tips:即必须在凡人境巅峰且已有899以上经验时使用才能突破)", 
+        description: "以高级药材配合妖兽内丹炼制而成，增加1e6经验值，可用于突破【纳气境】。(Tips:即必须在凡人境巅峰且已经验满时使用才能突破)", 
         value: 0,
-        E_value: 6000,
+        E_value: 1000000,
         effects:[],
         C_value: 1,
         image: "image/item/A1_break_trance.png",
     });
-	
+	item_templates["聚气丹"] = new  UsableItem({
+        name: "聚气丹", 
+        description: "高级丹药，可快速吸收周围灵气，大幅提高自身的灵气含量,大约3e6经验，一般出自三品炼丹师之手", 
+        value: 0,
+        E_value: 3000000,
+        effects:[],
+        C_value: 0,
+        //image: "image/item/A1_break_trance.png",
+    });	
     item_templates["中等进化结晶"] = new  UsableItem({
         name: "中等进化结晶", 
         description: "稀有且常常破碎的能量晶体，纳可借助狗王之腹方才凝聚成一颗完整的。增加10京经验值，可用于突破【云霄级】。(Tips:即必须在已有90京以上经验时使用才能突破)", 
