@@ -2583,7 +2583,6 @@ function do_enemy_combat_action(enemy_id,spec_hint,E_atk_mul = 1,E_dmg_mul = 1) 
 			handle_enemy_death(attacker, dmg);
 		}
     }
-    return;
 
     if(enemy_crit_chance > Math.random())
     {
@@ -3050,7 +3049,7 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
             satk_mul = character.stats.full.defense / character.stats.full.attack_power;
             Spec_E += "[硬化]";
         }
-        else Spec_E += "[硬化·免疫]"
+        else spec_hint  += "[硬化·免疫]"
     }//硬化
 
     const hero_base_damage = attack_power * satk_mul * c_atk_mul;
@@ -3233,11 +3232,7 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
                 //受击动画
 
         update_displayed_health_of_enemies();
-
-        if(target.stats.health <= 0) {
-            handle_enemy_death(target, damage_dealt);
-        }
-        update_displayed_health_of_enemies();        
+      
 
         //和造成伤害有关的判定区(反伤，吸血，领域)
         if(global_flags.is_realm_enabled)
@@ -3555,17 +3550,16 @@ function processBleedEffects() {
         if(!enemy.bleed_effect) continue;
         if(enemy.stats.health <= 0) continue;
 
-		const dmg = enemy.stats.max_health * enemy.bleed_effect.percent;
-		enemy.stats.health -= dmg; // ★ 取消保1血限制，允许流血击杀
-		log_message(`${enemy.name} 因【流血】受到 ${format_number(dmg)} 点伤害`, "enemy_attacked");
-		anyChange = true;
-
-		if(enemy.stats.health <= 0) {
-			handle_enemy_death(enemy, dmg); // ★ 流血击杀结算
-		}
-        log_message(`${enemy.name} 因【流血】受到 ${format_number(dmg)} 点伤害`,
-                    "enemy_attacked");
+        const dmg = enemy.stats.max_health * enemy.bleed_effect.percent;
+        enemy.stats.health -= dmg; 
+        log_message(`${enemy.name} 因【流血】受到 ${format_number(dmg)} 点伤害`, "enemy_attacked");
         anyChange = true;
+
+        // ★ 修复：如果流血击杀敌人，结算死亡后立即 continue，防止访问已经被 dispose 清空的 bleed_effect
+        if(enemy.stats.health <= 0) {
+            handle_enemy_death(enemy, dmg); 
+            continue; 
+        }
 
         enemy.bleed_effect.remaining -= 1;
         if(enemy.bleed_effect.remaining <= 0) {

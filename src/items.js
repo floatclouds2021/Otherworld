@@ -3437,7 +3437,7 @@ const TRAIT_ArmorPenetration = {
                 flat: 0.1,
             },
         },
-		traits: [TRAIT_ArmorPenetration]      // ★
+		traits: [TRAIT_PORTAL]      // ★
     });	
 	
 	item_templates["晶化暗影匕锋"] = new WeaponComponent({
