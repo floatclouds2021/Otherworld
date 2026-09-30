@@ -5796,6 +5796,7 @@ locations["城外墓园 - 1"] = new Combat_zone({
 	locations["空间锚点"].connected_locations.push({location: locations["战斗学院"]});	
 	locations["空间锚点"].connected_locations.push({location: locations["系统空间2"]});	
 	locations["空间锚点"].connected_locations.push({location: locations["邪恶沼泽"]});	
+	locations["空间锚点"].connected_locations.push({location: locations["矿山"]});	
 
 	// —— 特定地点 → 空间锚点 ——
 	[
