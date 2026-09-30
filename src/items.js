@@ -324,7 +324,7 @@ class WeaponComponent extends ItemComponent {
         && item_data.component_type !== "short blade" && item_data.component_type !== "long blade"
         && item_data.component_type !== "short handle" && item_data.component_type !== "long handle"
         && item_data.component_type !== "bent body" && item_data.component_type !== "bowstring"
-		&& item_data.component_type !== "medium handle" && item_data.component_type !== "triple blade"
+		&& item_data.component_type !== "medium handle" 
         && item_data.component_type !== "wheel core" && item_data.component_type !== "wheel head") {
             throw new Error(`No such weapon component type as ${item_data.component_type}`);
         }
@@ -860,10 +860,6 @@ class Weapon extends Equippable {
         && item_templates[this.components.head].component_type === "long blade") {
             //short handle + long blade = sword
             this.weapon_type = "sword";
-        } else if(item_templates[this.components.handle].component_type === "short handle" 
-        && item_templates[this.components.head].component_type === "triple blade") {
-            //short handle + triple blade = trident
-            this.weapon_type = "trident";
         }else if(item_templates[this.components.handle].component_type === "wheel core" 
         && item_templates[this.components.head].component_type === "wheel head") {
             //wheel core + wheel head = moon wheel
@@ -912,8 +908,8 @@ class Weapon extends Equippable {
     getTrait(name) { return this.traits.find(t => t.name === name); }
 
     getName() {
-        let WTM = {"sword":"剑","trident":"匕首","moonwheel":"月轮","bow":"弓","31":"32"};
-        const base = `${item_templates[this.components.head].name_prefix} ${
+		let WTM = {"sword":"剑","dagger":"匕首","moonwheel":"月轮","bow":"弓"};
+		const base = `${item_templates[this.components.head].name_prefix} ${
             this.weapon_type === "hammer" ? "战锤" : WTM[this.weapon_type]
         }`;
         return base + this.trait_suffix;   // ★ 后缀
@@ -1126,7 +1122,38 @@ book_stats["融血秘法"] = new BookData({
         stances: ["MB_Power","MB_Speed"],         // 解锁战斗姿态
     }
 });
-
+book_stats["影步要诀"] = new BookData({
+    required_time: 300,
+    literacy_xp_rate: 2,
+    unlocks: {
+        flags: ["is_shadow_step_unlocked"],
+    },
+});
+book_stats["集中心法"] = new BookData({
+    required_time: 300,
+    literacy_xp_rate: 2,
+    unlocks: {
+        flags: ["is_bow_focus_unlocked"],
+    },
+});
+book_stats["炼丹手法与技巧说明"] = new BookData({
+    required_time: 180,
+    literacy_xp_rate: 2,
+    rewards: {
+        xp_multipliers: {
+            Alchemy: 1.2,
+        }
+    },
+});
+book_stats["阵法初解"] = new BookData({
+    required_time: 180,
+    literacy_xp_rate: 2,
+    rewards: {
+        xp_multipliers: {
+            Formation: 1.05,
+        }
+    },
+});
 /* book_stats["古墓笔记"] = new BookData({
     required_time: 320,
     literacy_xp_rate: 2,
@@ -1225,7 +1252,27 @@ item_templates["融血秘法"] = new Book({
     description: "平行世界的功法之一",
     value: 9999, // 自行调整
 });
+item_templates["影步要诀"] = new Book({
+    name: "影步要诀",
+    description: "记载着匕首闪避反击技巧的秘籍。阅读后解锁匕首被动【影步】。",
+    value: 50000,
+});
+item_templates["集中心法"] = new Book({
+    name: "集中心法",
+    description: "记载着弓术命中与连续打击心得的秘籍。阅读后解锁弓被动【集中】。",
+    value: 50000,
+});
+item_templates["炼丹手法与技巧说明"] = new Book({
+    name: "炼丹手法与技巧说明",
+    description: "记载着一些炼丹师控火以及成丹的技巧。",
+    value: 20000,
+});
 
+item_templates["阵法初解"] = new Book({
+    name: "阵法初解",
+    description: "记载着一些阵法的功能和布阵方法。",
+    value: 300,
+});
 //miscellaneous and loot:
 (function(){
     item_templates["Rat fang"] = new OtherItem({
@@ -3099,7 +3146,28 @@ item_templates["融血秘法"] = new Book({
             }
         }
     });
-    
+ 
+    item_templates["魔力抵消器"] = new Special({
+        name: "魔力抵消器",
+        id: "魔力抵消器",
+        description: "受到魔攻伤害时，减少当前护甲值25%等值的伤害，可升级", 
+        value: 1e5,
+        stats: {
+            attack_power: {
+                multiplier: 1.01,
+            },
+            defense: {
+                multiplier: 1.01,
+            },
+            agility: {
+                multiplier: 1.01,
+            },
+            max_health: {
+                multiplier: 1.01,
+            }
+        }
+    });
+	
     item_templates["结界湖之心"] = new Special({
         name: "结界湖之心",
         id: "结界湖之心",
@@ -3305,6 +3373,104 @@ const TRAIT_ArmorPenetration = {
         attack_value: 2,
 		traits: [TRAIT_BLEED]      // ★
     });
+
+	item_templates["晶化血腥剑刃"] = new WeaponComponent({
+        name: "晶化血腥剑刃", description: "加了深渊晶体粉末的血腥锭制作的剑刃",
+        component_type: "long blade",
+        value: 900,
+        component_tier: 4,
+        name_prefix: "血腥",
+        attack_value: 230,
+        stats: {
+            crit_rate: {
+                flat: 0.07,
+            },
+            attack_speed: {
+                multiplier: 1.06,
+            }
+        },
+		traits: [TRAIT_LIFESTEAL]      // ★
+    });
+	item_templates["晶化骸骨剑柄"] = new WeaponComponent({
+        name: "晶化骸骨剑柄", description: "加了深渊晶体粉末的骸骨制作的剑柄",
+        component_type: "short handle",
+        value: 700,
+        component_tier: 4,
+		stats: {
+            crit_multiplier: {
+                flat: 0.1,
+            },
+			agility: {
+                flat:20,
+            }
+        },
+		traits: [TRAIT_ArmorPenetration]      // ★
+    });	
+	
+	item_templates["晶化惊魂弓身"] = new WeaponComponent({
+        name: "晶化惊魂弓身", description: "加了深渊晶体粉末的惊魂木制作的弓身",
+        component_type: "bent body",
+        value: 900,
+        component_tier: 4,
+        name_prefix: "惊魂",
+        attack_value: 300,
+        stats: {
+            crit_rate: {
+                flat: 0.07,
+            },
+            attack_speed: {
+                multiplier: 1.06,
+            }
+        },
+		traits: [TRAIT_HUNT]      // ★
+    });
+	item_templates["晶化异界滕蔓弓弦"] = new WeaponComponent({
+        name: "晶化异界滕蔓弓弦", description: "加了深渊晶体粉末的异界滕蔓制作的弓弦",
+        component_type: "bowstring",
+        value: 700,
+        component_tier: 4,
+		stats: {
+			agility: {
+                flat:70,
+            },
+            crit_multiplier: {
+                flat: 0.1,
+            },
+        },
+		traits: [TRAIT_ArmorPenetration]      // ★
+    });	
+	
+	item_templates["晶化暗影匕锋"] = new WeaponComponent({
+		name: "晶化暗影匕锋",
+		description: "由暗影钢和深渊晶体粉末打造的短匕刃，轻巧而致命。",
+		component_type: "short blade",   // ★ 匕首必须用 short blade
+		value: 900,
+		component_tier: 4,
+		name_prefix: "影袭",
+		attack_value: 180,               // 100%品质下约等于180攻击
+		stats: {
+			agility: { flat: 80 },
+			attack_speed: { multiplier: 1.12 },
+			crit_multiplier: { flat: 0.25 },
+			crit_rate: { flat: 0.05 },
+		},
+		traits: [TRAIT_REWIND]      // ★		
+	});
+
+	item_templates["晶化龙骨短柄"] = new WeaponComponent({
+		name: "晶化龙骨短柄",
+		description: "由龙骨和深渊晶体粉末制成的短柄，轻便且导能优秀。",
+		component_type: "short handle",  // ★ 短柄 + 短匕刃 = 匕首
+		value: 700,
+		component_tier: 4,
+		stats: {
+			agility: { flat: 40 },
+			attack_speed: { multiplier: 1.05 },
+			crit_multiplier: { flat: 0.15 },
+		},
+		traits: [TRAIT_BLEED]      // ★				
+	});
+
 	
     item_templates["铁剑刃"] = new WeaponComponent({
         name: "铁剑刃", description: "由铁锭打造出的剑刃，是铁剑的核心部件",
@@ -3312,7 +3478,7 @@ const TRAIT_ArmorPenetration = {
         value: 125,
         component_tier: 0,
         name_prefix: "铁",
-        attack_value: 16,
+        attack_value: 125,
         stats: {
             crit_rate: {
                 flat: 0.05,
@@ -3426,7 +3592,7 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-    item_templates["充能戟头"] = new WeaponComponent({
+/*     item_templates["充能戟头"] = new WeaponComponent({
         name: "充能戟头", description: "充能合金锭制造的三叉戟头。一次可以戳出三个洞，但有些难以拔出来...",
         component_type: "triple blade",
         value: 4.5e7,
@@ -3444,7 +3610,7 @@ const TRAIT_ArmorPenetration = {
                 multiplier: 0.50,
             },
         }
-    });
+    }); */
     
     item_templates["脉冲剑刃"] = new WeaponComponent({
         name: "脉冲剑刃", description: "脉冲合金锭制造的剑刃。剑刃系列后续主要增长暴击和攻速。",
@@ -3462,7 +3628,7 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-    item_templates["脉冲戟头"] = new WeaponComponent({
+/*     item_templates["脉冲戟头"] = new WeaponComponent({
         name: "脉冲戟头", description: "脉冲合金锭制造的三叉戟头。普攻倍率比充能戟头强一线？",
         component_type: "triple blade",
         value: 180e6,
@@ -3480,7 +3646,7 @@ const TRAIT_ArmorPenetration = {
                 multiplier: 0.50,
             },
         }
-    });
+    }); */
     
     item_templates["蓝金剑刃"] = new WeaponComponent({
         name: "蓝金剑刃", description: "蓝金锭制造的剑刃。攻速和爆率又强了一线",
@@ -3498,7 +3664,7 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-    item_templates["蓝金戟头"] = new WeaponComponent({
+/*     item_templates["蓝金戟头"] = new WeaponComponent({
         name: "蓝金戟头", description: "蓝金锭制造的三叉戟头。普攻倍率又强了一线。",
         component_type: "triple blade",
         value: 1440e6,
@@ -3516,7 +3682,7 @@ const TRAIT_ArmorPenetration = {
                 multiplier: 0.50,
             },
         }
-    });
+    }); */
     
     item_templates["海绿剑刃"] = new WeaponComponent({
         name: "海绿剑刃", description: "海绿锭制造的剑刃。",
@@ -3534,7 +3700,7 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-    item_templates["海绿戟头"] = new WeaponComponent({
+/*     item_templates["海绿戟头"] = new WeaponComponent({
         name: "海绿戟头", description: "海绿锭制造的三叉戟头。",
         component_type: "triple blade",
         value: 3600e6,
@@ -3552,7 +3718,7 @@ const TRAIT_ArmorPenetration = {
                 multiplier: 0.50,
             },
         }
-    });
+    }); */
     
     item_templates["红钢剑刃"] = new WeaponComponent({
         name: "红钢剑刃", description: "红钢锭制造的剑刃。",
@@ -3570,7 +3736,7 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-    item_templates["红钢戟头"] = new WeaponComponent({
+/*     item_templates["红钢戟头"] = new WeaponComponent({
         name: "红钢戟头", description: "红钢锭制造的三叉戟头。",
         component_type: "triple blade",
         value: 9600e6,
@@ -3588,7 +3754,7 @@ const TRAIT_ArmorPenetration = {
                 multiplier: 0.50,
             },
         }
-    });
+    }); */
     item_templates["秘银剑刃"] = new WeaponComponent({
         name: "秘银剑刃", description: "秘银锭制造的剑刃。",
         component_type: "long blade",
@@ -3605,7 +3771,7 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-    item_templates["秘银戟头"] = new WeaponComponent({
+/*     item_templates["秘银戟头"] = new WeaponComponent({
         name: "秘银戟头", description: "秘银锭制造的三叉戟头。",
         component_type: "triple blade",
         value: 120e9,
@@ -3623,7 +3789,7 @@ const TRAIT_ArmorPenetration = {
                 multiplier: 0.50,
             },
         }
-    });
+    }); */
     item_templates["旋律剑刃"] = new WeaponComponent({
         name: "旋律剑刃", description: "旋律合金锭制造的剑刃。冷兵器的潜力已经被完全挖掘，它们的额外词条不会继续加强。",
         component_type: "long blade",
@@ -3636,7 +3802,7 @@ const TRAIT_ArmorPenetration = {
             attack_speed: {multiplier: 1.16,},
         }
     });
-    item_templates["旋律戟头"] = new WeaponComponent({
+/*     item_templates["旋律戟头"] = new WeaponComponent({
         name: "旋律戟头", description: "旋律合金锭制造的三叉戟头。冷兵器的潜力已经被完全挖掘，它们的额外词条不会继续加强。",
         component_type: "triple blade",
         value: 1800e9,
@@ -3648,7 +3814,7 @@ const TRAIT_ArmorPenetration = {
             attack_mul: {multiplier: 3.60,},
             attack_speed: {multiplier: 0.50,},
         }
-    });
+    }); */
     
     item_templates["冰髓剑刃"] = new WeaponComponent({
         name: "冰髓剑刃", description: "万载冰髓制造的剑刃。这可是货真价实的【冷】兵器。",
@@ -3662,7 +3828,7 @@ const TRAIT_ArmorPenetration = {
             attack_speed: {multiplier: 1.16,},
         }
     });
-    item_templates["冰髓戟头"] = new WeaponComponent({
+/*     item_templates["冰髓戟头"] = new WeaponComponent({
         name: "冰髓戟头", description: "万载冰髓制造的戟头。这可是货真价实的【冷】兵器。",
         component_type: "triple blade",
         value: 5400e9,
@@ -3674,7 +3840,7 @@ const TRAIT_ArmorPenetration = {
             attack_mul: {multiplier: 3.60,},
             attack_speed: {multiplier: 0.50,},
         }
-    });
+    }); */
     item_templates["晶化剑刃"] = new WeaponComponent({
         name: "晶化剑刃", description: "晶化合金制造的剑刃。是时候该去做月轮了不是吗？",
         component_type: "long blade",
@@ -3687,7 +3853,7 @@ const TRAIT_ArmorPenetration = {
             attack_speed: {multiplier: 1.16,},
         }
     });
-    item_templates["晶化戟头"] = new WeaponComponent({
+/*     item_templates["晶化戟头"] = new WeaponComponent({
         name: "晶化戟头", description: "晶化合金制造的戟头。部件经验和使用的材料量挂钩，我是说，做月轮不亏……",
         component_type: "triple blade",
         value: 18e12,
@@ -3699,7 +3865,7 @@ const TRAIT_ArmorPenetration = {
             attack_mul: {multiplier: 3.60,},
             attack_speed: {multiplier: 0.50,},
         }
-    });
+    }); */
 	
 	item_templates["稻草剑柄"] = new WeaponComponent({
         name: "稻草剑柄", description: "稻草缠绕而成的剑柄",
@@ -4109,6 +4275,26 @@ const TRAIT_ArmorPenetration = {
             handle: "稻草剑柄",
         }
     });
+	item_templates["血腥剑"] = new Weapon({
+        components: {
+            head: "晶化血腥剑刃",
+            handle: "晶化骸骨剑柄",
+        }
+    });	
+	item_templates["惊魂弓"] = new Weapon({
+        components: {
+            head: "晶化惊魂弓身",
+            handle: "晶化异界滕蔓弓弦",
+        }
+    });
+	item_templates["影袭匕首"] = new Weapon({
+        components: {
+            head: "晶化暗影匕锋",
+            handle: "晶化龙骨短柄",
+        }
+    });
+
+	
     item_templates["铁剑"] = new Weapon({
         components: {
             head: "铁剑刃",
@@ -4134,12 +4320,12 @@ const TRAIT_ArmorPenetration = {
             handle: "柳木剑柄",
         }
     });
-    item_templates["充能戟"] = new Weapon({
+/*     item_templates["充能戟"] = new Weapon({
         components: {
             head: "充能戟头",
             handle: "柳木剑柄",
         }
-    });
+    }); */
 
     
     item_templates["海绿剑"] = new Weapon({
@@ -4148,12 +4334,12 @@ const TRAIT_ArmorPenetration = {
             handle: "水晶剑柄",
         }
     });
-    item_templates["海绿戟"] = new Weapon({
+/*     item_templates["海绿戟"] = new Weapon({
         components: {
             head: "海绿戟头",
             handle: "水晶剑柄",
         }
-    });
+    }); */
 
     
     item_templates["红钢剑"] = new Weapon({
@@ -4162,12 +4348,12 @@ const TRAIT_ArmorPenetration = {
             handle: "凝胶剑柄",
         }
     });
-    item_templates["红钢戟"] = new Weapon({
+/*     item_templates["红钢戟"] = new Weapon({
         components: {
             head: "红钢戟头",
             handle: "凝胶剑柄",
         }
-    });
+    }); */
     item_templates["秘银月轮"] = new Weapon({
         components: {
             head: "秘银轮锋",
@@ -4180,24 +4366,24 @@ const TRAIT_ArmorPenetration = {
             handle: "光暗剑柄",
         }
     });
-    item_templates["旋律戟"] = new Weapon({
+/*     item_templates["旋律戟"] = new Weapon({
         components: {
             head: "旋律戟头",
             handle: "光暗剑柄",
         }
-    });
+    }); */
     item_templates["晶化剑"] = new Weapon({
         components: {
             head: "晶化剑刃",
             handle: "光暗剑柄",
         }
     });
-    item_templates["晶化戟"] = new Weapon({
+/*     item_templates["晶化戟"] = new Weapon({
         components: {
             head: "晶化戟头",
             handle: "光暗剑柄",
         }
-    });
+    }); */
     item_templates["晶化月轮"] = new Weapon({
         components: {
             head: "晶化轮锋",
@@ -4895,8 +5081,8 @@ item_templates["常青藤帽子"] = new Armor({
         value: 187,
         component_tier: 0,
         full_armor_name: "铁制头盔",
-        defense_value: 3,
-		set_name: "铁制",   // ★ 加一行
+        defense_value: 30,
+		name_prefix: "铁制",   // ★ 加一行
     });
     item_templates["铁制胸甲"] = new ArmorComponent({
         name: "铁制胸甲",
@@ -4905,8 +5091,8 @@ item_templates["常青藤帽子"] = new Armor({
         value: 250,
         component_tier: 0,
         full_armor_name: "铁制胸甲",
-        defense_value: 5,
-		set_name: "铁制",   // ★ 加一行
+        defense_value: 50,
+		name_prefix: "铁制",   // ★ 加一行
     });
     item_templates["铁制腿甲"] = new ArmorComponent({
         name: "铁制腿甲",
@@ -4915,8 +5101,8 @@ item_templates["常青藤帽子"] = new Armor({
         value: 250,
         component_tier: 0,
         full_armor_name: "铁制腿甲",
-        defense_value: 4,
-		set_name: "铁制",   // ★ 加一行
+        defense_value: 40,
+		name_prefix: "铁制",   // ★ 加一行
     });
     item_templates["铁制战靴"] = new ArmorComponent({
         name: "铁制战靴",
@@ -4925,8 +5111,8 @@ item_templates["常青藤帽子"] = new Armor({
         value: 125,
         component_tier: 0,
         full_armor_name: "铁制战靴",
-        defense_value: 2,
-		set_name: "铁制",   // ★ 加一行
+        defense_value: 30,
+		name_prefix: "铁制",   // ★ 加一行
     });
     item_templates["紫铜头盔"] = new ArmorComponent({
         name: "紫铜头盔",
@@ -5903,8 +6089,22 @@ item_templates["常青藤帽子"] = new Armor({
         material_type: "metal",
         image: "image/item/blomond_ingot.png",
     });
-	
-	
+	item_templates["贡献点"] = new Material({
+        id: "贡献点",
+        name: "贡献点", 
+        description: "战斗学院兑换用单位", 
+        value: 0,
+        material_type: "metal",
+        //image: "image/item/blomond_ingot.png",
+    });		
+	item_templates["战斗学院徽章"] = new Material({
+        id: "战斗学院徽章",
+        name: "战斗学院徽章", 
+        description: "铁质徽章，上面有战斗学院的图标，里面可以储存贡献点", 
+        value: 0,
+        material_type: "metal",
+        //image: "image/item/blomond_ingot.png",
+    });	
 	item_templates["一级炼丹师徽章"] = new Material({
         id: "一级炼丹师徽章",
         name: "一级炼丹师徽章", 
@@ -5913,6 +6113,15 @@ item_templates["常青藤帽子"] = new Armor({
         material_type: "metal",
         //image: "image/item/blomond_ingot.png",
     });
+	item_templates["学院武器兑换券"] = new Material({
+        id: "学院武器兑换券",
+        name: "学院武器兑换券", 
+        description: "可以兑换学院研究的特性武器", 
+        value: 0,
+        material_type: "metal",
+        //image: "image/item/blomond_ingot.png",
+    });	
+	
 })();
 //矿石
 (function(){
@@ -6719,6 +6928,29 @@ item_templates["常青藤帽子"] = new Armor({
         value: 1,
         //image: "image/item/rubber.png",
     });	
+	// 在 items.js 的 //怪物掉落 或相应位置添加
+
+	item_templates["藤蔓"] = new Loot({
+		name: "藤蔓",
+		description: "吸血藤和魔鬼藤掉落的藤蔓，可以作为编织材料。",
+		value: 20,
+		image: "image/item/vine.png", // 假设的图片路径
+	});
+
+	item_templates["灵液"] = new Loot({
+		name: "灵液",
+		description: "沼泽植物凝聚的精华，蕴含生命力。",
+		value: 50,
+		image: "image/item/aura_drop.png", // 复用现有图片
+	});
+
+	item_templates["毒液"] = new Loot({
+		name: "毒液",
+		description: "沼泽生物特有的毒液，可以用于制作毒药。",
+		value: 80,
+		image: "image/item/poison_drop.png",
+	});	
+	
     item_templates["凝胶"] = new Loot({
         name: "凝胶", 
         description: "从死去的史莱姆中发现的凝胶。可以用作缓冲垫，但并不耐用。", 
@@ -6878,6 +7110,12 @@ item_templates["常青藤帽子"] = new Armor({
         value: 400,
         //image: "image/item/salix_wood.png",
     });
+    item_templates["铁矿石"] = new Loot({
+        name: "铁矿石", 
+        description: "矿山出产的铁矿石", 
+        value: 150,
+        image: "image/item/alloy_fragment.png",
+    });	
     //1-2
     item_templates["万物·凶兽肉块"] = new Loot({
         name: "万物·凶兽肉块", 

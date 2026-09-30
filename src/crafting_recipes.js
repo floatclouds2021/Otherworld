@@ -376,7 +376,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         item_type: "Component",
         recipe_skill: "Forging"
     });
-    forging_recipes.components["匕首刃"] = new ComponentRecipe({
+/*     forging_recipes.components["匕首刃"] = new ComponentRecipe({
         name: "匕首刃",
         materials: [
             {material_id: "充能合金锭", count: 6, result_id: "充能戟头"}, 
@@ -392,7 +392,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         ],
         item_type: "Component",
         recipe_skill: "Forging"
-    });
+    }); */
 	
     forging_recipes.components["弓身"] = new ComponentRecipe({
         name: "弓身",
@@ -1229,7 +1229,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
     smelting_recipes.items["熔炼铁锭"] = new ItemRecipe({
         name: "熔炼铁锭",
         recipe_type: "material",
-        materials: [{material_id: "金属残片", count: 3},{material_id: "魔力碎晶", count: 1}], 
+        materials: [{material_id: "铁矿石", count: 3},{material_id: "煤炭", count: 1}], 
         result: {result_id: "铁锭", count: 1},
         success_chance: [0.6,1],
         recipe_level: [0,5],

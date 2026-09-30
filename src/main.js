@@ -64,6 +64,8 @@ import { end_activity_animation,
          update_displayed_family,
          update_displayed_family_members,
 		 unlock_displayed_crafting_recipe,   // ★ 加这一行（注意末尾逗号）
+		 clear_skill_list,
+		 clear_skill_bars,
         } from "./display.js";
 import { compare_game_version, get_hit_chance } from "./misc.js";
 import { stances } from "./combat_stances.js";
@@ -140,8 +142,11 @@ const global_flags = {
     lq_status: 0,//0:离开 1:杀害 2:侵犯
     qz_percent: 0,//牵制-从入门到精通 获取的百分比
 
-    
+	is_shadow_step_unlocked: false,     // 匕首影步
+    is_bow_focus_unlocked: false,       // 弓集中   
 };
+window.global_flags = global_flags; 
+
 const flag_unlock_texts = {
     is_gathering_unlocked: "你获得了收集材料的能力！",
     is_crafting_unlocked: "你获得了合成物品和装备的能力！",
@@ -149,6 +154,9 @@ const flag_unlock_texts = {
     is_evolve_studied: "你掌握了【初等进化结晶】的凝聚方法！",
     is_moonwheel_unlocked: "你掌握了【银霜月轮】的合成方法！",
     is_family_enabled: "【家族系统】已激活！(右下角第三栏)",
+	
+	is_shadow_step_unlocked: "解锁匕首被动【影步】！",
+    is_bow_focus_unlocked: "解锁弓被动【集中】！",
 }
 
 // special stats
@@ -275,6 +283,19 @@ time_field.innerHTML = current_game_time.toString();
         character.xp_bonuses.total_multiplier[skill] = 1;
     });
 })();
+
+//攻速读取
+function get_effective_attack_speed() {
+    let spd = character.stats.full.attack_speed;
+    if(character.runtime_buffs?.bow_focus) {
+        if(Date.now() > character.runtime_buffs.bow_focus.until) {
+            delete character.runtime_buffs.bow_focus;
+        } else {
+            spd *= character.runtime_buffs.bow_focus.mult;
+        }
+    }
+    return spd;
+}
 
 /**
  * 检查当前武器是否带有某个战斗词条（把词条的 name 当作效果名用）
@@ -693,9 +714,9 @@ function start_activity(selected_activity) {
 }
 
 function end_activity() {
-    let ActivityEndMap = {"Running":"跑步","Swimming":"游泳","mining":"挖矿","woodcutting":"砍伐","fishing":"钓鱼","AquaElement":"水元素感应"}
-    log_message(`${character.name} 结束了 ${ActivityEndMap[current_activity.activity_name]}`, "activity_finished");
-    if(current_activity.exp_scaling)
+	let ActivityEndMap = {"Running":"跑步","Swimming":"游泳","mining":"挖矿","woodcutting":"砍伐","fishing":"钓鱼","AquaElement":"水元素感应","Formation":"阵法","Talismans":"画符"};
+	log_message(`${character.name} 结束了 ${ActivityEndMap[current_activity.activity_name] || current_activity.activity_name}`, "activity_finished");
+	if(current_activity.exp_scaling)
     {
         character.C_scaling[current_activity.scaling_id] = current_activity.done_actions;
         log_message(`该行动已进行${current_activity.done_actions}次`, "activity_finished");
@@ -874,6 +895,41 @@ function apply_book_unlocks(book_id) {
             unlock_combat_stance(stance_id); // 这个函数在 main.js 里已经有定义
         });
     }
+	
+    // 6. 解锁标记（新增）
+    if(unlocks.flags && unlocks.flags.length > 0) {
+        unlocks.flags.forEach(flag_id => {
+            if(!global_flags[flag_id]) {
+                global_flags[flag_id] = true;
+                log_message(
+                    flag_unlock_texts[flag_id] || `解锁新被动: ${flag_id}`,
+                    "activity_unlocked"
+                );
+            }
+        });
+    }
+/*     // ★ 刷新所有技能 tooltip（描述里现在会多出一行被动效果）
+    Object.keys(skills).forEach(skill_id => {
+        const skill = skills[skill_id];
+		if(skill.is_unlocked) {
+			update_displayed_skill_description(skill);
+		}
+    }); */	
+	
+	// ★ 强制重建整个技能栏，让所有 tooltip 立即使用最新的 global_flags 重新计算
+	//import { clear_skill_list, clear_skill_bars, create_new_skill_bar, update_displayed_skill_bar } from "./display.js";
+
+	clear_skill_list();     // 清空 skill_list DOM
+	clear_skill_bars();     // 清空 skill_bar_divs 缓存
+
+	Object.keys(skills).forEach(skill_id => {
+		const skill = skills[skill_id];
+		// 只重建已经可见（解锁且越过可见阈值）的技能
+		if(skill.is_unlocked && skill.visibility_treshold <= skill.total_xp) {
+			create_new_skill_bar(skill);
+			update_displayed_skill_bar(skill, false);
+		}
+	});	
 }
 
 function do_reading() {
@@ -1087,6 +1143,9 @@ function textline_special(t_key){
 			add_xp_to_skill({skill: skills["system"], xp_to_add: 50});
             //displayed_text += `<br><br> 获取了9999亿【秘法精通】经验值。`;
         }
+        else if(t_key == "zhenfa"){
+            add_xp_to_skill({skill: skills["Formation"], xp_to_add: 10});
+        }		
         else if(t_key == "Alchemy"){
             add_xp_to_skill({skill: skills["Alchemy"], xp_to_add: 10});
             //displayed_text += `<br><br> 获取了9999亿【秘法精通】经验值。`;
@@ -1134,6 +1193,22 @@ function textline_special(t_key){
 					locations["一级炼丹考核"].is_unlocked = false;
 					locations["一级炼丹考核"].is_finished = true;
 				}
+			}
+        }
+        else if(t_key == "huizhang"){
+			let h_cnt = 0;
+            if(character.inventory["{\"id\":\""+"一级炼丹师徽章"+"\"}"] != undefined){
+                h_cnt = character.inventory["{\"id\":\""+"一级炼丹师徽章"+"\"}"].count;
+            }
+			if(h_cnt >= 1){
+				displayed_text += `咦，你居然有一阶炼丹师徽章<br>`;
+				displayed_text += `看来你已经有一定的炼丹水平了<br>`;
+				displayed_text += `这本书你可以拿去看看<br>`;
+			}else{
+				displayed_text += `不知道你对炼丹有没有兴趣<br>`;
+				displayed_text += `这本书你可以拿去看看，不过建议是先炼丹入门后在看<br>`;
+				displayed_text += `主城有出售止血丹的材料可以拿来练手<br>`;
+				displayed_text += `觉得差不多了也可以去主城丹盟考核下等级，很多地方都能用得到<br>`;
 			}
         }		
         else if(t_key == "A8-killcount"){
@@ -1378,6 +1453,32 @@ function textline_special(t_key){
 					text: "飞舟行驶中...",
 				});
 			}, 0);
+		}	
+		else if(t_key == 'maintokuangshan'){
+			locations["矿山"].is_unlocked = true;
+			// 用 setTimeout 延迟到当前 start_textline 调用栈结束（
+			// 也就是 start_dialogue + update_displayed_textline_answer 跑完）
+			// 之后再显示旅行进度条，否则会被对话 UI 覆盖
+			setTimeout(() => {
+				start_traveling({
+					destination: "矿山",
+					duration: 40,      // ← 想要不同地方不同时长，改这里就行
+					text: "飞舟行驶中...",
+				});
+			}, 0);
+		}
+		else if(t_key == 'maintozhaoze'){
+			locations["邪恶沼泽"].is_unlocked = true;
+			// 用 setTimeout 延迟到当前 start_textline 调用栈结束（
+			// 也就是 start_dialogue + update_displayed_textline_answer 跑完）
+			// 之后再显示旅行进度条，否则会被对话 UI 覆盖
+			setTimeout(() => {
+				start_traveling({
+					destination: "邪恶沼泽",
+					duration: 30,      // ← 想要不同地方不同时长，改这里就行
+					text: "飞舟行驶中...",
+				});
+			}, 0);
 		}		
 		else if(t_key == 'maincity'){
 			let C_money = 1000;
@@ -1427,6 +1528,52 @@ function textline_special(t_key){
 				}, 0);
 			}
 		}
+        else if(t_key.includes("dh")){
+            let T_S = t_key;
+            let pz_map = {"dh-sword":"血腥剑","dh-dagger":"影袭匕首","dh-bow":"惊魂弓"};//凭证
+            let cs_map = {"dh-sword":1,"dh-dagger":1,"dh-bow":1};//cost
+            //检查物品是否足够，扣除物品，如果不够就返回
+            let pz_key = "{\"id\":\""+"学院武器兑换券"+"\"}";//凭证
+            let C_pz = cs_map[T_S];//Cost_凭证
+            if(character.inventory[pz_key] != undefined)
+            {
+                let T_cnt = Math.floor(character.inventory[pz_key].count/C_pz);
+                if(T_cnt != 0) remove_from_character_inventory([{ 
+                    item_key: pz_key,           
+                    item_count: C_pz * T_cnt,
+                }]);
+                if(T_cnt != 0) add_to_character_inventory([{ "item": getItem(item_templates[pz_map[T_S]]), "count": T_cnt }]);
+                displayed_text += `消耗了 ${C_pz * T_cnt} 个 学院武器兑换券，<br>`;
+                displayed_text += `兑换了 ${T_cnt} 个 ${pz_map[T_S]}。<br>`;
+
+            }
+            else displayed_text += `未发现【学院武器兑换券】！<br>需要它才能兑换物品...`;
+        }
+
+        else if(t_key.includes("gf")){
+            let T_S = t_key;
+            let pz_map = {"gf-dagger":"影步要诀","gf-bow":"集中心法","gf-dan":"聚气丹"};//凭证
+            let cs_map = {"gf-dagger":10000,"gf-bow":10000,"gf-dan":3000};//cost
+            //检查物品是否足够，扣除物品，如果不够就返回
+            let pz_key = "{\"id\":\""+"贡献点"+"\"}";//凭证
+            let C_pz = cs_map[T_S];//Cost_凭证
+            if(character.inventory[pz_key] != undefined)
+            {
+                let T_cnt = Math.floor(character.inventory[pz_key].count/C_pz);
+				if(T_cnt>1){
+					T_cnt=1;
+				};
+                if(T_cnt != 0) remove_from_character_inventory([{ 
+                    item_key: pz_key,           
+                    item_count: C_pz * T_cnt,
+                }]);
+                if(T_cnt != 0) add_to_character_inventory([{ "item": getItem(item_templates[pz_map[T_S]]), "count": T_cnt }]);
+                displayed_text += `消耗了 ${C_pz * T_cnt} 个 贡献点，<br>`;
+                displayed_text += `兑换了 ${T_cnt} 个 ${pz_map[T_S]}。<br>`;
+
+            }
+            else displayed_text += `未发现【贡献点】！<br>需要它才能兑换物品...`;
+        }
 		
         else if(t_key.includes("pz")){
             let T_S = t_key;
@@ -2406,6 +2553,14 @@ function do_enemy_combat_action(enemy_id,spec_hint,E_atk_mul = 1,E_dmg_mul = 1) 
     
     if(active_effects["血遁 C6"]!=undefined) evasion_agi_modifier *= 1 + character.stats.full.health / character.stats.full.max_health * 2.5;
 
+
+	// 闪避率修正
+	if(character.equipment.weapon?.weapon_type === "dagger" 
+	   && global_flags.is_shadow_step_unlocked) {
+		const lv = skills["Daggers"].current_level;
+		evasion_agi_modifier *= 1 + (5 + lv * 0.5) / 100;
+	}
+
     const hit_chance = get_hit_chance(attacker.stats.agility * enemy_agi_modifier, character.stats.full.agility * evasion_agi_modifier);
 
 
@@ -2414,6 +2569,21 @@ function do_enemy_combat_action(enemy_id,spec_hint,E_atk_mul = 1,E_dmg_mul = 1) 
         return; //damage fully evaded, nothing more can happen
     }
     //目前25倍以上攻击是必中状态。
+
+    // ★ 影步追伤
+    if(character.equipment.weapon?.weapon_type === "dagger" 
+       && global_flags.is_shadow_step_unlocked) {
+        const lv = skills["Daggers"].current_level;
+        const mul = 0.3 + lv * 0.02;
+        const dmg = character.get_attack_power() * mul;
+        attacker.stats.health -= dmg;
+        log_message(`【影步】对 ${attacker.name} 造成 ${format_number(dmg)} 点伤害`, "enemy_attacked");
+        update_displayed_health_of_enemies();
+		if(attacker.stats.health <= 0) {
+			handle_enemy_death(attacker, dmg);
+		}
+    }
+    return;
 
     if(enemy_crit_chance > Math.random())
     {
@@ -2512,7 +2682,8 @@ function get_enemy_realm(enemy){
     let realm_l = enemy.realm[realm_index + 6];//last
     switch (realm_f){
         case "凡": realm_e += 0; break;
-		case "炼": realm_e += 10; break;
+		case "纳": realm_e += 10; break;
+		case "炼": realm_e += 20; break;
         case "万":
             realm_e += 3;
             break;
@@ -2670,258 +2841,47 @@ function get_spirit_buff(S3_sp){
                         update_displayed_effects();
 }
 
-function do_character_combat_action({target, attack_power}, target_num,c_atk_mul,c_hint) {
-    let satk_mul = 1;//角色攻击乘数
-    let sdmg_mul = 1;//角色伤害乘数
-    let Spec_E = c_hint;
-    if(target.spec.includes(8)) satk_mul *= (1 - 0.01*target.spec_value[8]);//衰弱
-    if(target.spec.includes(9)) satk_mul *= character.stats.full.defense / character.stats.full.attack_power;//反转
-    if(target.spec.includes(27)) satk_mul *= 0.9;//柔骨
-    
-    if(target.spec.includes(23))
-    {
-        if(character.stats.full.attack_power > target.stats.attack){
-            Spec_E += "[灵闪·免疫]";
-        }
-        else{
-            Spec_E += "[灵闪]";
-            sdmg_mul = 1 - (target.stats.defense / character.stats.full.defense / 2);
-        }
-    }//灵闪
+// ★ 新增：通用的敌人死亡处理函数
+function handle_enemy_death(target, damage_dealt) {
+    // 防止重复结算
+    if (!target || !target.stats || target.stats.health > 0 || target.death_processed) {
+        return;
+    }
+    target.death_processed = true;
 
-    if(target.spec.includes(37))
-    {
-        Spec_E += "[散华]";
-        satk_mul *= 1 - target.stats.health / character.stats.full.health;
-        satk_mul = Math.max(satk_mul,0);
-    }//散华
-    if(target.spec.includes(68))
-    {
-        Spec_E += "[散华]";
-        satk_mul *= 1 - 0.1 * target.stats.health / character.stats.full.health;
-        satk_mul = Math.max(satk_mul,0);
-    }//散华·改
-    if(target.spec.includes(63)){
-        if(character.stats.full.attack_power > character.stats.full.defense){
-            satk_mul = character.stats.full.defense / character.stats.full.attack_power;
-            Spec_E += "[硬化]";
-        }
-        else Spec_E += "[硬化·免疫]"
-    }//硬化
+    damage_dealt = Math.max(damage_dealt, target.stats.max_health); // 防止超杀伤害计算出错，或直接给最大血量作为经验基数
+    total_kills++;
+    if(target.spec.includes(61)){total_kills += 9;}
+    if(target.spec.includes(64)){total_kills += 99;}
 
-    const hero_base_damage = attack_power * satk_mul * c_atk_mul;
+    target.stats.health = 0; // 防止血量显示负数
 
-    let damage_dealt;
-    
-    let critted = false;
-    
-    let hit_agi_modifier = current_enemies.filter(enemy => enemy.is_alive).length**(1/3); //more enemies will be easier to hit
-    
-    //it will be changed with environment or spec stat.
+    let xp_reward = target.xp_value * (current_enemies.length**0.3334);
+    let realm_diff = get_enemy_realm(target) - character.get_hero_realm();
+    let realm_mul = realm_diff >= 0 ? Math.pow(1.25,realm_diff) : Math.pow(5,realm_diff);
+    xp_reward *= realm_mul;
+    add_xp_to_character(xp_reward, true);
 
-    add_xp_to_skill({skill: skills["Combat"], xp_to_add: target.xp_value});
-    let enemy_agi_modifier = 1;
-    if(target.spec.includes(65)) enemy_agi_modifier = 1 + target.stats.health / target.stats.max_health * 99;
-    if(active_effects["血遁 C6"]!=undefined) hit_agi_modifier *= 1 + character.stats.full.health / character.stats.full.max_health * 2.5;
-    
-    const hit_chance = get_hit_chance(character.stats.full.agility * hit_agi_modifier, target.stats.agility * enemy_agi_modifier);
-    
-    if(hit_chance > Math.random()) {//hero's attack hits
+    let xp_display = xp_reward * character.get_xp_bonus();
+    let tooltip_ex = "";
+    if(realm_mul > 1) tooltip_ex = "(越级+" + format_number((realm_mul - 1)*100) + "%)";
+    if(realm_mul < 1) tooltip_ex = "(压级-" + format_number((1 - realm_mul)*100) + "%)";
 
-        damage_dealt = hero_base_damage;
-        let vibra_damage = (1.2 - Math.random() * 0.4);//0.8-1.2倍率浮动
-        if(character.equipment.weapon != null) {
-            add_xp_to_skill({skill: skills[weapon_type_to_skill[character.equipment.weapon.weapon_type]], xp_to_add: target.xp_value}); 
-        } else {
-            add_xp_to_skill({skill: skills['Unarmed'], xp_to_add: target.xp_value});
-        }//武器技能+空手技能
-        if(character.equipment.method != null){
-            if(character.equipment.method.id=="三月断宵") add_xp_to_skill({skill: skills['3Moon/Night'], xp_to_add: target.xp_value});
-            if(character.equipment.method.id=="星解之术") add_xp_to_skill({skill: skills['StarDestruction'], xp_to_add: target.xp_value});
-            if(character.equipment.method.id=="映星紫华") add_xp_to_skill({skill: skills['ReflectStarVioletLight'], xp_to_add: target.xp_value});
-        }
-        if(character.stats.full.crit_rate > Math.random()) {
-            vibra_damage *= character.stats.full.crit_multiplier;
-            critted = true;
-        }
-        else {
-            critted = false;
-        }
-		// ★ 先把防御按破甲调整
-		let effective_defense = target.stats.defense;
-		if(heroHasTrait("破甲")) {
-			effective_defense *= 0.8;
-			Spec_E += "[破甲]";
-		}
-		
-		if(heroHasTrait("衰弱")) {
-			effective_defense *= 0.9;
-			Spec_E += "[衰弱]";
-		}
-		
-		if(active_effects["异界之门 B9"]!=undefined || heroHasTrait("异界之门"))
-		{
-			target.stats.spec_value ||= {};
-			// 用同一个计数器，两个来源共用
-			target.stats.spec_value[-1] ??= 0;                 // 累计"击数"
-			const mult = (target.stats.spec_value[-1] + 1) * 0.1;  // 0.1x, 0.2x, 0.3x...
-			sdmg_mul *= mult;
-			target.stats.spec_value[-1] += 1;
-			Spec_E += "[异界之门]";
-		}
-		
-		// ★ 只减一次防
-		let proto_d = damage_dealt;
-		damage_dealt = Math.ceil(10*Math.max(damage_dealt - effective_defense, 0))/10;
+    log_message(target.name + " 被打败,获取 " + format_number(xp_display) + " 经验值" + tooltip_ex, "enemy_defeated");
 
-        if(active_effects["魔攻 A9"]!=undefined && damage_dealt < proto_d * 0.1)
-        {
-            damage_dealt = proto_d * 0.1;
-            Spec_E += "[魔攻]";
-        }
-        if(active_effects["烈日祝福·坎"]!=undefined && damage_dealt < proto_d * 0.2)
-        {
-            damage_dealt = proto_d * 0.1;
-            Spec_E += "[魔攻·祝福]";
-        }
-        if(active_effects["牵制 A9"]!=undefined)
-        {
-            sdmg_mul *= Math.min(character.stats.full.defense / (target.stats.defense + 0.0001) * 0.6,10);
-            Spec_E += "[牵制]";
-        }
-        if(active_effects["烈日祝福·巽"]!=undefined)
-        {
-            sdmg_mul *= Math.min(character.stats.full.defense / (target.stats.defense + 0.0001) * 0.8,10);
-            Spec_E += "[牵制·祝福]";
-        }
-		
-        if(active_effects["压制 C6"]!=undefined)
-        {
-            sdmg_mul *= 1.25 * (character.stats.full.defense+character.stats.full.attack_power) / (target.stats.defense+target.stats.attack);
-            
-            if(sdmg_mul == Infinity) sdmg_mul = 9999.99;//防止除以0
-        }
+    // 系统技能经验
+    let system_xp = Math.floor(Math.sqrt((target.stats.attack || 0) + (target.stats.defense || 0) + (target.stats.agility || 0)));
+    if (target.spec.includes(64)) system_xp *= 100;
+    else if (target.spec.includes(61)) system_xp *= 10;
+    add_xp_to_skill({skill: skills["system"], xp_to_add: system_xp, should_info: true, use_bonus: true});
 
-    
-
-        if(target.spec.includes(1))
-        {
-            if(character.equipment.special?.name == "纳娜米"){
-                damage_dealt=Math.min(damage_dealt,4.0);//坚固
-                Spec_E += "[坚固·削弱]"
-            }
-            else{
-                damage_dealt=Math.min(damage_dealt,1.0);//坚固
-                Spec_E += "[坚固]"
-            }
-        }
-        if(target.spec.includes(8)) Spec_E += "[衰弱]";
-        if(target.spec.includes(9)) Spec_E += "[反转]";
-        if(target.spec.includes(27)) Spec_E += "[柔骨]";
-        if(satk_mul != 1) Spec_E += `[ATK${format_number(satk_mul * 100)}%]`;
-        if(sdmg_mul != 1)
-        {
-            Spec_E += `[DMG${format_number(sdmg_mul * 100)}%]`;
-            damage_dealt *= sdmg_mul;
-        }
-        damage_dealt *= vibra_damage;
-        let A_mul = (character.stats.full.attack_mul || 1)
-        if(A_mul > 1)
-        {
-            damage_dealt *= A_mul;
-            Spec_E += `[x${format_number(A_mul)}]`;
-        }
-        let b_health = target.stats.health;
-        target.stats.health -= damage_dealt;
-
-		// ★ 新增：武器词条 - 流血（目标还活着才挂）
-		if(target.stats.health > 0 && target.is_alive) {
-			const weapon = character.equipment.weapon;
-			if(weapon?.hasTrait?.("bleed")) {
-				const bleed = weapon.getTrait("bleed");
-				if(bleed?.params) {
-					target.bleed_effect = {
-						remaining: bleed.params.duration,
-						percent:   bleed.params.percent,
-					};
-				}
-			}
-		}
-		
-        let filter = false;
-        if(options.option_combat_filter && ((damage_dealt == 0) || (target.stats.health <= 0))) filter = true;
-        if(critted) {
-            if(!filter) log_message(target.name + " 受到了 " + format_number(damage_dealt) + " 伤害[暴击]" + Spec_E, "enemy_attacked_critically");
-        }
-        else {
-            if(!filter) log_message(target.name + " 受到了 " + format_number(damage_dealt) + " 伤害" + Spec_E, "enemy_attacked");
-        }
-        
-        if(active_effects["吹火 C6"]!=undefined){
-            cur_cd[target_num] -= 500 / target.stats.attack_speed;
-            log_message(`${character.name} 将 ${target.name} 的攻击 延迟了0.5轮![吹火 C6].`,"hero_regened");
-        }//吹火 C6
-        const effect = document.getElementById(`E${target_num}_effect`);
-            effect.classList.add('active');
-                effect.addEventListener('animationend', () => {
-                       effect.classList.remove('active');
-                }, { once: true });
-                //受击动画
-
-        if(target.stats.health <= 0) {
-            damage_dealt = b_health;//防止超杀的伤害被计算
-            total_kills++;
-            if(target.spec.includes(61)){total_kills += 9;}
-            if(target.spec.includes(64)){total_kills += 99;}
-
-            target.stats.health = 0; //to not go negative on displayed value
-        
-            //gained xp multiplied ny TOTAL size of enemy group raised to 1/3
-            let xp_reward = target.xp_value * (current_enemies.length**0.3334);
-            let realm_diff =  get_enemy_realm(target) - character.get_hero_realm();
-            let realm_mul = realm_diff >= 0 ? Math.pow(1.25,realm_diff) : Math.pow(5,realm_diff);
-            xp_reward *= realm_mul;
-            add_xp_to_character(xp_reward, true);
-
-
-            let xp_display = xp_reward * character.get_xp_bonus();
-            let tooltip_ex = "";
-            if(realm_mul > 1) tooltip_ex = "(越级+" + format_number((realm_mul - 1)*100) + "%)";
-            if(realm_mul < 1) tooltip_ex = "(压级-" + format_number((1 - realm_mul)*100) + "%)";
-
-
-            
-
-            log_message(target.name + " 被打败,获取 " + format_number(xp_display) + " 经验值" + tooltip_ex, 
-            "enemy_defeated");
-			
-			// ========== 新增：根据敌人属性增加“系统”技能经验 ==========
-			let system_xp = Math.floor(Math.sqrt(
-				(target.stats.attack || 0) + 
-				(target.stats.defense || 0) + 
-				(target.stats.agility || 0)
-			));
-			// 小队/大队规模修正
-			if (target.spec.includes(64)) {
-				system_xp *= 100;   // 大队：100 倍
-			} else if (target.spec.includes(61)) {
-				system_xp *= 10;    // 小队：10 倍
-			}
-			add_xp_to_skill({
-				skill: skills["system"], 
-				xp_to_add: system_xp, 
-				should_info: true, 
-				use_bonus: true
-			});
-			
-            //敌人亡语判定区
-            if(target.spec.includes(56))
-            {
-                log_message(`${character.name} 获取了60s【迟缓】效果！`,"enemy_enhanced");
-                active_effects["迟缓"] = new ActiveEffect({...effect_templates["迟缓"], duration:60});
-                inf_combat.S3.b1 -= 1;
-            }//禁锢
-            if(target.spec.includes(57))
+    // 敌人亡语判定区
+    if(target.spec.includes(56)) {
+        log_message(`${character.name} 获取了60s【迟缓】效果！`,"enemy_enhanced");
+        active_effects["迟缓"] = new ActiveEffect({...effect_templates["迟缓"], duration:60});
+        inf_combat.S3.b1 -= 1;
+    }
+if(target.spec.includes(57))
             {
                 log_message(`场上增加了3只【心之灵·暴走】！`,"enemy_enhanced");
                 inf_combat.S3.b2 -= 1;
@@ -3047,9 +3007,237 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
 
             }
             kill_enemy(target);
+}
+
+function do_character_combat_action({target, attack_power}, target_num,c_atk_mul,c_hint) {
+    // ★ 新增：目标已死亡或数据已清空，直接返回，防止空指针异常
+    if (!target || !target.is_alive || !target.stats) {
+        return;
+    }
+
+    let satk_mul = 1;//角色攻击乘数
+    let sdmg_mul = 1;//角色伤害乘数
+    let Spec_E = c_hint;
+    if(target.spec.includes(8)) satk_mul *= (1 - 0.01*target.spec_value[8]);//衰弱
+    if(target.spec.includes(9)) satk_mul *= character.stats.full.defense / character.stats.full.attack_power;//反转
+    if(target.spec.includes(27)) satk_mul *= 0.9;//柔骨
+    
+    if(target.spec.includes(23))
+    {
+        if(character.stats.full.attack_power > target.stats.attack){
+            Spec_E += "[灵闪·免疫]";
         }
-        update_displayed_health_of_enemies();
+        else{
+            Spec_E += "[灵闪]";
+            sdmg_mul = 1 - (target.stats.defense / character.stats.full.defense / 2);
+        }
+    }//灵闪
+
+    if(target.spec.includes(37))
+    {
+        Spec_E += "[散华]";
+        satk_mul *= 1 - target.stats.health / character.stats.full.health;
+        satk_mul = Math.max(satk_mul,0);
+    }//散华
+    if(target.spec.includes(68))
+    {
+        Spec_E += "[散华]";
+        satk_mul *= 1 - 0.1 * target.stats.health / character.stats.full.health;
+        satk_mul = Math.max(satk_mul,0);
+    }//散华·改
+    if(target.spec.includes(63)){
+        if(character.stats.full.attack_power > character.stats.full.defense){
+            satk_mul = character.stats.full.defense / character.stats.full.attack_power;
+            Spec_E += "[硬化]";
+        }
+        else Spec_E += "[硬化·免疫]"
+    }//硬化
+
+    const hero_base_damage = attack_power * satk_mul * c_atk_mul;
+
+    let damage_dealt;
+    
+    let critted = false;
+    
+    let hit_agi_modifier = current_enemies.filter(enemy => enemy.is_alive).length**(1/3); //more enemies will be easier to hit
+    
+    //it will be changed with environment or spec stat.
+
+    add_xp_to_skill({skill: skills["Combat"], xp_to_add: target.xp_value});
+    let enemy_agi_modifier = 1;
+    if(target.spec.includes(65)) enemy_agi_modifier = 1 + target.stats.health / target.stats.max_health * 99;
+    if(active_effects["血遁 C6"]!=undefined) hit_agi_modifier *= 1 + character.stats.full.health / character.stats.full.max_health * 2.5;
+
+	// 命中率修正
+	if(character.equipment.weapon?.weapon_type === "bow" 
+	   && global_flags.is_bow_focus_unlocked) {
+		const lv = skills["Bows"].current_level;
+		hit_agi_modifier *= 1 + (5 + lv * 0.5) / 100;
+	}
+    
+    const hit_chance = get_hit_chance(character.stats.full.agility * hit_agi_modifier, target.stats.agility * enemy_agi_modifier);
+    
+    if(hit_chance > Math.random()) {//hero's attack hits
+		// ★ 集中攻速 buff
+		if(character.equipment.weapon?.weapon_type === "bow" 
+		   && global_flags.is_bow_focus_unlocked) {
+			const lv = skills["Bows"].current_level;
+			const spd = 3 + lv * 0.1;
+			if(!character.runtime_buffs) character.runtime_buffs = {};
+			character.runtime_buffs.bow_focus = {
+				mult: 1 + spd / 100,
+				until: Date.now() + 3000,
+			};
+		}
+        damage_dealt = hero_base_damage;
+        let vibra_damage = (1.2 - Math.random() * 0.4);//0.8-1.2倍率浮动
+        if(character.equipment.weapon != null) {
+            add_xp_to_skill({skill: skills[weapon_type_to_skill[character.equipment.weapon.weapon_type]], xp_to_add: target.xp_value}); 
+        } else {
+            add_xp_to_skill({skill: skills['Unarmed'], xp_to_add: target.xp_value});
+        }//武器技能+空手技能
+        if(character.equipment.method != null){
+            if(character.equipment.method.id=="三月断宵") add_xp_to_skill({skill: skills['3Moon/Night'], xp_to_add: target.xp_value});
+            if(character.equipment.method.id=="星解之术") add_xp_to_skill({skill: skills['StarDestruction'], xp_to_add: target.xp_value});
+            if(character.equipment.method.id=="映星紫华") add_xp_to_skill({skill: skills['ReflectStarVioletLight'], xp_to_add: target.xp_value});
+        }
+        if(character.stats.full.crit_rate > Math.random()) {
+            vibra_damage *= character.stats.full.crit_multiplier;
+            critted = true;
+        }
+        else {
+            critted = false;
+        }
+		// ★ 先把防御按破甲调整
+		let effective_defense = target.stats.defense;
+		if(heroHasTrait("破甲")) {
+			effective_defense *= 0.8;
+			Spec_E += "[破甲]";
+		}
+		
+		if(heroHasTrait("衰弱")) {
+			effective_defense *= 0.9;
+			Spec_E += "[衰弱]";
+		}
+		
+		if(active_effects["异界之门 B9"]!=undefined || heroHasTrait("异界之门"))
+		{
+			target.stats.spec_value ||= {};
+			// 用同一个计数器，两个来源共用
+			target.stats.spec_value[-1] ??= 0;                 // 累计"击数"
+			const mult = (target.stats.spec_value[-1] + 1) * 0.1;  // 0.1x, 0.2x, 0.3x...
+			sdmg_mul *= mult;
+			target.stats.spec_value[-1] += 1;
+			Spec_E += "[异界之门]";
+		}
+		
+		// ★ 只减一次防
+		let proto_d = damage_dealt;
+		damage_dealt = Math.ceil(10*Math.max(damage_dealt - effective_defense, 0))/10;
+
+        if(active_effects["魔攻 A9"]!=undefined && damage_dealt < proto_d * 0.1)
+        {
+            damage_dealt = proto_d * 0.1;
+            Spec_E += "[魔攻]";
+        }
+        if(active_effects["烈日祝福·坎"]!=undefined && damage_dealt < proto_d * 0.2)
+        {
+            damage_dealt = proto_d * 0.1;
+            Spec_E += "[魔攻·祝福]";
+        }
+        if(active_effects["牵制 A9"]!=undefined)
+        {
+            sdmg_mul *= Math.min(character.stats.full.defense / (target.stats.defense + 0.0001) * 0.6,10);
+            Spec_E += "[牵制]";
+        }
+        if(active_effects["烈日祝福·巽"]!=undefined)
+        {
+            sdmg_mul *= Math.min(character.stats.full.defense / (target.stats.defense + 0.0001) * 0.8,10);
+            Spec_E += "[牵制·祝福]";
+        }
+		
+        if(active_effects["压制 C6"]!=undefined)
+        {
+            sdmg_mul *= 1.25 * (character.stats.full.defense+character.stats.full.attack_power) / (target.stats.defense+target.stats.attack);
+            
+            if(sdmg_mul == Infinity) sdmg_mul = 9999.99;//防止除以0
+        }
+
+        if(target.stats.health <= 0) {
+            handle_enemy_death(target, damage_dealt);
+        }
+        update_displayed_health_of_enemies();    
+
+        if(target.spec.includes(1))
+        {
+            if(character.equipment.special?.name == "纳娜米"){
+                damage_dealt=Math.min(damage_dealt,4.0);//坚固
+                Spec_E += "[坚固·削弱]"
+            }
+            else{
+                damage_dealt=Math.min(damage_dealt,1.0);//坚固
+                Spec_E += "[坚固]"
+            }
+        }
+        if(target.spec.includes(8)) Spec_E += "[衰弱]";
+        if(target.spec.includes(9)) Spec_E += "[反转]";
+        if(target.spec.includes(27)) Spec_E += "[柔骨]";
+        if(satk_mul != 1) Spec_E += `[ATK${format_number(satk_mul * 100)}%]`;
+        if(sdmg_mul != 1)
+        {
+            Spec_E += `[DMG${format_number(sdmg_mul * 100)}%]`;
+            damage_dealt *= sdmg_mul;
+        }
+        damage_dealt *= vibra_damage;
+        let A_mul = (character.stats.full.attack_mul || 1)
+        if(A_mul > 1)
+        {
+            damage_dealt *= A_mul;
+            Spec_E += `[x${format_number(A_mul)}]`;
+        }
+        let b_health = target.stats.health;
+        target.stats.health -= damage_dealt;
+
+		// ★ 新增：武器词条 - 流血（目标还活着才挂）
+		if(target.stats.health > 0 && target.is_alive) {
+			const weapon = character.equipment.weapon;
+			if(weapon?.hasTrait?.("bleed")) {
+				const bleed = weapon.getTrait("bleed");
+				if(bleed?.params) {
+					target.bleed_effect = {
+						remaining: bleed.params.duration,
+						percent:   bleed.params.percent,
+					};
+				}
+			}
+		}
+		
+        let filter = false;
+        if(options.option_combat_filter && ((damage_dealt == 0) || (target.stats.health <= 0))) filter = true;
+        if(critted) {
+            if(!filter) log_message(target.name + " 受到了 " + format_number(damage_dealt) + " 伤害[暴击]" + Spec_E, "enemy_attacked_critically");
+        }
+        else {
+            if(!filter) log_message(target.name + " 受到了 " + format_number(damage_dealt) + " 伤害" + Spec_E, "enemy_attacked");
+        }
         
+        if(active_effects["吹火 C6"]!=undefined){
+            cur_cd[target_num] -= 500 / target.stats.attack_speed;
+            log_message(`${character.name} 将 ${target.name} 的攻击 延迟了0.5轮![吹火 C6].`,"hero_regened");
+        }//吹火 C6
+        const effect = document.getElementById(`E${target_num}_effect`);
+            effect.classList.add('active');
+                effect.addEventListener('animationend', () => {
+                       effect.classList.remove('active');
+                }, { once: true });
+                //受击动画
+
+        update_displayed_health_of_enemies();
+
+        if(target.stats.health <= 0) {
+            handle_enemy_death(target, damage_dealt);
+        }
+        update_displayed_health_of_enemies();        
 
         //和造成伤害有关的判定区(反伤，吸血，领域)
         if(global_flags.is_realm_enabled)
@@ -3168,8 +3356,12 @@ function add_xp_to_skill({skill, xp_to_add = 1, should_info = true, use_bonus = 
     const prev_name = skill.name();
     const was_hidden = skill.visibility_treshold > skill.total_xp;
     
-    const {message, gains, unlocks} = skill.add_xp({xp_to_add: xp_to_add});
-    const new_name = skill.name();
+	const result = skill.add_xp({xp_to_add: xp_to_add});
+	if (!result) {
+		return leveled;  // 如果返回 undefined，直接跳过，不执行后续逻辑
+	}
+	const {message, gains, unlocks} = result;
+	const new_name = skill.name();
     if(skill.parent_skill) {
         if(skill.total_xp > skills[skill.parent_skill].total_xp) {
             /*
@@ -3363,9 +3555,14 @@ function processBleedEffects() {
         if(!enemy.bleed_effect) continue;
         if(enemy.stats.health <= 0) continue;
 
-        const dmg = enemy.stats.max_health * enemy.bleed_effect.percent;
-        // 保 1 血，让玩家补刀
-        enemy.stats.health = Math.max(1, enemy.stats.health - dmg);
+		const dmg = enemy.stats.max_health * enemy.bleed_effect.percent;
+		enemy.stats.health -= dmg; // ★ 取消保1血限制，允许流血击杀
+		log_message(`${enemy.name} 因【流血】受到 ${format_number(dmg)} 点伤害`, "enemy_attacked");
+		anyChange = true;
+
+		if(enemy.stats.health <= 0) {
+			handle_enemy_death(enemy, dmg); // ★ 流血击杀结算
+		}
         log_message(`${enemy.name} 因【流血】受到 ${format_number(dmg)} 点伤害`,
                     "enemy_attacked");
         anyChange = true;

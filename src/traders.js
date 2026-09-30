@@ -634,7 +634,7 @@ class TradeItem {
             new TradeItem({item_name: "活化柳木", count: [5,10], chance: 0.8}),
             
             new TradeItem({item_name: "充能剑", count: [1], quality: [81, 120], chance: 0.5}),
-            new TradeItem({item_name: "充能戟", count: [1], quality: [71, 110], chance: 0.2}),
+            //new TradeItem({item_name: "充能戟", count: [1], quality: [71, 110], chance: 0.2}),
 
             new TradeItem({item_name: "活性帽子", count: [1], quality: [91, 120], chance: 0.8}),
             new TradeItem({item_name: "活性背心", count: [1], quality: [91, 120], chance: 0.8}),
@@ -658,7 +658,7 @@ class TradeItem {
 
             
             new TradeItem({item_name: "充能剑", count: [1], quality: [111, 140], chance: 0.8}),
-            new TradeItem({item_name: "充能戟", count: [1], quality: [111, 140], chance: 0.8}),
+            //new TradeItem({item_name: "充能戟", count: [1], quality: [111, 140], chance: 0.8}),
 
     ];
     inventory_templates["Terra IV"] = 
@@ -672,7 +672,7 @@ class TradeItem {
             new TradeItem({item_name: "青花鱼", count: [20,50], chance: 0.8}),
 
             new TradeItem({item_name: "海绿剑", count: [1], quality: [101, 140], chance: 0.8}),
-            new TradeItem({item_name: "海绿戟", count: [1], quality: [91, 130], chance: 0.5}),
+            //new TradeItem({item_name: "海绿戟", count: [1], quality: [91, 130], chance: 0.5}),
 
             
             new TradeItem({item_name: "海绿头盔", count: [1], quality: [101, 130], chance: 0.8}),
@@ -704,7 +704,7 @@ class TradeItem {
             new TradeItem({item_name: "高能织料", count: [50,125]}),
 
             new TradeItem({item_name: "红钢剑", count: [1], quality: [110, 139], chance: 0.8}),
-            new TradeItem({item_name: "红钢戟", count: [1], quality: [100, 129], chance: 0.5}),
+            //new TradeItem({item_name: "红钢戟", count: [1], quality: [100, 129], chance: 0.5}),
 
             
             new TradeItem({item_name: "高能帽子", count: [1], quality: [111, 140], chance: 0.8}),
@@ -732,7 +732,7 @@ class TradeItem {
             new TradeItem({item_name: "沼泽兽油", count: [50,125]}),
 
             new TradeItem({item_name: "旋律剑", count: [1], quality: [141, 180], chance: 0.8}),
-            new TradeItem({item_name: "旋律戟", count: [1], quality: [141, 180], chance: 0.8}),
+            //new TradeItem({item_name: "旋律戟", count: [1], quality: [141, 180], chance: 0.8}),
 
             
             new TradeItem({item_name: "黑森帽子", count: [1], quality: [141, 180], chance: 0.8}),
@@ -758,7 +758,7 @@ class TradeItem {
             new TradeItem({item_name: "多孔冰晶", count: [50,125]}),
 
             new TradeItem({item_name: "晶化剑", count: [1], quality: [141, 180]}),
-            new TradeItem({item_name: "晶化戟", count: [1], quality: [141, 180]}),
+            //new TradeItem({item_name: "晶化戟", count: [1], quality: [141, 180]}),
             new TradeItem({item_name: "晶化月轮", count: [1], quality: [141, 180]}),
 
             

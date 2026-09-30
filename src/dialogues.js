@@ -785,7 +785,57 @@ class Textline {
 					spec: "collegetomain",
                 },
             }), 
-			locks_lines: ["去主城（特别免费）"],   // ← 新增这一行			
+			locks_lines: ["去主城（特别免费）"],   // ← 新增这一行
+
+            "去邪恶沼泽（特别免费）": new Textline({
+                is_unlocked: false,
+                name: "去邪恶沼泽（特别免费）",
+                text: "去邪恶沼泽（特别免费）",
+				unlocks: {
+					spec: "maintozhaoze",
+                },
+            }), 
+			locks_lines: ["去邪恶沼泽（特别免费）"],   // ← 新增这一行	
+
+            "去矿山（特别免费）": new Textline({
+                is_unlocked: false,
+                name: "去矿山（特别免费）",
+                text: "去矿山（特别免费）",
+				unlocks: {
+					spec: "maintokuangshan",
+                },
+            }), 
+			locks_lines: ["去矿山（特别免费）"],   // ← 新增这一行				
+        }
+    });
+
+	dialogues["沼泽飞舟点"] = new Dialogue({
+        name: "沼泽飞舟点",
+		textlines: {
+            "去战斗学院（特别免费）": new Textline({
+                is_unlocked: true,
+                name: "去战斗学院（特别免费）",
+                text: "去战斗学院（特别免费）",
+				unlocks: {
+					spec: "college",
+                },
+            }), 
+			locks_lines: ["去战斗学院（特别免费）"],   // ← 新增这一行				
+        }
+    });
+
+	dialogues["矿山飞舟点"] = new Dialogue({
+        name: "矿山飞舟点",
+		textlines: {
+            "去战斗学院（特别免费）": new Textline({
+                is_unlocked: true,
+                name: "去战斗学院（特别免费）",
+                text: "去战斗学院（特别免费）",
+				unlocks: {
+					spec: "college",
+                },
+            }), 
+			locks_lines: ["去战斗学院（特别免费）"],   // ← 新增这一行				
         }
     });
 
@@ -1041,6 +1091,7 @@ class Textline {
 		textlines: {
 			"欢迎": new Textline({
                 name: "欢迎",
+				is_unlocked: true,
                 text: "到了，这就是战斗学院了<br>"+
 				"我已经和导师们都打过招呼了，需要锻炼或者学习直接去对应部门就行<br>"+
 				"无需任何费用，如果想去主城的话去飞舟点乘坐飞舟就好了，费用算我头上<br>"+
@@ -1059,6 +1110,337 @@ class Textline {
             }),
         }
     });
+
+	dialogues["与校长对话"] = new Dialogue({
+        name: "与校长对话",
+		textlines: {
+			"初见校长": new Textline({
+                name: "初见校长",
+				is_unlocked: false,
+                text: "欢迎加入战斗学院，我是校长韩墨白<br>"+
+				"这是学院的徽章，有这个你就能去图书馆兑换功法了<br>"+
+				"任务阁那边已经打过招呼了，会尽量给你筛选符合你当前境界的任务<br>"+
+				"我知道赵主任已经了你一些奖励了吧，那我也不能空手而来<br>"+
+				"聚气丹对你而言应该是现阶段最有用的丹药了，拿着吧<br>"+
+				"过几天新生大会的时候你最好出席下,这几天你可以在你的住处吃点聚气丹修炼下<br>"+
+				"炼器部那边已经见过了吧，周小子是个武痴，有空你可以和他切磋下，打赢有好处的<br>",
+				unlocks: {
+					 items: [
+						{ item_name: "战斗学院徽章", count: 1 },
+						{ item_name: "聚气丹", count: 20 },
+						{ item_name: "贡献点", count: 100000 },
+					],
+					textlines: [
+						{
+							dialogue: "度过时间，等待开学典礼开始",
+							lines: ["时间流逝中"]
+						},
+						{
+							dialogue: "任务阁学姐",
+							lines: ["接取任务"]
+						},
+					],
+                },
+				locks_lines: ["初见校长"],
+            }),
+        }
+    });
+
+	dialogues["用贡献点兑换功法"] = new Dialogue({
+        name: "用贡献点兑换功法",
+		textlines: {
+            // ★ 修正：将具体的武器选项放在同一级
+            "影步要诀": new Textline({ 
+                is_unlocked: true,
+                name: "影步要诀（匕首技），需要10000贡献点",
+                text: "",
+                unlocks: {
+                    spec: "gf-dagger",
+                },
+            }),
+            "集中心法": new Textline({ 
+                is_unlocked: true,
+                name: "集中心法（弓技），需要10000贡献点",
+                text: "",
+                unlocks: {
+                    spec: "gf-bow",
+                },
+            }),
+			"聚气丹": new Textline({ 
+                is_unlocked: true,
+                name: "聚气丹，需要3000贡献点/颗",
+                text: "",
+                unlocks: {
+                    spec: "gf-dan",
+                },
+            }),
+		}
+    });
+
+	dialogues["与周远航对话"] = new Dialogue({
+        name: "与周远航对话",
+		textlines: {
+			"见面礼": new Textline({
+                name: "见面礼",
+				is_unlocked: true,
+                text: "你就是赵主任今年特招的学生么？<br>"+
+				"我叫周远航，上一届的特招学生，算是你的学长<br>"+
+				"初次见面，这个小玩意就送你了，如果有材料的话说不定还能升级<br>"+
+				"你如果对炼器感兴趣的话可以来找我学习<br>"+
+				"这是赵主管要我给你的兑换券，可以在我这兑换一次学院武器<br>"+
+				"都是附带特技的武器，比外面那些凡铁好用多了，你看看你喜欢用啥<br>"+
+				"<br>有空的话可以找我来切磋，我会压制自己实力的<br>",
+				unlocks: {
+					 textlines: [{dialogue: "与周远航对话", lines: ["兑换武器","发起切磋"]},{dialogue: "与校长对话", lines: ["初见校长"]}],
+					 items: [
+						{ item_name: "学院武器兑换券", count: 1 },
+						{ item_name: "魔力抵消器", count: 1 },
+					],
+                },
+				locks_lines: ["见面礼"],
+            }),
+			"发起切磋": new Textline({
+                name: "发起切磋",
+				is_unlocked: false,
+                text: "让我看看你的实力<br>",
+				unlocks: {
+					 textlines: [{dialogue: "与周远航对话", lines: ["I", "II", "III"]}]
+                },
+            }),
+            "I": new Textline({ 
+                is_unlocked: false,
+                name: "与纳气境五层的学长切磋",
+                text: "未实装敌人属性",
+/*                 unlocks: {
+                    spec: "na5",
+                }, */
+            }),
+            "II": new Textline({ 
+                is_unlocked: false,
+                name: "与炼气境五层的学长切磋",
+                text: "未实装敌人属性",
+/*                 unlocks: {
+                    spec: "yu5",
+                }, */
+            }),
+            "III": new Textline({ 
+                is_unlocked: false,
+                name: "与炼气境巅峰的学长切磋",
+                text: "未实装敌人属性",
+/*                 unlocks: {
+                    spec: "yu10",
+                }, */
+            }),			
+			// ★ 修正：将 "兑换武器" 作为一个 Textline
+            "兑换武器": new Textline({
+                name: "兑换武器",
+                is_unlocked: false,
+                text: "请选择你要兑换的武器：",
+                // 解锁下面三个选项
+                unlocks: {
+                    textlines: [{dialogue: "与周远航对话", lines: ["sword", "dagger", "bow"]}]
+                }
+            }),
+            // ★ 修正：将具体的武器选项放在同一级
+            "sword": new Textline({ 
+                is_unlocked: false,
+                name: "兑换血腥剑（剑，附带吸血+破甲，持久战斗）",
+                text: "",
+                unlocks: {
+                    spec: "dh-sword",
+                },
+            }),
+            "dagger": new Textline({ 
+                is_unlocked: false,
+                name: "兑换影袭匕首（匕首，附带二连击+流血，持续伤害）",
+                text: "",
+                unlocks: {
+                    spec: "dh-dagger",
+                },
+            }),
+            "bow": new Textline({ 
+                is_unlocked: false,
+                name: "兑换惊魂弓（弓，附带狩猎+异界之门，越打越强）",
+                text: "",
+                unlocks: {
+                    spec: "dh-bow",
+                },
+            }),
+		}
+    });
+
+	dialogues["度过时间，等待开学典礼开始"] = new Dialogue({
+        name: "度过时间，等待开学典礼开始",
+		textlines: {
+			"时间流逝中": new Textline({
+                name: "时间流逝中",
+				is_unlocked: false,
+                text: "已经到开学典礼开始的时间了，去看看吧<br>",
+				unlocks: {
+					 textlines: [{dialogue: "开学典礼", lines: ["校长发言"]}]
+                },
+				locks_lines: ["时间流逝中"],
+            }),
+		}
+    });
+
+	dialogues["开学典礼"] = new Dialogue({
+        name: "开学典礼",
+		textlines: {
+			"校长发言": new Textline({
+                name: "校长发言",
+				is_unlocked: false,
+                text: "欢迎大家加入战斗学院，我是校长韩墨白<br>"+
+				"战斗学院历史悠久，曾经不少人族的大能从这里走出参与对抗天外异族的战争<br>"+
+				"现在的和平来之不易，你们都是人族的未来，希望你们将来也能成长起来成为保护人族的一员<br>"+
+				"你们可以在各部门中选择喜欢的部门来加强自己，任务阁也会提供相应的任务和奖励<br>"+
+				"你们的学院徽章里有贡献点，可以去找导师或者图书馆兑换物品，加快你们的成长<br>"+
+				"半年后学院会举行新生校内赛，排名前几的能获得奖励，希望各位都能获得好名次<br>"+
+				"记住，何以长存，唯血与火！<br>",
+				unlocks: {
+					 textlines: [{dialogue: "开学典礼", lines: ["校长发言"]}]
+                },
+				locks_lines: ["校长发言"],
+            }),
+		}
+    });
+
+	dialogues["与影部导师对话"] = new Dialogue({
+        name: "与影部导师对话",
+		textlines: {
+			"介绍影部": new Textline({
+                name: "介绍影部",
+                text: "我听赵主任说了，你追求战斗是吧？<br>"+
+				"这里是影部，主要负责获取情报，刺杀邪教徒<br>"+
+				"不知道你对匕首有没有兴趣<br>"+
+				"有的话在图书馆有一门名叫【影步要诀】的功法<br>"+
+				"建议你去学一下<br>",
+				locks_lines: ["介绍影部"],
+            }),
+		}
+    });
+
+	dialogues["与任务阁学姐对话"] = new Dialogue({
+        name: "与任务阁学姐对话",
+		textlines: {
+			"介绍任务阁": new Textline({
+                name: "介绍任务阁",
+                text: "这里是任务部，发放任务，提交任务，领取奖励的地方<br>"+
+				"任务种类包括帮其他部门获得材料，战斗派遣，以及一些奇怪的任务<br>"+
+				"获得的奖励以贡献点为主，贡献点可以去图书馆兑换功法<br>"+
+				"或者去找各部门制作相应物品<br>",
+				locks_lines: ["介绍任务阁"],
+            }),
+		}
+    });
+
+	dialogues["与阵法导师对话"] = new Dialogue({
+        name: "与阵法导师对话",
+		textlines: {
+			"介绍阵法楼": new Textline({
+                name: "介绍阵法楼",
+                text: "这里是阵法楼，将灵气引导固定在阵法内即可实现特殊的效果<br>"+
+				"模拟威压，幻觉，防御，进攻等都能通过阵法实现<br>"+
+				"布阵需要阵旗、阵纹、节点等多个内容组成，环环相扣缺一不可<br>"+
+				"高级阵法更是大阵套小阵来实现一些更复杂的功能<br>"+
+				"你可以先看一下这个书了解一下<br>",
+				unlocks: {	
+                    items: [
+						{ item_name: "阵法初解", count: 1 },
+					],
+					spec: "zhenfa",						
+                },
+				locks_lines: ["介绍阵法楼"],
+            }),
+		}
+    });
+
+	dialogues["与符篆导师对话"] = new Dialogue({
+        name: "与符篆导师对话",
+		textlines: {
+			"介绍符篆楼": new Textline({
+                name: "介绍符篆楼",
+                text: "这里是符篆楼，调用天地灵气遵循古代符文的方式实现效果<br>"+
+				"上古时期人们主要使用神符来实现各种功能<br>"+
+				"操作只需要一个或者几个符号就能完成<br>"+
+				"虽然不知道中间发生了啥，这套体系没落了<br>"+
+				"后人根据各地发现的物品重新解析学习符号形成了现在的符篆<br>"+
+				"不过符篆难画，稍有偏差就会失败，所以要先学会精确书写符号<br>",
+				locks_lines: ["介绍符篆楼"],
+            }),
+		}
+    });
+
+	dialogues["与炼丹楼导师对话"] = new Dialogue({
+        name: "与炼丹楼导师对话",
+		textlines: {
+			"介绍炼丹楼": new Textline({
+                name: "介绍炼丹楼",
+                text: "这里是炼丹楼，学院丹药的主要产出点<br>"+
+				"有时候会在任务阁挂所需药材的委托任务<br>",
+				unlocks: {	
+                    items: [
+						{ item_name: "炼丹手法与技巧说明", count: 1 },
+					],					
+					spec: "huizhang",		
+                },
+				locks_lines: ["介绍炼丹楼"],
+            }),
+		}
+    });
+
+	// 在 dialogues.js 的适当位置添加
+
+	dialogues["任务阁学姐"] = new Dialogue({
+		name: "任务阁学姐",
+		textlines: {
+			"接取任务": new Textline({
+				name: "学姐，有什么任务可以接吗？",
+				is_unlocked: false,
+				text: "当然有！最近学院周边出现了不少麻烦，正需要人手去处理。<br>"+
+					  "一个是【邪恶沼泽】的魔物清剿任务，另一个是【矿山】的资源采集任务。<br>"+
+					  "你想接哪个？",
+				unlocks: {
+					textlines: [{dialogue: "任务阁学姐", lines: ["邪恶沼泽任务", "矿山任务"]}],
+				},
+				locks_lines: ["接取任务"],
+			}),
+			"邪恶沼泽任务": new Textline({
+				name: "我接取【邪恶沼泽】任务",
+				text: "好的，这是任务委托书。<br>"+
+					  "邪恶沼泽里到处都是毒沼和吸血藤，你千万要小心。<br>"+
+					  "完成任务后回来找我复命。",
+				is_unlocked: false,
+				locks_lines: ["邪恶沼泽任务"],
+				unlocks: {
+					locations: ["邪恶沼泽"],
+					textlines: [{dialogue: "任务阁学姐", lines: ["提交邪恶沼泽任务"]},{dialogue: "学院飞舟点", lines: ["去邪恶沼泽（特别免费）"]}],
+					// 可以添加任务标记
+				},
+			}),
+			"矿山任务": new Textline({
+				name: "我接取【矿山】任务",
+				text: "矿山那边最近石精泛滥，矿工们都不敢去了。<br>"+
+					  "你去清理一下石精，顺便采集一些铁矿和煤矿回来吧。",
+				is_unlocked: false,
+				locks_lines: ["矿山任务"],
+				unlocks: {
+					locations: ["矿山"],
+					textlines: [{dialogue: "任务阁学姐", lines: ["提交矿山任务"]},{dialogue: "学院飞舟点", lines: ["去矿山（特别免费）"]}],
+				},
+			}),
+			"提交邪恶沼泽任务": new Textline({
+				name: "提交邪恶沼泽任务，需指定单位杀敌数>=500",
+				text: "暂未完成该任务统计，下个版本更新<br>",
+				is_unlocked: false,
+			}),
+			"提交矿山任务": new Textline({
+				name: "提交矿山任务，需指定单位杀敌数>=500且煤炭和铁的数量>=100",
+				text: "暂未完成该任务统计，下个版本更新<br>",
+				is_unlocked: false,
+			}),				
+		},
+	});
 	
     dialogues["秘法石碑 - 1"] = new Dialogue({
         name: "秘法石碑 - 1",

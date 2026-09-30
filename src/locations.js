@@ -1028,7 +1028,7 @@ function get_location_type_penalty(type, stage, stat) {
 	locations["战斗学院"] = new Location({ 
 		connected_locations: [],
         description: "你看到这里分了好多个部门，不同部门各司其职",  
-		dialogues: ["与赵主任对话","学院飞舟点"],
+		dialogues: ["与赵主任对话","学院飞舟点","与校长对话","开学典礼"],
         bgm: 4,
         is_unlocked: false,
         name: "战斗学院", 
@@ -1042,12 +1042,14 @@ function get_location_type_penalty(type, stage, stat) {
         name: "阵法楼",
         is_unlocked: false,
         bgm: 1,
+		dialogues: ["与阵法导师对话"], // 可选：添加一个阵法导师NPC		
     })
     locations["符篆楼"] = new Location({
         connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
         description: "符篆楼",
         name: "符篆楼",
         is_unlocked: false,
+		dialogues: ["与符篆导师对话"],
         bgm: 1,
     })
     locations["炼丹楼"] = new Location({
@@ -1055,6 +1057,7 @@ function get_location_type_penalty(type, stage, stat) {
         description: "炼丹楼",
         name: "炼丹楼",
         is_unlocked: false,
+		dialogues: ["与炼丹楼导师对话"],
         bgm: 1,
     })
     locations["炼器楼"] = new Location({
@@ -1062,6 +1065,7 @@ function get_location_type_penalty(type, stage, stat) {
         description: "炼器楼",
         name: "炼器楼",
         is_unlocked: false,
+		dialogues: ["与周远航对话"],
         bgm: 1,
     })
     locations["盾部"] = new Location({
@@ -1076,6 +1080,7 @@ function get_location_type_penalty(type, stage, stat) {
         description: "影部",
         name: "影部",
         is_unlocked: false,
+		dialogues: ["与影部导师对话"],
         bgm: 1,
     })
     locations["图书馆"] = new Location({
@@ -1083,6 +1088,7 @@ function get_location_type_penalty(type, stage, stat) {
         description: "图书馆",
         name: "图书馆",
         is_unlocked: false,
+		dialogues: ["用贡献点兑换功法"],
         bgm: 1,
     })
     locations["任务阁"] = new Location({
@@ -1090,6 +1096,7 @@ function get_location_type_penalty(type, stage, stat) {
         description: "任务阁",
         name: "任务阁",
         is_unlocked: false,
+		dialogues: ["与任务阁学姐对话","任务阁学姐"],	
         bgm: 1,
     })
     locations["你的住宅"] = new Location({
@@ -1112,6 +1119,7 @@ function get_location_type_penalty(type, stage, stat) {
 				alchemy: 3,
 			}
 		},
+		dialogues: ["度过时间，等待开学典礼开始"],
     })	
 
     locations["空间锚点"] = new Location({
@@ -1132,6 +1140,190 @@ function get_location_type_penalty(type, stage, stat) {
     locations["战斗学院"].connected_locations.push({location: locations["图书馆"]});	
 	locations["战斗学院"].connected_locations.push({location: locations["任务阁"]});
 	locations["战斗学院"].connected_locations.push({location: locations["你的住宅"]});	
+
+	// --- 在 战斗学院 内部添加部门练级地点 ---
+	locations["炼丹实训室"] = new Location({
+		connected_locations: [{location: locations["炼丹楼"], custom_text: "回到炼丹楼"}],
+		description: "炼丹楼的附属实训室，提供基础的炼丹设备，可以在这里练习炼丹术。",
+		name: "炼丹实训室",
+		bgm: 1,
+		crafting: {
+			is_unlocked: true,
+			use_text: "使用实训室炼丹炉",
+			tiers: { alchemy: 3 } // 提供较高的炼金等级加成
+		},
+	});
+
+	locations["阵法演练场"] = new Location({
+		connected_locations: [{location: locations["阵法楼"], custom_text: "回到阵法楼"}],
+		description: "阵法楼外的演练场，这里可以练习布置阵法。",
+		name: "阵法演练场",
+		bgm: 1,
+	});
+
+	locations["符篆工坊"] = new Location({
+		connected_locations: [{location: locations["符篆楼"], custom_text: "回到符篆楼"}],
+		description: "符篆楼的工坊，在这里可以练习书写和制作符箓。",
+		name: "符篆工坊",
+		bgm: 1,
+		crafting: {
+			is_unlocked: true,
+			use_text: "使用符箓工作台",
+			tiers: { crafting: 3 } // 提供合成等级加成
+		}
+	});
+
+	locations["炼器实训室"] = new Location({
+		connected_locations: [{location: locations["炼器楼"], custom_text: "回到炼器楼"}],
+		description: "炼器楼的实训室，可以在这里进行锻造和合成练习。",
+		name: "炼器实训室",
+		bgm: 1,
+		crafting: {
+			is_unlocked: true,
+			use_text: "使用炼器实训台",
+			tiers: { forging: 3, crafting: 3 }
+		}
+	});
+
+	// 将这些地点连接到战斗学院
+	locations["炼丹楼"].connected_locations.push({location: locations["炼丹实训室"]});
+	locations["阵法楼"].connected_locations.push({location: locations["阵法演练场"]});
+	locations["符篆楼"].connected_locations.push({location: locations["符篆工坊"]});
+	locations["炼器楼"].connected_locations.push({location: locations["炼器实训室"]});
+
+
+	// --- 任务阁：邪恶沼泽与矿山 ---
+
+	locations["邪恶沼泽"] = new Location({
+		connected_locations: [{location: locations["任务阁"], custom_text: "返回任务阁"}],
+		description: "任务阁发布的清剿任务地点。这里弥漫着毒沼的瘴气，到处都是危险的藤蔓生物。",
+		name: "邪恶沼泽",
+		bgm: 15,
+		dialogues: ["沼泽飞舟点"],	
+		is_unlocked: false, // 通过任务解锁
+		unlock_text: "你接受了任务阁的委托，前往邪恶沼泽清剿魔物。",
+	});
+
+/* 	locations["邪恶沼泽 - 1"] = new Combat_zone({
+		description: "邪恶沼泽的外围区域，毒沼遍布，吸血藤在暗处蠢蠢欲动。",
+		enemy_count: 20,
+		enemies_list: ["吸血藤", "魔鬼藤"],
+		enemy_group_size: [2, 3],
+		types: [{type: "toxic", stage: 1, xp_gain: 2}], // 毒沼效果
+		is_unlocked: true,
+		name: "邪恶沼泽 - 1",
+		rank: 501,
+		bgm: 15,
+		parent_location: locations["邪恶沼泽"],
+		first_reward: { xp: 5000 },
+		repeatable_reward: {
+			xp: 2000,
+			locations: [{location: "邪恶沼泽 - 2"}],
+		},
+	}); */
+
+	locations["邪恶沼泽 - 2"] = new Combat_zone({
+		description: "邪恶沼泽的深处，魔鬼藤在这里盘踞，生命力极其顽强。",
+		enemy_count: 20,
+		enemies_list: ["魔鬼藤"],
+		enemy_group_size: [2, 3],
+		types: [{type: "toxic", stage: 1, xp_gain: 3}],
+		is_unlocked: false,
+		name: "邪恶沼泽 - 2",
+		rank: 502,
+		bgm: 15,
+		parent_location: locations["邪恶沼泽"],
+		first_reward: { xp: 10000 },
+		repeatable_reward: {
+			xp: 4000,
+			locations: [{location: "邪恶沼泽 - X"}],
+		},
+	});
+
+	locations["邪恶沼泽 - X"] = new Challenge_zone({
+		description: "邪恶沼泽的中心，巨大的魔鬼藤母体就在这里。",
+		enemy_count: 1,
+		enemies_list: ["魔鬼藤[BOSS]"],
+		enemy_group_size: [1, 1],
+		types: [{type: "toxic", stage: 1, xp_gain: 5}],
+		is_unlocked: false,
+		is_challenge: true,
+		name: "邪恶沼泽 - X",
+		rank: 503,
+		bgm: 15,
+		parent_location: locations["邪恶沼泽"],
+		repeatable_reward: {
+			// 完成任务后的奖励
+		},
+	});
+
+	locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 1"]});
+	locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 2"]});
+	locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - X"]});
+
+
+	locations["矿山"] = new Location({
+		connected_locations: [{location: locations["任务阁"], custom_text: "返回任务阁"}],
+		description: "任务阁发布的资源采集地点。这里盛产铁矿和煤矿，但也盘踞着不少石精。",
+		name: "矿山",
+		bgm: 2,
+		is_unlocked: false, // 通过任务解锁
+		unlock_text: "你接受了任务阁的委托，前往矿山采集资源。",
+		dialogues: ["矿山飞舟点"],	
+	});
+
+/* 	locations["矿山 - 1"] = new Combat_zone({
+		description: "矿山的外围区域，石精在这里游荡。",
+		enemy_count: 20,
+		enemies_list: ["石精"],
+		enemy_group_size: [1, 2],
+		is_unlocked: true,
+		name: "矿山 - 1",
+		rank: 511,
+		bgm: 2,
+		parent_location: locations["矿山"],
+		first_reward: { xp: 8000 },
+		repeatable_reward: {
+			xp: 3000,
+			locations: [{location: "矿山 - 2"}],
+		},
+	}); */
+
+	locations["矿山 - 2"] = new Combat_zone({
+		description: "矿山的深处，富含铁矿的石精在这里聚集。",
+		enemy_count: 20,
+		enemies_list: ["铁矿石精"],
+		enemy_group_size: [1, 2],
+		is_unlocked: false,
+		name: "矿山 - 2",
+		rank: 512,
+		bgm: 2,
+		parent_location: locations["矿山"],
+		first_reward: { xp: 15000 },
+		repeatable_reward: {
+			xp: 6000,
+			locations: [{location: "矿山 - X"}],
+		},
+	});
+
+	locations["矿山 - X"] = new Challenge_zone({
+		description: "矿山的最深处，一只巨大的石精霸主守护着丰富的矿脉。",
+		enemy_count: 1,
+		enemies_list: ["石精霸主[BOSS]"],
+		enemy_group_size: [1, 1],
+		is_unlocked: false,
+		is_challenge: true,
+		name: "矿山 - X",
+		rank: 513,
+		bgm: 2,
+		parent_location: locations["矿山"],
+		repeatable_reward: {
+		},
+	});
+
+	locations["矿山"].connected_locations.push({location: locations["矿山 - 1"]});
+	locations["矿山"].connected_locations.push({location: locations["矿山 - 2"]});
+	locations["矿山"].connected_locations.push({location: locations["矿山 - X"]});
 
 	
 /*     locations["练兵场深处"] = new Location({ 
@@ -5603,11 +5795,12 @@ locations["城外墓园 - 1"] = new Combat_zone({
 	locations["空间锚点"].connected_locations.push({location: locations["城外墓园"]});	
 	locations["空间锚点"].connected_locations.push({location: locations["战斗学院"]});	
 	locations["空间锚点"].connected_locations.push({location: locations["系统空间2"]});	
+	locations["空间锚点"].connected_locations.push({location: locations["邪恶沼泽"]});	
 
 	// —— 特定地点 → 空间锚点 ——
 	[
 		"未知平原", "乡村小镇", "战斗学院", "主城",
-		"城外墓园", "系统空间2",
+		"城外墓园", "系统空间2","邪恶沼泽","矿山",
 	].forEach(name => {
 		if(locations[name]) {
 			locations[name].connected_locations.push({
@@ -6188,7 +6381,63 @@ locations["城外墓园 - 1"] = new Combat_zone({
             is_unlocked: true,
         }),		
     }
-    
+	// 在 locations.js 的符箓工坊中添加活动
+	locations["符篆工坊"].activities = {
+		"练习画符": new LocationActivity({
+			activity_name: "Talismans", // 使用合成类型或自定义
+			infinite: true,
+			starting_text: "练习画符",
+			skill_xp_per_tick: 2, // 这里会同时给数组里的两个技能加经验
+			is_unlocked: true,
+			// 核心：同时训练两个技能
+			base_skills_names: ["Calligraphy", "Talismans"], 
+			// ... 其他配置
+		})
+	}    
+	// 在 locations.js 的符箓工坊中添加活动
+	locations["阵法演练场"].activities = {
+		"练习阵法": new LocationActivity({
+			activity_name: "Formation", // 使用合成类型或自定义
+			infinite: true,
+			starting_text: "练习阵法",
+			skill_xp_per_tick: 2, // 这里会同时给数组里的两个技能加经验
+			is_unlocked: true,
+			// 核心：同时训练两个技能
+			base_skills_names: ["Formation"], 
+			// ... 其他配置
+		})
+	}	
+	locations["图书馆"].activities = {
+		"阅读书籍": new LocationActivity({
+			activity_name: "Literacy", // 使用合成类型或自定义
+			infinite: true,
+			starting_text: "阅读书籍",
+			skill_xp_per_tick: 2, // 这里会同时给数组里的两个技能加经验
+			is_unlocked: true,
+			// 核心：同时训练两个技能
+			base_skills_names: ["Literacy"], 
+			// ... 其他配置
+		})
+	}
+    locations["矿山"].activities = {
+        "mining_iron": new LocationActivity({
+            activity_name: "mining",
+            infinite: true,
+            starting_text: "开采铁矿",
+            skill_xp_per_tick: 5,
+            is_unlocked: true,
+            gained_resources: {
+                resources: [
+                    {name: "铁矿石", ammount: [[1, 1], [2, 4]], chance: [0.4, 0.9]},
+                    {name: "煤炭", ammount: [[1, 1], [2, 5]], chance: [0.3, 0.8]}
+                ],
+                time_period: [30, 10],
+                skill_required: [0, 20],
+                scales_with_skill: true,
+            },
+        }),
+    };
+	
     locations["燕岗矿井"].activities = {
         
         "miningP_Copper": new LocationActivity({

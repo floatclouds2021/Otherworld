@@ -50,6 +50,19 @@ const ARMOR_SETS = {
                 description: "生命上限 +300，生命回复 +40",
             },
         },
+    },
+    "铁制": {
+        name: "铁制套装",
+        thresholds: {
+            2: {
+                stats: { defense: { flat: 50 } },
+                description: "防御力 +50",
+            },
+            4: {
+                stats: { defense: { flat: 150 }},
+                description: "防御力 +150",
+            },
+        },
     },	
     // 想加更多套装，照这个格式继续写就行
     // 例如给"铁制"系列在 items.js 里加 set_name: "铁制"，然后这里加一条：

@@ -511,6 +511,81 @@ class Enemy {
             //应为900C
         ],
     });	
+
+	// --- 邪恶沼泽敌人 ---
+	enemy_templates["吸血藤"] = new Enemy({
+		name: "吸血藤",
+		description: "会主动攻击并吸取生命力的藤蔓植物。",
+		xp_value: 20,
+		rank: 5001,
+		image: "image/enemy/E5001.png", // 假设的图片路径
+		realm: "<span class=realm_basic><b>纳气境一层</b></span>",
+		size: "medium",
+		spec: [24], // 饮剑
+		tags: [],
+		stats: {health: 800, attack: 120, agility: 60, attack_speed: 1.0, defense: 40},
+		loot_list: [
+			{item_name: "藤蔓", chance: 0.6},
+			{item_name: "灵液", chance: 0.1},
+		]
+	});
+
+	enemy_templates["魔鬼藤"] = new Enemy({
+		name: "魔鬼藤",
+		description: "邪恶沼泽深处盘踞的藤蔓，拥有更强的攻击性和生命力。",
+		xp_value: 50,
+		rank: 5002,
+		image: "image/enemy/E5002.png",
+		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
+		size: "medium",
+		spec: [24, 31], // 饮剑 + 回春
+		tags: [],
+		stats: {health: 3000, attack: 250, agility: 100, attack_speed: 1.2, defense: 80},
+		loot_list: [
+			{item_name: "藤蔓", chance: 0.8},
+			{item_name: "灵液", chance: 0.2},
+			{item_name: "毒液", chance: 0.1},
+		]
+	});
+
+	// --- 矿山敌人 ---
+	enemy_templates["石精"] = new Enemy({
+		name: "石精",
+		description: "在矿洞中孕育出的岩石生命体，防御力极强。",
+		xp_value: 30,
+		rank: 5101,
+        image: "image/enemy/E1116.png",
+		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
+		size: "medium",
+		spec: [1], // 坚固
+		tags: [],
+		stats: {health: 10, attack: 1800, agility: 600, attack_speed: 0.8, defense: 1800},
+		loot_list: [
+			{item_name: "铁锭", chance: 0.3},
+			{item_name: "煤炭", chance: 0.4},
+			{item_name: "坚硬石块", chance: 0.5},
+		]
+	});
+
+	enemy_templates["铁矿石精"] = new Enemy({
+		name: "铁矿石精",
+		description: "富含铁矿的石精，击杀后可以获得更多铁矿。",
+		xp_value: 60,
+		rank: 5102,
+        image: "image/enemy/E2604.png",
+		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
+		size: "medium",
+		spec: [1],
+		tags: [],
+		stats: {health: 15, attack: 2500, agility: 800, attack_speed: 0.8, defense: 2100},
+		loot_list: [
+			{item_name: "铁锭", chance: 0.8},
+			{item_name: "精钢锭", chance: 0.1},
+			{item_name: "煤炭", chance: 0.5},
+		]
+	});
+	
+	
     enemy_templates["少年法师"] = new Enemy({
         name: "少年法师", 
         description: "幼小的法师。魔法攻击可以无视他人的防御，但他本身相当脆弱", 
@@ -647,25 +722,6 @@ class Enemy {
             {item_name: "金属残片", chance: 0.1},
             {item_name: "一级妖兽内丹", chance:0.12},
             //1.08C(-0.52C)
-        ],
-    });
-
-    enemy_templates["石精"] = new Enemy({
-        name: "石精", 
-        description: "每次打它，它最多只会掉1滴血~", 
-        xp_value: 5, 
-        rank: 1116,
-        image: "image/enemy/E1116.png",
-        realm: "<span class=realm_basic><b>万物级初等</b></span>",
-        size: "small",
-        spec: [1],
-        tags: [],
-        stats: {health: 4, attack: 36, agility: 12, attack_speed: 1.1, defense: 0}, 
-        loot_list: [
-            {item_name: "坚硬石块", chance: 0.2},
-            {item_name: "魔力碎晶", chance: 0.04},
-            {item_name: "一级妖兽内丹", chance:0.12},
-            //1.32C(-0.28C)
         ],
     });
 

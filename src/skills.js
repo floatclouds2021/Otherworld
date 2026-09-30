@@ -17,7 +17,6 @@ TODO:
 const weapon_type_to_skill = {
     "axe": "Axes",
     "dagger": "Daggers",
-    "trident": "Tridents",
     "moonwheel": "Moonwheels",
     "hammer": "Hammers",
     "sword": "Swords",
@@ -148,7 +147,7 @@ class Skill {
 
     add_xp({xp_to_add = 0}) {
         if(xp_to_add == 0 || !this.is_unlocked) {
-            return;
+			return {};  // ★ 改成 return {}
         }
         xp_to_add = Math.round(xp_to_add*100)/100;
 
@@ -545,6 +544,57 @@ function format_skill_rewards(milestone){
 
 //combat stances
 (function(){
+	// 阵法（后续用于战斗布阵，用负数光环实现）
+    skills["Formation"] = new Skill({
+        skill_id: "Formation",
+        names: {0: "阵法"},
+        description: "布置与操控阵法的能力。后续可在战斗中布置阵法（战斗区域获得负数光环效果）",
+        category: "Combat",
+        max_level: 100,
+        base_xp_cost: 100,
+        get_effect_description: () => `提升阵法效果`
+    });
+
+    // 书写（5级满级后解锁符箓）
+    skills["Calligraphy"] = new Skill({
+        skill_id: "Calligraphy",
+        names: {0: "书写"},
+        description: "绘制符箓的书写技巧。满级后解锁【符箓】技能。",
+        category: "Character",
+        max_level: 5,
+        base_xp_cost: 80,
+        xp_scaling: 1.6,
+        get_effect_description: () => {
+            if (skills["Calligraphy"].current_level >= 5) {
+                return "已解锁【符箓】技能！";
+            }
+            return `满级（5级）后解锁【符箓】技能。当前进度：${skills["Calligraphy"].current_level}/5`;
+        },
+        rewards: {
+            milestones: {
+                5: {
+                    unlocks: {
+                        skills: ["Talismans"]
+                    }
+                }
+            }
+        }
+    });
+
+    // 符箓（根据等级解锁配方，后续作为消耗品使用）
+    skills["Talismans"] = new Skill({
+        skill_id: "Talismans",
+		is_unlocked: false,       // ★ 加这一行
+        names: {0: "符箓", 20: "符箓·精通", 50: "符箓·大师"},
+        description: "制作与使用符箓的能力。等级越高，可制作的符箓越强。",
+        category: "Crafting",
+        max_level: 100,
+        base_xp_cost: 100,
+        xp_scaling: 1.5,
+        get_effect_description: () => `提升符箓制作成功率与效果`
+    });
+	
+	
     skills["Stance mastery"] = new Skill({skill_id: "Stance mastery", 
                                     names: {0: "秘法入门", 30: "秘法精通"}, 
                                     description: "如何在战斗中灵活使用各种秘法的知识",
@@ -1101,9 +1151,16 @@ function format_skill_rewards(milestone){
                                     10: { stats: { "crit_multiplier": {flat: 0.01} } },
                                 }
                             },
-                            get_effect_description: ()=> {
-                                return `增加持弓时暴击率 ${Math.round(skills["Bows"].get_coefficient()*1000- 1000)/10 }%`;
-                            },
+                            get_effect_description: () => {
+								let desc = `增加持弓时暴击率 ${Math.round(skills["Bows"].get_coefficient()*1000-1000)/10}%`;
+								if(window.global_flags?.is_bow_focus_unlocked) {
+									const lv = skills["Bows"].current_level;
+									const hit = 5 + lv * 0.5;
+									const spd = 3 + lv * 0.1;
+									desc += `<br><span style="color:cyan">【集中】</span>装备弓时命中率 +${hit.toFixed(1)}%，命中后获得 ${spd.toFixed(1)}% 攻速加成，持续 3 秒。`;
+								}
+								return desc;
+							},
                             max_level_coefficient: 2
                         });								
     skills["Swords"] = new Skill({skill_id: "Swords", 
@@ -1158,7 +1215,7 @@ function format_skill_rewards(milestone){
                                   
                                   max_level_coefficient: 2
                             });
-    skills["Tridents"] = new Skill({skill_id: "Tridents", 
+							/* skills["Tridents"] = new Skill({skill_id: "Tridents", 
                                   parent_skill: "Weapon mastery",
                                   names: {0: "戟术"}, 
                                   category: "Weapon",
@@ -1191,7 +1248,7 @@ function format_skill_rewards(milestone){
                                   },
                                   
                                   max_level_coefficient: 2
-                            });
+                            }); */
     skills["Moonwheels"] = new Skill({skill_id: "Moonwheels", 
                                   parent_skill: "Weapon mastery",
                                   names: {0:"银霜月轮·未入门",20: "银霜月轮·一重",40:"银霜月轮·二重",60:"银霜月轮·三重",80:"银霜月轮·四重",100:"银霜月轮·五重",120:"银霜月轮·圆满"}, 
@@ -1355,23 +1412,24 @@ Multiplies AP with hammers by ${Math.round((skills["Hammers"].get_coefficient("m
 
     skills["Daggers"] = new Skill({skill_id: "Daggers",
                                 parent_skill: "Weapon mastery",
-                                names: {0: "Dagger combat"},
+                                names: {0: "匕首战斗"},
                                 category: "Weapon",
-                                description: "The looked upon art of fighting (and stabbing) with daggers",
-                                get_effect_description: ()=> {
-                                    return `Multiplies damage dealt with daggers by ${Math.round(skills["Daggers"].get_coefficient("multiplicative")*1000)/1000}.
-Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("multiplicative")**0.3333)*1000)/1000}`;
-                                },
+                                description: "用匕首进行战斗（或刺杀）",
+								get_effect_description: () => {
+								let desc = `增加持匕首时暴击率 ${Math.round(skills["Daggers"].get_coefficient()*1000-1000)/10}%`;
+								if(window.global_flags?.is_shadow_step_unlocked) {
+									const lv = skills["Daggers"].current_level;
+									const eva = 5 + lv * 0.5;
+									const mul = 0.3 + lv * 0.02;
+									desc += `<br><span style="color:cyan">【影步】</span>装备匕首时闪避率 +${eva.toFixed(1)}%，闪避成功后追加一次 ${(mul*100).toFixed(0)}% 攻击力的伤害。`;
+								}
+								return desc;
+								},
                                 rewards: {
                                     milestones: {
                                         1: {
                                             stats: {
-                                                "dexterity": {flat: 1},
-                                            }
-                                        },
-                                        3: {
-                                            stats: {
-                                                "agility": {flat: 1},
+                                                "agility": {flat: 10},
                                             }
                                         },
                                         5: {
@@ -1380,20 +1438,15 @@ Multiplies AP with daggers by ${Math.round((skills["Daggers"].get_coefficient("m
                                                 "crit_rate": {flat: 0.01},
                                             },
                                         },
-                                        7: {
-                                            stats: {
-                                                "dexterity": {flat: 1},
-                                            }
-                                        },
                                         10: {
                                             stats: {
                                                 "crit_rate": {flat: 0.02},
                                                 "crit_multiplier": {flat: 0.01}, 
                                             },
                                         },
-                                        12: {
+                                        15: {
                                             stats: {
-                                                "dexterity": {flat: 2},
+                                                "agility": {flat: 20},
                                             }
                                         },
                                     }

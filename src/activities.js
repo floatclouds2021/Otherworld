@@ -126,6 +126,27 @@ class Gathering extends Training {
         base_skills_names: ["AquaElement"],
         is_unlocked: true,
     });
+	
+	//异界新增动作
+	// 在 activities.js 中的合适位置添加
+	activities["Formation"] = new Training({
+		name: "Formation", // 显示名称
+		action_text: "练习布阵方法",
+		is_unlocked: true,
+		base_skills_names: ["Formation"], // 受影响的技能
+    });
+	activities["Talismans"] = new Training({
+		name: "Talismans", // 显示名称
+		action_text: "练习画符",
+		is_unlocked: true,
+		base_skills_names: ["Calligraphy", "Talismans"], 
+    });
+	activities["Literacy"] = new Training({
+		name: "Literacy", // 显示名称
+		action_text: "阅读书籍",
+		is_unlocked: true,
+		base_skills_names: ["Literacy"], 
+    });
 })();
 
 //resource gatherings

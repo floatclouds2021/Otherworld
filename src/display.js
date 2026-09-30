@@ -195,6 +195,21 @@ const other_save_load_button = document.getElementById("import_other_save_button
 
 const units=['','万','亿','兆','京','垓','秭','穣','沟','涧','正','载','极'];
 
+/**
+ * 为一个活动挑选要展示的主技能：
+ * 优先展示"未满级且已解锁"的技能；全满级就展示第一个。
+ */
+function getPrimarySkillForDisplay(activity) {
+    const names = activity?.base_skills_names || [];
+    for (const skill_id of names) {
+        const skill = skills[skill_id];
+        if (skill && skill.is_unlocked && skill.current_level < skill.max_level) {
+            return skill;
+        }
+    }
+    return names.length > 0 ? skills[names[0]] : null;
+}
+
 function format_number(some_number)
 {
     let f_result = "";
@@ -310,8 +325,8 @@ function create_item_tooltip_content({item, options={}}) {
             });
         }
 
-        let EquipSlotMap = {"sword":"剑","head":"头部","trident":"匕首","moonwheel":"月轮","torso":"躯干","legs":"腿部","feet":"脚部","pickaxe":"镐子","axe":"斧子","sickle":"镰刀","props":"道具","method":"秘法","special":"特殊","realm":"领域","bow":"弓"}
-		let WeaponTypeMap = {"sword":"剑","trident":"匕首","moonwheel":"月轮","bent":"弓","hammer":"战锤"};
+		let EquipSlotMap = {"sword":"剑","dagger":"匕首","head":"头部","moonwheel":"月轮","torso":"躯干","legs":"腿部","feet":"脚部","pickaxe":"镐子","axe":"斧子","sickle":"镰刀","props":"道具","method":"秘法","special":"特殊","realm":"领域","bow":"弓"}
+		let WeaponTypeMap = {"sword":"剑","moonwheel":"月轮","bent":"弓","hammer":"战锤"};
         if(item.equip_slot === "weapon") {
             item_tooltip += `<br>类型: <b>${EquipSlotMap[item.weapon_type]}</b>`;
         }
@@ -1227,7 +1242,7 @@ function create_inventory_item_div({key, item_count, target, is_equipped, trade_
     if("quality" in target_item) {
         item_control_div.dataset.item_quality = target_item.quality;
     }
-    let EquipSlotMap = {"sword":"剑","head":"头部","trident":"三叉戟","moonwheel":"月轮","torso":"躯干","legs":"腿部","feet":"脚部","weapon":"武器","props":"道具","method":"秘法","special":"特殊","realm":"领域"};
+    let EquipSlotMap = {"sword":"剑","head":"头部","moonwheel":"月轮","torso":"躯干","legs":"腿部","feet":"脚部","weapon":"武器","props":"道具","method":"秘法","special":"特殊","realm":"领域"};
     if(target_item.tags?.equippable) {
         if(target_item.tags.tool) {
             item_name_div.innerHTML = `<span class = "item_slot" >[tool]</span> <span>${target_item.getName()}</span>`;
@@ -1554,10 +1569,12 @@ function update_displayed_normal_location(location) {
     ///////////////////////////
     //add buttons to start jobs
 
-    const available_jobs = Object.values(location.activities).filter(activity => activities[activity.activity_name].type === "JOB" 
-                                                                    && activities[activity.activity_name].is_unlocked
-                                                                    && activity.is_unlocked
-                                                                    && activities[activity.activity_name].base_skills_names.filter(skill => !skills[skill].is_unlocked).length == 0);
+	const available_jobs = Object.values(location.activities).filter(activity => 
+		activities[activity.activity_name].type === "JOB" 
+		&& activities[activity.activity_name].is_unlocked
+		&& activity.is_unlocked
+		&& activities[activity.activity_name].base_skills_names.some(skill_id => skills[skill_id]?.is_unlocked)
+	);
     if(available_jobs.length > 2) {     
         const jobs_button = document.createElement("div");
         jobs_button.setAttribute("data-location", location.name);
@@ -1572,10 +1589,12 @@ function update_displayed_normal_location(location) {
     ///////////////////////////////
     //add buttons to start training
 
-    const available_trainings = Object.values(location.activities).filter(activity => activities[activity.activity_name].type === "TRAINING" 
-                                                                    && activities[activity.activity_name].is_unlocked
-                                                                    && activity.is_unlocked
-                                                                    && activities[activity.activity_name].base_skills_names.filter(skill => !skills[skill].is_unlocked).length == 0);
+	const available_trainings = Object.values(location.activities).filter(activity => 
+		activities[activity.activity_name].type === "TRAINING" 
+		&& activities[activity.activity_name].is_unlocked
+		&& activity.is_unlocked
+		&& activities[activity.activity_name].base_skills_names.some(skill_id => skills[skill_id]?.is_unlocked)
+	);
     if(available_trainings.length > 2) {     
         const trainings_button = document.createElement("div");
         trainings_button.setAttribute("data-location", location.name);
@@ -1590,10 +1609,12 @@ function update_displayed_normal_location(location) {
     ////////////////////////////////
     //add buttons to start gathering
     if(global_flags.is_gathering_unlocked) {
-        const available_gatherings = Object.values(location.activities).filter(activity => activities[activity.activity_name].type === "GATHERING" 
-                                                                        && activities[activity.activity_name].is_unlocked
-                                                                        && activity.is_unlocked
-                                                                        && activities[activity.activity_name].base_skills_names.filter(skill => !skills[skill].is_unlocked).length == 0);
+        const available_gatherings = Object.values(location.activities).filter(activity => 
+			activities[activity.activity_name].type === "GATHERING" 
+			&& activities[activity.activity_name].is_unlocked
+			&& activity.is_unlocked
+			&& activities[activity.activity_name].base_skills_names.some(skill_id => skills[skill_id]?.is_unlocked)
+		);
         if(available_gatherings.length > 2) {     
             const gatherings_button = document.createElement("div");
             gatherings_button.setAttribute("data-location", location.name);
@@ -1774,15 +1795,15 @@ function create_location_choices({location, category, add_icons = true, is_comba
             activity_div.innerHTML += location.activities[key].starting_text;
             choice_list.push(activity_div);
         });
-    } else if (category === "train") {
-        Object.keys(location.activities).forEach(key => {
-            if(!activities[location.activities[key].activity_name]?.is_unlocked 
-                || !location.activities[key]?.is_unlocked 
-                || activities[location.activities[key].activity_name].type !== "TRAINING"
-                || activities[location.activities[key].activity_name].base_skills_names.filter(skill => !skills[skill].is_unlocked).length > 0) 
-            {
-                return;
-            }
+	} else if (category === "train") {
+		Object.keys(location.activities).forEach(key => {
+			if(!activities[location.activities[key].activity_name]?.is_unlocked 
+				|| !location.activities[key]?.is_unlocked 
+				|| activities[location.activities[key].activity_name].type !== "TRAINING"
+				|| !activities[location.activities[key].activity_name].base_skills_names.some(skill_id => skills[skill_id]?.is_unlocked)) // 改为 some
+			{
+				return;
+			}
 
             const activity_div = document.createElement("div");
 
@@ -1794,15 +1815,15 @@ function create_location_choices({location, category, add_icons = true, is_comba
             activity_div.innerHTML += `<span style="color:#d8c0ff">` + location.activities[key].starting_text + "</span>";
             choice_list.push(activity_div);
         });
-    } else if (category === "gather") {
-        Object.keys(location.activities).forEach(key => {
-            if(!activities[location.activities[key].activity_name]?.is_unlocked 
-                || !location.activities[key]?.is_unlocked 
-                || activities[location.activities[key].activity_name].type !== "GATHERING"
-                || activities[location.activities[key].activity_name].base_skills_names.filter(skill => !skills[skill].is_unlocked).length > 0) 
-            {
-                return;
-            }
+	} else if (category === "gather") {
+		Object.keys(location.activities).forEach(key => {
+			if(!activities[location.activities[key].activity_name]?.is_unlocked 
+				|| !location.activities[key]?.is_unlocked 
+				|| activities[location.activities[key].activity_name].type !== "GATHERING"
+				|| !activities[location.activities[key].activity_name].base_skills_names.some(skill_id => skills[skill_id]?.is_unlocked)) // 改为 some
+			{
+				return;
+			}
 
             const activity_div = document.createElement("div");
 
@@ -3182,17 +3203,21 @@ function start_activity_display(current_activity) {
     action_status_div.id = "action_status_div";
     const action_xp_div = document.createElement("div");
 
-    if(activities[current_activity.activity_name].base_skills_names) {
-        const needed_xp = skills[activities[current_activity.activity_name].base_skills_names].current_level == skills[activities[current_activity.activity_name].base_skills_names].max_level? "Max": `${Math.round(10000*skills[activities[current_activity.activity_name].base_skills_names].current_xp/skills[activities[current_activity.activity_name].base_skills_names].xp_to_next_lvl)/100}%`
-        if(activities[current_activity.activity_name].type !== "GATHERING") {
-            action_xp_div.innerText = `每秒得到 ${current_activity.skill_xp_per_tick} ${skills[activities[current_activity.activity_name].base_skills_names].name()} 基础经验值   (${needed_xp})`;
-        } else {
-            action_xp_div.innerText = `得到 ${current_activity.skill_xp_per_tick} 基本经验 每个采集循环 对于 ${skills[activities[current_activity.activity_name].base_skills_names].name()} (${needed_xp})`;
-        }
-    }
-    else {
-        console.warn(`Activity "${current_activity.activity_name}" has no skills assigned!`);
-    }
+	if(activities[current_activity.activity_name].base_skills_names) {
+		const sk = getPrimarySkillForDisplay(activities[current_activity.activity_name]);
+		if (sk) {
+			const needed_xp = sk.current_level == sk.max_level
+				? "Max"
+				: `${Math.round(10000*sk.current_xp/sk.xp_to_next_lvl)/100}%`;
+			if(activities[current_activity.activity_name].type !== "GATHERING") {
+				action_xp_div.innerText = `每秒得到 ${current_activity.skill_xp_per_tick} ${sk.name()} 基础经验值   (${needed_xp})`;
+			} else {
+				action_xp_div.innerText = `得到 ${current_activity.skill_xp_per_tick} 基本经验 每个采集循环 对于 ${sk.name()} (${needed_xp})`;
+			}
+		}
+	} else {
+		console.warn(`Activity "${current_activity.activity_name}" has no skills assigned!`);
+	}
 
 
     action_xp_div.id = "action_xp_div";
@@ -3203,9 +3228,9 @@ function start_activity_display(current_activity) {
 
 
     const action_end_text = document.createElement("div");
-    const ActivityNameMap = {"Running":"跑步","Swimming":"游泳","mining":"挖掘","woodcutting":"砍伐","fishing":"钓鱼","AquaElement":"水元素感应"};
-    const dev_ACNMap = false;
-    action_end_text.innerText = `结束 ${dev_ACNMap?current_activity.activity_name:ActivityNameMap[current_activity.activity_name]}`;
+	const ActivityNameMap = {"Running":"跑步","Swimming":"游泳","mining":"挖掘","woodcutting":"砍伐","fishing":"钓鱼","AquaElement":"水元素感应","Formation":"阵法","Talismans":"画符"};
+	const dev_ACNMap = false;
+	action_end_text.innerText = `结束 ${ActivityNameMap[current_activity.activity_name] || current_activity.activity_name}`;
     action_end_text.id = "action_end_text";
 
 
@@ -3263,13 +3288,18 @@ function update_displayed_ongoing_activity(current_activity, is_job){
             time_info_div.innerHTML = `Next earnings in: ${format_time({time: {minutes: current_activity.working_period - current_activity.working_time%current_activity.working_period}})}`;
         }
     }
-    const action_xp_div = document.getElementById("action_xp_div");
-    const needed_xp = skills[activities[current_activity.activity_name].base_skills_names].current_level == skills[activities[current_activity.activity_name].base_skills_names].max_level? "Max": `${Math.round(10000*skills[activities[current_activity.activity_name].base_skills_names].current_xp/skills[activities[current_activity.activity_name].base_skills_names].xp_to_next_lvl)/100}%`
-    if(activities[current_activity.activity_name].type !== "GATHERING") {
-        action_xp_div.innerText = `每秒获取 ${format_number(current_activity.skill_xp_per_tick*get_skills_overall_xp_gain())}  ${skills[activities[current_activity.activity_name].base_skills_names].name()} 经验值 (${needed_xp})`;
-    } else {
-        action_xp_div.innerText = `得到 ${current_activity.skill_xp_per_tick} 基本经验 每个采集循环 对于 ${skills[activities[current_activity.activity_name].base_skills_names].name()} (${needed_xp})`;
-    }
+	const action_xp_div = document.getElementById("action_xp_div");
+	const sk = getPrimarySkillForDisplay(activities[current_activity.activity_name]);
+	if (sk) {
+		const needed_xp = sk.current_level == sk.max_level
+			? "Max"	
+			: `${Math.round(10000*sk.current_xp/sk.xp_to_next_lvl)/100}%`;
+		if(activities[current_activity.activity_name].type !== "GATHERING") {
+			action_xp_div.innerText = `每秒获取 ${format_number(current_activity.skill_xp_per_tick*get_skills_overall_xp_gain())}  ${sk.name()} 经验值 (${needed_xp})`;
+		} else {
+			action_xp_div.innerText = `得到 ${current_activity.skill_xp_per_tick} 基本经验 每个采集循环 对于 ${sk.name()} (${needed_xp})`;
+		}
+	}
     if(current_activity.spec != ""){
         if(current_activity.spec == "goto2-5")
         {
@@ -4166,8 +4196,8 @@ function add_bestiary_lines(zone)
     //zone 11-> 1-1，rank作为1200处理
     //sorts bestiary_list div by enemy rank
     bestiary_entry_divs[zone] = document.createElement("div");
-    let ZoneNameMap = {10:"训练场",11:"未知平原",12:"城外墓园",15:"地宫核心",21:"荒兽森林",22:"清野江畔",23:"纳家秘境",24:"结界湖",25:"声律城废墟",26:"声律城战场",27:"天外飞船",28:"飞船核心",31:"赫尔沼泽",32:"黑暗森林",33:"纯白冰原",34:"极寒冰宫",35:"时封水牢",36:"传承幻境",37:"幻境核心",41:"城门战",42:"密林战",43:"古墓战",44:"毬毬山谷",45:"鲜血峰",46:"破败之域",47:"破败危壁",48:"灭门战【WIP/需要剧情修正】",51:"枯叶走廊",52:"灰魇【WIP】",53:"灰魇庭院",54:"珍珠海",55:"风雷大会",56:"行道盟审判战",61:"深林【WIP】",62:"血魔海",63:"炎眸【WIP】",64:"葬地【WIP】",65:"冗音圣树",66:"冗音之塔",67:"音界",68:"圣城【WIP】"};//显示名
-    let ZoneTpMap = {10:"训练场",11:"未知平原",12:"城外墓园",15:"地宫深层",21:"荒兽森林",22:"清野江畔",23:"纳家秘境 - 战斗区",24:"结界湖",25:"声律城废墟",26:"声律城战场",27:"天外飞船",28:"飞船核心",31:"赫尔沼泽",32:"黑暗森林",33:"纯白冰原",34:"极寒冰宫",35:"时封水牢",36:"传承幻境",37:"幻境核心·地宫",41:"狩猎大赛·城门战",42:"狩猎大赛·密林战",43:"狩猎大赛·古墓战",44:"毬毬山谷",45:"鲜血峰",46:"破败之域",47:"破败危壁",48:"灭门战【WIP/需要剧情修正】",51:"枯叶走廊",52:"灰魇【WIP】",53:"灰魇庭院",54:"珍珠海",55:"风雷大会",56:"行道盟审判战",61:"深林【WIP】",62:"血魔海",63:"炎眸【WIP】",64:"葬地【WIP】",65:"冗音圣树",66:"冗音之塔",67:"音界",68:"圣城【WIP】"};//TP地点名
+    let ZoneNameMap = {10:"训练场",11:"未知平原",12:"城外墓园",15:"地宫核心",21:"荒兽森林",22:"清野江畔",23:"纳家秘境",24:"结界湖",25:"声律城废墟",26:"声律城战场",27:"天外飞船",28:"飞船核心",31:"赫尔沼泽",32:"黑暗森林",33:"纯白冰原",34:"极寒冰宫",35:"时封水牢",36:"传承幻境",37:"幻境核心",41:"城门战",42:"密林战",43:"古墓战",44:"毬毬山谷",45:"鲜血峰",46:"破败之域",47:"破败危壁",48:"灭门战【WIP/需要剧情修正】",51: "邪恶沼泽",52: "矿山",53:"灰魇庭院",54:"珍珠海",55:"风雷大会",56:"行道盟审判战",61:"深林【WIP】",62:"血魔海",63:"炎眸【WIP】",64:"葬地【WIP】",65:"冗音圣树",66:"冗音之塔",67:"音界",68:"圣城【WIP】"};//显示名
+    let ZoneTpMap = {10:"训练场",11:"未知平原",12:"城外墓园",15:"地宫深层",21:"荒兽森林",22:"清野江畔",23:"纳家秘境 - 战斗区",24:"结界湖",25:"声律城废墟",26:"声律城战场",27:"天外飞船",28:"飞船核心",31:"赫尔沼泽",32:"黑暗森林",33:"纯白冰原",34:"极寒冰宫",35:"时封水牢",36:"传承幻境",37:"幻境核心·地宫",41:"狩猎大赛·城门战",42:"狩猎大赛·密林战",43:"狩猎大赛·古墓战",44:"毬毬山谷",45:"鲜血峰",46:"破败之域",47:"破败危壁",48:"灭门战【WIP/需要剧情修正】",51: "邪恶沼泽",52: "矿山",53:"灰魇庭院",54:"珍珠海",55:"风雷大会",56:"行道盟审判战",61:"深林【WIP】",62:"血魔海",63:"炎眸【WIP】",64:"葬地【WIP】",65:"冗音圣树",66:"冗音之塔",67:"音界",68:"圣城【WIP】"};//TP地点名
     const name_div = document.createElement("div");
     name_div.innerHTML = `<b><div  onclick="change_location('${ZoneTpMap[zone]}')">【${ZoneNameMap[zone]}】</div></b>`;
     name_div.classList.add("bestiary_entry_name");
@@ -4234,6 +4264,12 @@ function add_bestiary_zones(enemy_name)
     if(enemy_name == "燕岗战法小队") add_bestiary_lines(43);
     if(enemy_name == "青茸茸将军") add_bestiary_lines(44);
     if(enemy_name == "翩然蝶仙") add_bestiary_lines(45);
+		
+	// 在 display.js 的 add_bestiary_zones 函数中添加
+	if(enemy_name == "吸血藤") add_bestiary_lines(51);
+	if(enemy_name == "魔鬼藤") add_bestiary_lines(51);
+	if(enemy_name == "石精") add_bestiary_lines(52);
+	if(enemy_name == "铁矿石精") add_bestiary_lines(52);
 }
 
 function reload_bestiary(){
