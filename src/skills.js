@@ -1064,51 +1064,47 @@ function format_skill_rewards(milestone){
         skill_id: "Toxic resistance",
         names: {0: "毒液抗性",10:"毒液抗性·精通",20:"毒液抗性·圆满"},
         description: "对常见蚊虫毒液的免疫能力。",
-        base_xp_cost: 1800e4,
+        base_xp_cost: 400,
         max_level: 20,
         xp_scaling: 1.6,
         category: "Environmental",
         rewards: {
             milestones: {
-            4: {
-                stats: {
-                    agility: {
-                        flat:5e8
-                    },
-                    },
-                },
-            8: {
-                stats: {
-                    agility: {
-                        flat:10e8
-                    },
-                    },
-                },
-                12: {
-                stats: {
-                    agility: {
-                        flat:15e8
-                    },
-                    },
-                },
-                16: {
-                stats: {
-                    agility: {
-                        flat:20e8
-                    },
-                    },
-                },
+				5: {
+					stats: {
+						health_regeneration_flat: {
+							flat:30
+						},
+					},
+				},
+				10: {
+					stats: {
+						health_regeneration_flat: {
+							flat:50
+						},
+					},
+				},
+                15: {
+					stats: {
+						health_regeneration_flat: {
+							flat:80
+						},
+					},
+				},
                 20: {
-                stats: {
-                    agility: {
-                        flat:30e8
-                    },
-                    },
-                }
+					stats: {
+						health_regeneration_flat: {
+							flat:120
+						},
+					},
+				},
             }
         },
         get_effect_description: () => {
-            return `毒液伤害削弱到原来的${100-skills["Toxic resistance"].current_level*5}%,<br>再因为【坚韧皮肤】削弱到原来的${(100*(0.99**skills["Iron skin"].current_level)).toFixed(2)}%.<br>毒液防御惩罚^${(1-skills["Toxic resistance"].current_level*0.05).toFixed(2)}`;
+            const reduction = Math.min(skills["Toxic resistance"].current_level * 0.04, 1);
+            return `毒液伤害减免 ${(reduction*100).toFixed(0)}%<br>` +
+                   `（基础毒伤 = 最大生命的 3%/s，每级 -4%）<br>` +
+                   `毒液防御惩罚^${(1-skills["Toxic resistance"].current_level*0.04).toFixed(2)}`;
         }
     });
 
@@ -1209,9 +1205,15 @@ function format_skill_rewards(milestone){
                                         },
                                     }
                                  },
-                                  get_effect_description: ()=> {
-                                      return `增加持剑时暴击率 ${Math.round(skills["Swords"].get_coefficient()*1000- 1000)/10 }%`;
-                                  },
+									get_effect_description: () => {
+										let desc = `增加持剑时暴击率 ${Math.round(skills["Swords"].get_coefficient()*1000-1000)/10}%`;
+										if(window.global_flags?.is_sword_heart_unlocked) {
+											const lv = skills["Swords"].current_level;
+											const bonus = (lv * 0.5).toFixed(1);
+											desc += `<br><span style="color:cyan">【剑心】</span>装备剑时，全属性 +${bonus}%。`;
+										}
+										return desc;
+									},
                                   
                                   max_level_coefficient: 2
                             });
@@ -1500,7 +1502,7 @@ Multiplies AP with hammers by ${Math.round((skills["Hammers"].get_coefficient("m
 													multiplier: 1.05,
 												},
 												"health_regeneration_flat": {
-													multiplier: 1.5,
+													multiplier: 1.05,
 												},
 												
                                             },
@@ -1543,7 +1545,7 @@ Multiplies AP with hammers by ${Math.round((skills["Hammers"].get_coefficient("m
 													multiplier: 1.1,
 												},
 												"health_regeneration_flat": {
-													multiplier: 1.5,
+													multiplier: 1.15,
 												},
 												
                                             },
@@ -1586,7 +1588,7 @@ Multiplies AP with hammers by ${Math.round((skills["Hammers"].get_coefficient("m
 													multiplier: 1.05,
 												},
 												"health_regeneration_flat": {
-													multiplier: 2,
+													multiplier: 1.35,
 												},
 												
                                             },

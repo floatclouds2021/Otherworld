@@ -280,6 +280,15 @@ class TradeItem {
         profit_margin: 2.8,
         act:1,
     });		
+    traders["阵法商人"] = new Trader({
+        name: "阵法商人",
+        inventory_template: "Array",
+		is_unlocked: true,          // ★ 改为 true，玩家一到阵法楼就能看见
+        location_name: "阵法楼",
+        profit_margin: 2.5,
+        refresh_time: 1,
+        act: 1,
+    });	
 	//以下商人未使用--------------------------
 	
     traders["village trader"] = new Trader({
@@ -514,8 +523,6 @@ class TradeItem {
             
             new TradeItem({item_name: "微尘·凶兽肉排", count: [2,5], chance: 0.5}),
             
-            new TradeItem({item_name: "铁剑", count: [1], quality: [61, 100], chance: 0.8}),
-            new TradeItem({item_name: "铁剑·改", count: [1], quality: [81, 120], chance: 0.2}),
             new TradeItem({item_name: "粘合帽子", count: [1], quality: [61, 100], chance: 0.5}),
             new TradeItem({item_name: "粘合背心", count: [1], quality: [61, 100], chance: 0.5}),
             new TradeItem({item_name: "粘合裤子", count: [1], quality: [61, 100], chance: 0.5}),
@@ -611,7 +618,11 @@ class TradeItem {
 			new TradeItem({item_name: "大力参", count: [80,100]}),
 			new TradeItem({item_name: "铁线草", count: [80,200]}),
     ];	
-	
+    inventory_templates["Array"] = [
+        new TradeItem({item_name: "阵旗", count: [15, 25]}),
+        new TradeItem({item_name: "阵法核心", count: [3, 9]}),
+        //new TradeItem({item_name: "铁矿石", count: [3, 8]}),
+    ];	
 			
     inventory_templates["Terra Palace"] = 
     [

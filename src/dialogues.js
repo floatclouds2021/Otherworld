@@ -1166,6 +1166,22 @@ class Textline {
                     spec: "gf-bow",
                 },
             }),
+			"炼体秘典": new Textline({ 
+                is_unlocked: true,
+                name: "炼体秘典（皮肤经验加成），需要10000贡献点",
+                text: "",
+                unlocks: {
+                    spec: "gf-skin",
+                },
+            }),
+			"剑心要诀": new Textline({ 
+                is_unlocked: true,
+                name: "剑心要诀（剑技），需要10000贡献点",
+                text: "",
+                unlocks: {
+                    spec: "gf-sword",
+                },
+            }),
 			"聚气丹": new Textline({ 
                 is_unlocked: true,
                 name: "聚气丹，需要3000贡献点/颗",
@@ -1280,6 +1296,21 @@ class Textline {
 					 textlines: [{dialogue: "开学典礼", lines: ["校长发言"]}]
                 },
 				locks_lines: ["时间流逝中"],
+            }),
+		}
+    });
+
+	dialogues["做好准备，参加新生校内赛"] = new Dialogue({
+        name: "做好准备，参加新生校内赛",
+		textlines: {
+			"前往参加": new Textline({
+                name: "前往参加",
+				is_unlocked: false,
+                text: "准备的差不多了，可以去参加新生校内赛了【v0.07终点】<br>",
+/* 				unlocks: {
+					 textlines: [{dialogue: "开学典礼", lines: ["校长发言"]}]
+                },
+				locks_lines: ["时间流逝中"], */
             }),
 		}
     });
@@ -1430,17 +1461,80 @@ class Textline {
 				},
 			}),
 			"提交邪恶沼泽任务": new Textline({
-				name: "提交邪恶沼泽任务，需指定单位杀敌数>=500",
-				text: "暂未完成该任务统计，下个版本更新<br>",
+				name: "提交邪恶沼泽任务（击杀魔鬼藤母体[BOSS]），奖励3000贡献点",
+				text: "",
 				is_unlocked: false,
+				unlocks: { spec: "submit_zhaoze" },
 			}),
 			"提交矿山任务": new Textline({
-				name: "提交矿山任务，需指定单位杀敌数>=500且煤炭和铁的数量>=100",
-				text: "暂未完成该任务统计，下个版本更新<br>",
+				name: "提交矿山任务（击杀石精霸主[BOSS] + 50铁锭），奖励2000贡献点",
+				text: "",
 				is_unlocked: false,
-			}),				
+				unlocks: { spec: "submit_kuangshan" },
+			}),	
+			// 在 dialogues.js 里
+			"提交邪恶沼泽任务完成": new Textline({
+				name: "复命",
+				text: "感谢你的付出！后续学院有新的任务会第一时间通知你。",
+				is_unlocked: false,
+				unlocks: {
+					 textlines: [{dialogue: "做好准备，参加新生校内赛", lines: ["前往参加"]}]
+                },
+				locks_lines: ["提交邪恶沼泽任务完成"],
+			}),	
+			"提交矿山任务完成": new Textline({
+				name: "复命",
+				text: "感谢你的付出！后续学院有新的任务会第一时间通知你。",
+				is_unlocked: false,
+				unlocks: {
+					 textlines: [{dialogue: "做好准备，参加新生校内赛", lines: ["前往参加"]}]
+                },
+				locks_lines: ["提交矿山任务完成"],
+			}),			
 		},
 	});
+
+    dialogues["与周远航对话"] = dialogues["与周远航对话"] || {};
+    
+	// ★ 修复：周远航升级魔力抵消器 —— 由矿山 Boss 解锁
+	(function(){
+		const zh = dialogues["与周远航对话"];
+		if(!zh || !zh.textlines) return;
+
+		// 1. 保证 textline 存在（初始锁定）
+		if(!zh.textlines["升级魔力抵消器"]) {
+			zh.textlines["升级魔力抵消器"] = new Textline({
+				name: "升级魔力抵消器（岩心×1 + 晶石碎片×10 + 铁矿石×20）",
+				is_unlocked: false,
+				text: "升到【壹型】需要：岩心 ×1 + 晶石碎片 ×10 + 铁矿石 ×20。<br>",
+				unlocks: { spec: "upgrade_ma_off" },
+			});
+		}
+		// 注意：这里不再挂到"见面礼"上，改为由矿山 Boss 的 repeatable_reward 解锁
+	})();
+
+    // 阵法商人对话
+	dialogues["阵法商人"] = new Dialogue({
+		name: "阵法商人",
+		textlines: {
+			"介绍": new Textline({
+				name: "这位道友，有何贵干？",
+				is_unlocked: true,
+				text: "我这儿出售阵旗和阵法核心，价格公道。<br>" +
+						"在这练习可以不用，但是出去布阵这些可是必备物品<br>" +
+					  "要购买的话直接跟我交易就行（点左上角【与阵法商人交易】）。",
+				locks_lines: ["介绍"],
+			}),
+		}
+	});
+
+    // 影部对话
+    dialogues["与影部导师对话"].textlines["邪教线索"] = new Textline({
+        name: "有什么任务可以接吗？",
+        is_unlocked: false,
+        text: "最近沼泽一带出现了邪教活动的踪迹。如果你在沼泽遇到被追杀的人，务必施以援手。",
+        unlocks: { locations: ["邪恶沼泽"] },
+    });
 	
     dialogues["秘法石碑 - 1"] = new Dialogue({
         name: "秘法石碑 - 1",
@@ -4157,6 +4251,30 @@ class Textline {
             }),
         }
     });
+
+	dialogues["布置聚灵阵"] = new Dialogue({
+		name: "布置聚灵阵",
+		starting_text: "布置/升级聚灵阵",
+		textlines: {
+			"check": new Textline({
+				is_unlocked: true,
+				name: "查看当前聚灵阵状态",
+				text: "",
+				unlocks: {
+					spec: "formation_check",
+				},
+			}),
+			"upgrade": new Textline({
+				is_unlocked: true,
+				name: "布置/升级聚灵阵",
+				text: "",
+				unlocks: {
+					spec: "formation_upgrade",
+				},
+			}),
+		},
+	});
+	
 })();
 
 export {dialogues};

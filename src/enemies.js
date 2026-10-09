@@ -512,6 +512,117 @@ class Enemy {
         ],
     });	
 
+	// --- 矿山敌人 ---
+	enemy_templates["石精"] = new Enemy({
+		name: "石精",
+		description: "在矿洞中孕育出的岩石生命体，防御力极强。",
+		xp_value: 30,
+		rank: 5101,
+        image: "image/enemy/E1116.png",
+		realm: "<span class=realm_basic><b>纳气境一层</b></span>",
+		size: "medium",
+		spec: [1], // 坚固
+		tags: [],
+		stats: {health: 20, attack: 2000, agility: 600, attack_speed: 0.8, defense: 1800},
+		loot_list: [
+			{item_name: "铁锭", chance: 0.3},
+			{item_name: "煤炭", chance: 0.4},
+			{item_name: "坚硬石块", chance: 0.5},
+		]
+	});
+
+	enemy_templates["铁矿石精"] = new Enemy({
+		name: "铁矿石精",
+		description: "富含铁矿的石精，击杀后可以获得更多铁矿。",
+		xp_value: 60,
+		rank: 5102,
+        image: "image/enemy/E2604.png",
+		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
+		size: "medium",
+		spec: [1],
+		tags: [],
+		stats: {health: 32, attack: 2500, agility: 800, attack_speed: 0.8, defense: 2100},
+		loot_list: [
+			{item_name: "铁锭", chance: 0.8},
+			{item_name: "精钢锭", chance: 0.1},
+			{item_name: "煤炭", chance: 0.5},
+		]
+	});
+
+	// ========== 新增：矿山 3、4 图敌人 ==========
+	enemy_templates["铁矿虫"] = new Enemy({
+		name: "铁矿虫",
+		description: "啃食铁矿为生的巨虫，外壳坚硬如铁。",
+		xp_value: 80,
+		rank: 5103,
+		image: "image/enemy/E1109.png",
+		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
+		size: "medium",
+		spec: [1], // 坚固
+		tags: [],
+		stats: {health: 40, attack: 3200, agility: 900, attack_speed: 0.9, defense: 2200},
+		loot_list: [
+			{item_name: "铁矿石", chance: 0.8},
+			{item_name: "磁铁矿", chance: 0.2},
+			{item_name: "高级黄宝石", chance: 0.015},
+		]
+	});
+
+	enemy_templates["晶石精"] = new Enemy({
+		name: "晶石精",
+		description: "吸收晶石精华的岩石生命，攻击附带魔力。",
+		xp_value: 110,
+		rank: 5104,
+		image: "image/enemy/E1116.png",
+		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
+		size: "medium",
+		spec: [0], // 魔攻
+		tags: [],
+		stats: {health: 5000, attack: 4800, agility: 1100, attack_speed: 1.0, defense: 2400},
+		loot_list: [
+			{item_name: "晶石碎片", chance: 0.35},
+			{item_name: "磁铁矿", chance: 0.4},
+			{item_name: "高级蓝宝石", chance: 0.01},
+		]
+	});
+
+	enemy_templates["矿脉傀儡"] = new Enemy({
+		name: "矿脉傀儡",
+		description: "矿脉深处游荡的傀儡，比普通石精强大数倍。",
+		xp_value: 180,
+		rank: 5105,
+		image: "image/enemy/E2604.png",
+		realm: "<span class=realm_basic><b>纳气境四层</b></span>",
+		size: "medium",
+		spec: [3], // 2连击
+		tags: [],
+		stats: {health: 12000, attack: 7500, agility: 1500, attack_speed: 1.1, defense: 3200},
+		loot_list: [
+			{item_name: "磁铁矿", chance: 0.7},
+			{item_name: "晶石碎片", chance: 0.5},
+			{item_name: "高级蓝宝石", chance: 0.02},
+			{item_name: "高级红宝石", chance: 0.005},
+		]
+	});
+	enemy_templates["深岩守卫"] = new Enemy({
+		name: "深岩守卫",
+		description: "沉睡在矿脉最深处的岩石守卫，身上嵌满了晶石碎片。",
+		xp_value: 260,
+		rank: 5106,
+		image: "image/enemy/E1414.png",
+		realm: "<span class=realm_basic><b>纳气境五层</b></span>",
+		size: "medium",
+		spec: [1, 3], // 坚固 + 2连击
+		tags: [],
+		stats: {health: 60, attack: 10500, agility: 1800, attack_speed: 1.0, defense: 4500},
+		loot_list: [
+			{item_name: "磁铁矿", chance: 0.6},
+			{item_name: "晶石碎片", chance: 0.8},
+			{item_name: "高级蓝宝石", chance: 0.03},
+			{item_name: "高级红宝石", chance: 0.01},
+		]
+	});
+
 	// --- 邪恶沼泽敌人 ---
 	enemy_templates["吸血藤"] = new Enemy({
 		name: "吸血藤",
@@ -519,11 +630,11 @@ class Enemy {
 		xp_value: 20,
 		rank: 5001,
 		image: "image/enemy/E5001.png", // 假设的图片路径
-		realm: "<span class=realm_basic><b>纳气境一层</b></span>",
+		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
 		size: "medium",
 		spec: [24], // 饮剑
-		tags: [],
-		stats: {health: 800, attack: 120, agility: 60, attack_speed: 1.0, defense: 40},
+		tags: ["plant"], // 植物系，被火符克制
+		stats: {health: 3800, attack: 1500, agility: 800, attack_speed: 1.0, defense: 1000},
 		loot_list: [
 			{item_name: "藤蔓", chance: 0.6},
 			{item_name: "灵液", chance: 0.1},
@@ -539,52 +650,108 @@ class Enemy {
 		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
 		size: "medium",
 		spec: [24, 31], // 饮剑 + 回春
-		tags: [],
-		stats: {health: 3000, attack: 250, agility: 100, attack_speed: 1.2, defense: 80},
+		tags: ["plant"], // 植物系，被火符克制
+		stats: {health: 5000, attack: 2500, agility: 1000, attack_speed: 1.2, defense: 1200},
 		loot_list: [
 			{item_name: "藤蔓", chance: 0.8},
 			{item_name: "灵液", chance: 0.2},
 			{item_name: "毒液", chance: 0.1},
 		]
-	});
-
-	// --- 矿山敌人 ---
-	enemy_templates["石精"] = new Enemy({
-		name: "石精",
-		description: "在矿洞中孕育出的岩石生命体，防御力极强。",
-		xp_value: 30,
-		rank: 5101,
-        image: "image/enemy/E1116.png",
-		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
+	});	
+	// ========== 新增：沼泽 3、4 图敌人 ==========
+	enemy_templates["沼泽蟒"] = new Enemy({
+		name: "沼泽蟒",
+		description: "潜伏在毒沼里的巨蟒，攻击带剧毒。",
+		xp_value: 90,
+		rank: 5003,
+		image: "image/enemy/E5002.png",
+		realm: "<span class=realm_basic><b>纳气境四层</b></span>",
 		size: "medium",
-		spec: [1], // 坚固
-		tags: [],
-		stats: {health: 10, attack: 1800, agility: 600, attack_speed: 0.8, defense: 1800},
+		spec: [7], // 撕裂
+		tags: ["plant"], // 植物系，被火符克制
+		stats: {health: 12000, attack: 3000, agility: 1200, attack_speed: 1.0, defense: 1500},
 		loot_list: [
-			{item_name: "铁锭", chance: 0.3},
-			{item_name: "煤炭", chance: 0.4},
-			{item_name: "坚硬石块", chance: 0.5},
+			{item_name: "沼泽蔓藤", chance: 0.5},
+			{item_name: "沼泽蔓藤种子", chance: 0.05},
+			{item_name: "沼泽内丹", chance: 0.1},
 		]
 	});
 
-	enemy_templates["铁矿石精"] = new Enemy({
-		name: "铁矿石精",
-		description: "富含铁矿的石精，击杀后可以获得更多铁矿。",
-		xp_value: 60,
-		rank: 5102,
-        image: "image/enemy/E2604.png",
-		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
+	enemy_templates["腐毒花"] = new Enemy({
+		name: "腐毒花",
+		description: "会主动散播毒孢子的食人花。",
+		xp_value: 120,
+		rank: 5004,
+		image: "image/enemy/E1317.png",
+		realm: "<span class=realm_basic><b>纳气境五层</b></span>",
 		size: "medium",
-		spec: [1],
-		tags: [],
-		stats: {health: 15, attack: 2500, agility: 800, attack_speed: 0.8, defense: 2100},
+		spec: [8], // 衰弱
+		spec_value: {8: 10},
+		tags: ["plant"],
+		stats: {health: 16000, attack: 3500, agility: 900, attack_speed: 0.9, defense: 2800},
 		loot_list: [
-			{item_name: "铁锭", chance: 0.8},
-			{item_name: "精钢锭", chance: 0.1},
-			{item_name: "煤炭", chance: 0.5},
+			{item_name: "毒腺草", chance: 0.35},
+			{item_name: "毒腺草种子", chance: 0.04},
+			{item_name: "沼泽内丹", chance: 0.15},
 		]
 	});
-	
+
+	enemy_templates["荒古莲兽"] = new Enemy({
+		name: "荒古莲兽",
+		description: "守护荒古莲的魔物，拥有净化毒素的力量。",
+		xp_value: 200,
+		rank: 5005,
+		image: "image/enemy/E1319.png",
+		realm: "<span class=realm_basic><b>纳气境六层</b></span>",
+		size: "medium",
+		spec: [31], // 回春
+		tags: ["plant"],
+		stats: {health: 25000, attack: 4000, agility: 1600, attack_speed: 1.0, defense: 3000},
+		loot_list: [
+			{item_name: "荒古莲", chance: 0.25},
+			{item_name: "荒古莲种子", chance: 0.03},
+			{item_name: "魔沼内丹", chance: 0.1},
+		]
+	});
+
+	// ========== 新增 Boss ==========
+	enemy_templates["石精霸主[BOSS]"] = new Enemy({
+		name: "石精霸主[BOSS]",
+		description: "矿脉深处的最强石精，全身覆盖晶化岩甲。",
+		xp_value: 1500,
+		rank: 5199,
+		image: "image/boss/B5101.png",
+		realm: "<span class=realm_basic><b>纳气境巅峰</b></span>",
+		size: "large",
+		spec: [1, 3], // 坚固 + 2连击
+		tags: [],
+		stats: {health: 400, attack: 12000, agility: 4000, attack_speed: 1.2, defense: 8000},
+		loot_list: [
+			{item_name: "岩心", chance: 1.0, ignore_luck: true},
+			{item_name: "晶石碎片", chance: 3.0},
+			{item_name: "磁铁矿", chance: 5.0},
+			{item_name: "高级红宝石", chance: 2.0},
+		]
+	});
+
+	enemy_templates["魔鬼藤母体[BOSS]"] = new Enemy({
+		name: "魔鬼藤母体[BOSS]",
+		description: "沼泽最深处孕育的巨型藤蔓，触手遍布整个沼泽。",
+		xp_value: 1800,
+		rank: 5099,
+		image: "image/boss/B5002.png",
+		realm: "<span class=realm_basic><b>纳气境巅峰</b></span>",
+		size: "large",
+		spec: [24, 31], // 饮剑 + 回春
+		tags: ["plant"],
+		stats: {health: 120000, attack: 30000, agility: 8000, attack_speed: 1.1, defense: 15000},
+		loot_list: [
+			{item_name: "沼泽之心", chance: 1.0, ignore_luck: true},
+			{item_name: "荒古莲", chance: 2.0},
+			{item_name: "毒腺草", chance: 5.0},
+			{item_name: "魔沼内丹", chance: 3.0},
+		]
+	});	
 	
     enemy_templates["少年法师"] = new Enemy({
         name: "少年法师", 

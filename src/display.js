@@ -286,6 +286,10 @@ function create_item_tooltip(item, options) {
  * @param {Array} params.options.quality array with 1 or 2 values (1 - show only it, instead of item's; 2 - show start comparison between the two)
  */
 function create_item_tooltip_content({item, options={}}) {
+    if (!item) {
+        console.warn("create_item_tooltip_content: 传入的 item 为 undefined，可能是某个配方产物的 ID 拼写错误或已被删除");
+        return "<span style='color:red;'>未知物品 (数据缺失)</span>";
+    }
     let item_tooltip = "";
     item_tooltip = `<b>${item.getName()}</b>`;
     if(item.description) {
@@ -2063,7 +2067,15 @@ function create_location_types_display(current_location){
         //毒液伤害特殊判定
         
         if(type == 'toxic'){
-            type_tooltip.innerHTML += `<br>毒液伤害: ${format_number(800e8*(1-skills["Toxic resistance"].current_level*0.05)*(0.99**skills["Iron skin"].current_level))}`
+            const base = character.stats.full.max_health * 0.03;
+            const reduction = Math.min(skills["Toxic resistance"].current_level * 0.04, 1);
+            const finalDmg = base * (1 - reduction);
+            type_tooltip.innerHTML += `<br>毒液伤害: ${format_number(finalDmg)}/s`;
+            type_tooltip.innerHTML += `<br><span style="color:#8f8">基础: 最大生命 × 3% = ${format_number(base)}/s`;
+            if(reduction > 0) {
+                type_tooltip.innerHTML += `；毒抗 Lv.${skills["Toxic resistance"].current_level}: -${(reduction*100).toFixed(0)}%`;
+            }
+            type_tooltip.innerHTML += `</span>`;
         }
 
 
@@ -2567,8 +2579,18 @@ function create_recipe_tooltip_content({category, subcategory, recipe_id, materi
 		
 		
         //console.log(recipe.Q_able);
-        if(recipe.Q_able > 0) tooltip += `<br>产物:<br><div class="recipe_result">${create_item_tooltip_content({item: item_templates[recipe.getResult().result_id], options: {quality:recipe.Q_able,skip_quality:false}})}</div>`;
-        else tooltip += `<br>产物:<br><div class="recipe_result">${create_item_tooltip_content({item: item_templates[recipe.getResult().result_id], options: {skip_quality: true}})}</div>`;
+        const result_id = recipe.getResult().result_id;
+        const result_item = item_templates[result_id];
+        if (!result_item) {
+            console.error(`[配方错误] 配方 "${recipe.name}" (${recipe_id}) 的产物 "${result_id}" 不存在于 items.js 中！请检查 crafting_recipes.js 里的拼写。`);
+            tooltip += `<br>产物: <span style="color:red">配置错误: 未找到物品 ${result_id}</span>`;
+        } else {
+            if(recipe.Q_able > 0) {
+                tooltip += `<br>产物:<br><div class="recipe_result">${create_item_tooltip_content({item: result_item, options: {quality:recipe.Q_able, skip_quality:false}})}</div>`;
+            } else {
+                tooltip += `<br>产物:<br><div class="recipe_result">${create_item_tooltip_content({item: result_item, options: {skip_quality: true}})}</div>`;
+            }
+        }
 
     } else if(subcategory === "components"  || recipe.recipe_type === "component") {
         tooltip += `材料:<br>`;
@@ -2992,6 +3014,7 @@ function update_stat_description(stat) {
 		equipment: "装备", environment: "环境", light_level: "光照",
 		gems: "宝石", stance: "秘法", active_effect: "效果", coins: "心之境界",
 		armor_set: "套装",   // ★ 新增
+		pills: "丹药",   // ★ 新增
 	};    
 	
     if(stat === "attack_power" && character.equipment.weapon != undefined) {
@@ -4267,9 +4290,7 @@ function add_bestiary_zones(enemy_name)
 		
 	// 在 display.js 的 add_bestiary_zones 函数中添加
 	if(enemy_name == "吸血藤") add_bestiary_lines(51);
-	if(enemy_name == "魔鬼藤") add_bestiary_lines(51);
 	if(enemy_name == "石精") add_bestiary_lines(52);
-	if(enemy_name == "铁矿石精") add_bestiary_lines(52);
 }
 
 function reload_bestiary(){

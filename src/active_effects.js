@@ -20,6 +20,11 @@ class ActiveEffect {
     }
 }
 
+effect_templates["避毒"] = new ActiveEffect({
+    name: "避毒",
+    effects: { stats: {} }
+});
+
 effect_templates["Weak healing powder"] = new ActiveEffect({
     name: "Weak healing powder",
     effects: {

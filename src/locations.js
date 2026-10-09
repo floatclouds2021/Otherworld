@@ -323,8 +323,13 @@ class Combat_zone {
  
         for(let i = 0; i < enemy_group.length; i++) {
             const enemy = enemy_templates[enemy_group[i]];
+            // ★ 防御：模板不存在时，跳过并打 warn，避免崩
+            if(!enemy) {
+                console.error(`[${this.name}] 敌人列表中存在未定义的敌人: "${enemy_group[i]}"，已跳过`);
+                continue;
+            }
             if(enemy.name == undefined){
-                console.error("试图在 " + this.name + " 中生成未定义的敌人 [" + enemy_group[i].name + "]");
+                console.error("试图在 " + this.name + " 中生成未定义的敌人 [" + enemy_group[i] + "]");
             }
             // if(this.enemy_stat_variation != 0) {
 
@@ -1041,9 +1046,11 @@ function get_location_type_penalty(type, stage, stat) {
         description: "阵法楼",
         name: "阵法楼",
         is_unlocked: false,
+		traders: ["阵法商人"], // ← 加这一行
         bgm: 1,
-		dialogues: ["与阵法导师对话"], // 可选：添加一个阵法导师NPC		
-    })
+		dialogues: ["与阵法导师对话","阵法商人"], // ← 加 "阵法商人"
+		traders: ["阵法商人"],   // ★ 加这行
+		})
     locations["符篆楼"] = new Location({
         connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
         description: "符篆楼",
@@ -1119,8 +1126,8 @@ function get_location_type_penalty(type, stage, stat) {
 				alchemy: 3,
 			}
 		},
-		dialogues: ["度过时间，等待开学典礼开始"],
-    })	
+		dialogues: ["度过时间，等待开学典礼开始", "布置聚灵阵","做好准备，参加新生校内赛"],
+	})	
 
     locations["空间锚点"] = new Location({
 		connected_locations: [],
@@ -1194,136 +1201,218 @@ function get_location_type_penalty(type, stage, stat) {
 
 	// --- 任务阁：邪恶沼泽与矿山 ---
 
-	locations["邪恶沼泽"] = new Location({
-		connected_locations: [{location: locations["任务阁"], custom_text: "返回任务阁"}],
-		description: "任务阁发布的清剿任务地点。这里弥漫着毒沼的瘴气，到处都是危险的藤蔓生物。",
-		name: "邪恶沼泽",
-		bgm: 15,
-		dialogues: ["沼泽飞舟点"],	
-		is_unlocked: false, // 通过任务解锁
-		unlock_text: "你接受了任务阁的委托，前往邪恶沼泽清剿魔物。",
-	});
+locations["邪恶沼泽"] = new Location({
+	connected_locations: [],
+    description: "任务阁发布的清剿任务地点。这里弥漫着毒沼的瘴气，到处都是危险的藤蔓生物。",
+    name: "邪恶沼泽",
+    bgm: 15,
+    dialogues: ["沼泽飞舟点"],
+    is_unlocked: false,
+    unlock_text: "你接受了任务阁的委托，前往邪恶沼泽清剿魔物。",
+});
 
-/* 	locations["邪恶沼泽 - 1"] = new Combat_zone({
-		description: "邪恶沼泽的外围区域，毒沼遍布，吸血藤在暗处蠢蠢欲动。",
-		enemy_count: 20,
-		enemies_list: ["吸血藤", "魔鬼藤"],
-		enemy_group_size: [2, 3],
-		types: [{type: "toxic", stage: 1, xp_gain: 2}], // 毒沼效果
-		is_unlocked: true,
-		name: "邪恶沼泽 - 1",
-		rank: 501,
-		bgm: 15,
-		parent_location: locations["邪恶沼泽"],
-		first_reward: { xp: 5000 },
-		repeatable_reward: {
-			xp: 2000,
-			locations: [{location: "邪恶沼泽 - 2"}],
-		},
-	}); */
+locations["邪恶沼泽 - 1"] = new Combat_zone({
+    description: "邪恶沼泽的外围，毒沼遍布，吸血藤在暗处蠢蠢欲动。",
+    enemy_count: 20,
+    enemies_list: ["吸血藤", "沼泽蟒"],
+    enemy_group_size: [1, 2],
+    types: [{type: "toxic", stage: 1, xp_gain: 2}],
+    is_unlocked: true,
+    name: "邪恶沼泽 - 1",
+    rank: 501,
+    bgm: 15,
+    parent_location: locations["邪恶沼泽"],
+    first_reward: { xp: 5000 },
+    repeatable_reward: {
+        xp: 2000,
+        locations: [{location: "邪恶沼泽 - 2"}],
+    },
+});
 
-	locations["邪恶沼泽 - 2"] = new Combat_zone({
-		description: "邪恶沼泽的深处，魔鬼藤在这里盘踞，生命力极其顽强。",
-		enemy_count: 20,
-		enemies_list: ["魔鬼藤"],
-		enemy_group_size: [2, 3],
-		types: [{type: "toxic", stage: 1, xp_gain: 3}],
-		is_unlocked: false,
-		name: "邪恶沼泽 - 2",
-		rank: 502,
-		bgm: 15,
-		parent_location: locations["邪恶沼泽"],
-		first_reward: { xp: 10000 },
-		repeatable_reward: {
-			xp: 4000,
-			locations: [{location: "邪恶沼泽 - X"}],
-		},
-	});
+locations["邪恶沼泽 - 2"] = new Combat_zone({
+    description: "邪恶沼泽的深处，魔鬼藤在这里盘踞，生命力极其顽强。",
+    enemy_count: 20,
+    enemies_list: ["魔鬼藤", "沼泽蟒", "腐毒花"],
+    enemy_group_size: [1, 2],
+    types: [{type: "toxic", stage: 1, xp_gain: 3}],
+    is_unlocked: false,
+    name: "邪恶沼泽 - 2",
+    rank: 502,
+    bgm: 15,
+    parent_location: locations["邪恶沼泽"],
+    first_reward: { xp: 10000 },
+    repeatable_reward: {
+        xp: 4000,
+        locations: [{location: "邪恶沼泽 - 3"}],
+    },
+});
 
-	locations["邪恶沼泽 - X"] = new Challenge_zone({
-		description: "邪恶沼泽的中心，巨大的魔鬼藤母体就在这里。",
-		enemy_count: 1,
-		enemies_list: ["魔鬼藤[BOSS]"],
-		enemy_group_size: [1, 1],
-		types: [{type: "toxic", stage: 1, xp_gain: 5}],
-		is_unlocked: false,
-		is_challenge: true,
-		name: "邪恶沼泽 - X",
-		rank: 503,
-		bgm: 15,
-		parent_location: locations["邪恶沼泽"],
-		repeatable_reward: {
-			// 完成任务后的奖励
-		},
-	});
+locations["邪恶沼泽 - 3"] = new Combat_zone({
+    description: "沼泽中层，腐毒花遍地，空气中毒素浓郁。",
+    enemy_count: 20,
+    enemies_list: ["腐毒花", "魔鬼藤", "荒古莲兽"],
+    enemy_group_size: [1, 2],
+    types: [{type: "toxic", stage: 1, xp_gain: 4}],
+    is_unlocked: false,
+    name: "邪恶沼泽 - 3",
+    rank: 503,
+    bgm: 15,
+    parent_location: locations["邪恶沼泽"],
+    first_reward: { xp: 22000 },
+    repeatable_reward: {
+        xp: 9000,
+        locations: [{location: "邪恶沼泽 - 4"}],
+        activities: [{location:"邪恶沼泽", activity: "gather_seed"}],
+    },
+});
 
-	locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 1"]});
-	locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 2"]});
-	locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - X"]});
+locations["邪恶沼泽 - 4"] = new Combat_zone({
+    description: "沼泽最深处，荒古莲的气息弥漫，但魔鬼藤母体也在此处蛰伏。",
+    enemy_count: 20,
+    enemies_list: ["荒古莲兽", "腐毒花", "魔鬼藤"],
+    enemy_group_size: [1, 2],
+    types: [{type: "toxic", stage: 1, xp_gain: 5}],
+    is_unlocked: false,
+    name: "邪恶沼泽 - 4",
+    rank: 504,
+    bgm: 15,
+    parent_location: locations["邪恶沼泽"],
+    first_reward: { xp: 40000 },
+    repeatable_reward: {
+        xp: 16000,
+        locations: [{location: "邪恶沼泽 - X"}],
+    },
+});
+
+locations["邪恶沼泽 - X"] = new Challenge_zone({
+    description: "邪恶沼泽的中心，巨大的魔鬼藤母体就在这里。",
+    enemy_count: 1,
+    enemies_list: ["魔鬼藤母体[BOSS]"],
+    enemy_group_size: [1, 1],
+    types: [{type: "toxic", stage: 1, xp_gain: 5}],
+    is_unlocked: false,
+    is_challenge: true,
+    name: "邪恶沼泽 - X",
+    rank: 509,
+    bgm: 15,
+    parent_location: locations["邪恶沼泽"],
+    repeatable_reward: {
+        locations: [{location: "邪恶沼泽 - 3"}],
+    },
+    unlock_text: "前方的藤蔓比树木还粗……魔鬼藤母体！",
+});
+
+locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 1"]});
+locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 2"]});
+locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 3"]});
+locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 4"]});
+locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - X"]});
 
 
-	locations["矿山"] = new Location({
-		connected_locations: [{location: locations["任务阁"], custom_text: "返回任务阁"}],
-		description: "任务阁发布的资源采集地点。这里盛产铁矿和煤矿，但也盘踞着不少石精。",
-		name: "矿山",
-		bgm: 2,
-		is_unlocked: false, // 通过任务解锁
-		unlock_text: "你接受了任务阁的委托，前往矿山采集资源。",
-		dialogues: ["矿山飞舟点"],	
-	});
+locations["矿山"] = new Location({
+	connected_locations: [],
+    description: "任务阁发布的资源采集地点。这里盛产铁矿和煤矿，但也盘踞着不少石精。",
+    name: "矿山",
+    bgm: 2,
+    is_unlocked: false,
+    unlock_text: "你接受了任务阁的委托，前往矿山采集资源。",
+    dialogues: ["矿山飞舟点"],
+});
 
-/* 	locations["矿山 - 1"] = new Combat_zone({
-		description: "矿山的外围区域，石精在这里游荡。",
-		enemy_count: 20,
-		enemies_list: ["石精"],
-		enemy_group_size: [1, 2],
-		is_unlocked: true,
-		name: "矿山 - 1",
-		rank: 511,
-		bgm: 2,
-		parent_location: locations["矿山"],
-		first_reward: { xp: 8000 },
-		repeatable_reward: {
-			xp: 3000,
-			locations: [{location: "矿山 - 2"}],
-		},
-	}); */
+locations["矿山 - 1"] = new Combat_zone({
+    description: "矿山的外围区域，石精在这里游荡。",
+    enemy_count: 20,
+    enemies_list: ["石精", "铁矿虫"],
+    enemy_group_size: [1, 2],
+    is_unlocked: true,
+    name: "矿山 - 1",
+    rank: 511,
+    bgm: 2,
+    parent_location: locations["矿山"],
+    first_reward: { xp: 8000 },
+    repeatable_reward: {
+        xp: 3000,
+        locations: [{location: "矿山 - 2"}],
+    },
+});
 
-	locations["矿山 - 2"] = new Combat_zone({
-		description: "矿山的深处，富含铁矿的石精在这里聚集。",
-		enemy_count: 20,
-		enemies_list: ["铁矿石精"],
-		enemy_group_size: [1, 2],
-		is_unlocked: false,
-		name: "矿山 - 2",
-		rank: 512,
-		bgm: 2,
-		parent_location: locations["矿山"],
-		first_reward: { xp: 15000 },
-		repeatable_reward: {
-			xp: 6000,
-			locations: [{location: "矿山 - X"}],
-		},
-	});
+locations["矿山 - 2"] = new Combat_zone({
+    description: "矿山的深处，富含铁矿的石精在这里聚集。",
+    enemy_count: 20,
+    enemies_list: ["铁矿石精", "铁矿虫", "石精"],
+    enemy_group_size: [1, 2],
+    is_unlocked: false,
+    name: "矿山 - 2",
+    rank: 512,
+    bgm: 2,
+    parent_location: locations["矿山"],
+    first_reward: { xp: 15000 },
+    repeatable_reward: {
+        xp: 6000,
+        locations: [{location: "矿山 - 3"}],
+    },
+});
 
-	locations["矿山 - X"] = new Challenge_zone({
-		description: "矿山的最深处，一只巨大的石精霸主守护着丰富的矿脉。",
-		enemy_count: 1,
-		enemies_list: ["石精霸主[BOSS]"],
-		enemy_group_size: [1, 1],
-		is_unlocked: false,
-		is_challenge: true,
-		name: "矿山 - X",
-		rank: 513,
-		bgm: 2,
-		parent_location: locations["矿山"],
-		repeatable_reward: {
-		},
-	});
+locations["矿山 - 3"] = new Combat_zone({
+    description: "矿脉中层，晶石的光芒在岩壁上闪烁，危险的傀儡开始出现。",
+    enemy_count: 20,
+    enemies_list: ["晶石精", "铁矿虫", "矿脉傀儡"],
+    enemy_group_size: [1, 2],
+    is_unlocked: false,
+    name: "矿山 - 3",
+    rank: 513,
+    bgm: 2,
+    parent_location: locations["矿山"],
+    first_reward: { xp: 30000 },
+    repeatable_reward: {
+        xp: 12000,
+        locations: [{location: "矿山 - 4"}],
+        activities: [{location:"矿山", activity: "mining_magnetite"}],
+    },
+});
 
-	locations["矿山"].connected_locations.push({location: locations["矿山 - 1"]});
-	locations["矿山"].connected_locations.push({location: locations["矿山 - 2"]});
-	locations["矿山"].connected_locations.push({location: locations["矿山 - X"]});
+locations["矿山 - 4"] = new Combat_zone({
+    description: "矿脉深处，晶化岩壁散发幽光，霸主的气息已近。",
+    enemy_count: 20,
+    enemies_list: ["矿脉傀儡", "晶石精", "深岩守卫"],
+    enemy_group_size: [1, 2],
+    is_unlocked: false,
+    name: "矿山 - 4",
+    rank: 514,
+    bgm: 2,
+    parent_location: locations["矿山"],
+    first_reward: { xp: 50000 },
+    repeatable_reward: {
+        xp: 20000,
+        locations: [{location: "矿山 - X"}],
+    },
+});
+
+locations["矿山 - X"] = new Challenge_zone({
+    description: "矿山的最深处，一只巨大的石精霸主守护着丰富的矿脉。",
+    enemy_count: 1,
+    enemies_list: ["石精霸主[BOSS]"],
+    enemy_group_size: [1, 1],
+    is_unlocked: false,
+    is_challenge: true,
+    name: "矿山 - X",
+    rank: 519,
+    bgm: 2,
+    parent_location: locations["矿山"],
+    repeatable_reward: {
+        locations: [{location: "矿山 - 3"}],
+        traders: [{traders: "阵法商人"}],
+        // ★ 新增：解锁周远航的"升级魔力抵消器"对话
+        textlines: [{dialogue: "与周远航对话", lines: ["升级魔力抵消器"]}],
+    },
+    unlock_text: "前方传来沉重的脚步声……是石精霸主！",
+});
+
+locations["矿山"].connected_locations.push({location: locations["矿山 - 1"]});
+locations["矿山"].connected_locations.push({location: locations["矿山 - 2"]});
+locations["矿山"].connected_locations.push({location: locations["矿山 - 3"]});
+locations["矿山"].connected_locations.push({location: locations["矿山 - 4"]});
+locations["矿山"].connected_locations.push({location: locations["矿山 - X"]});
 
 	
 /*     locations["练兵场深处"] = new Location({ 
@@ -1612,7 +1701,7 @@ locations["城外墓园 - 1"] = new Combat_zone({
     });
 
     locations["城外墓园 - 3"] = new Combat_zone({
-        description: "是因为", //MT2
+        description: "变得更强了，是因为快要接近源头了么", //MT2
         enemy_count: 20, 
         enemies_list: ["聚灵骸骨","聚魂骸骨"],
         types: [],

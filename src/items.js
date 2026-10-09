@@ -3363,6 +3363,34 @@ const TRAIT_ArmorPenetration = {
         component_tier: 0,
         attack_value: 1,
     });
+
+	item_templates["沼泽滕蔓弓身"] = new WeaponComponent({
+        name: "沼泽滕蔓弓身", description: "硬化的沼泽滕蔓编制而成的弓身",
+        component_type: "bent body",
+        value: 20,
+        component_tier: 0,
+		name_prefix: "沼泽滕蔓",        		
+        attack_value: 300,
+		traits: [TRAIT_LIFESTEAL]       // ★		
+    });
+	item_templates["沼泽滕蔓弓弦"] = new WeaponComponent({
+        name: "沼泽滕蔓弓弦", description: "沼泽滕蔓编制而成的弓弦",
+        component_type: "bowstring",
+        value: 20,
+        component_tier: 0,
+		stats: {
+			agility: {
+                flat:50,
+            },
+            crit_multiplier: {
+                flat: 0.15,
+            },
+            attack_speed: {
+                multiplier: 1.04,
+            }			
+        },		
+    });
+
 	
 	item_templates["木剑刃"] = new WeaponComponent({
         name: "木剑刃", description: "木头做的剑刃，基本只能拿来砸而不是砍",
@@ -4269,6 +4297,13 @@ const TRAIT_ArmorPenetration = {
             handle: "常青藤弓弦",
         }
     });	
+	item_templates["沼泽滕蔓弓"] = new Weapon({
+        components: {
+            head: "沼泽滕蔓弓身",
+            handle: "沼泽滕蔓弓弦",
+        }
+    });	
+	
 	item_templates["木剑"] = new Weapon({
         components: {
             head: "木剑刃",
@@ -6600,6 +6635,15 @@ item_templates["常青藤帽子"] = new Armor({
 })();
 //炼金
 (function(){
+	// 在 items.js 中找到合适的位置（比如紧挨着沼泽蔓藤下面），添加：
+	item_templates["硬化沼泽滕蔓"] = new OtherItem({
+		id: "硬化沼泽滕蔓",
+		name: "硬化沼泽滕蔓",
+		description: "经过灵液浸泡和特殊工艺硬化的沼泽藤蔓，坚韧度大幅提升，可用于制作弓身。",
+		value: 15000, // 参考：3个沼泽蔓藤(5000*3) + 2个灵液(2500*2) = 20000，取个中间价
+		image: "image/item/vine.png", // 复用现有图片
+	});	
+	
     item_templates["粘合织料"] = new OtherItem({
         name: "粘合织料", 
         description: "涂抹了凝胶的飞蛾翅膀结合体，适合与皮肤亲密接触",
@@ -7796,6 +7840,271 @@ C1·能量核心(还是你啊)
     });
 })();
 
+// ========== 新增：矿山/沼泽扩展物品 ==========
+(function(){
+    // --- 矿山掉落 ---
+    item_templates["铁矿石"] = new OtherItem({
+        id: "铁矿石",
+        name: "铁矿石",
+        description: "矿山出产的原矿，需熔炼成铁锭。",
+        value: 100,
+        image: "image/item/alloy_fragment.png",
+    });
+    item_templates["磁铁矿"] = new OtherItem({
+        id: "磁铁矿",
+        name: "磁铁矿",
+        description: "高纯度铁矿，熔炼时出产更多铁锭。",
+        value: 320,
+        image: "image/item/alloy_fragment.png",
+    });
+    item_templates["晶石碎片"] = new OtherItem({
+        id: "晶石碎片",
+        name: "晶石碎片",
+        description: "蕴含着微弱能量的晶体碎片。",
+        value: 480,
+        image: "image/item/transparent_crystal.png",
+    });
+    item_templates["岩心"] = new OtherItem({
+        id: "岩心",
+        name: "岩心",
+        description: "石精霸主的核心，散发厚重的土元素气息。可交给周学长升级魔力抵消器。",
+        value: 0,
+        image: "image/item/A1_crystal.png",
+    });
+
+    // --- 沼泽掉落 ---
+    item_templates["沼泽蔓藤种子"] = new Loot({
+        id: "沼泽蔓藤种子",
+        name: "沼泽蔓藤种子",
+        description: "沼泽特有藤蔓的种子。灵田等级7以上可种。",
+        value: 3500,
+        image: "image/item/vine.png",
+    });
+    item_templates["毒腺草种子"] = new Loot({
+        id: "毒腺草种子",
+        name: "毒腺草种子",
+        description: "能吸收毒素的灵草种子。灵田等级8以上可种。",
+        value: 6800,
+        image: "image/item/poison_drop.png",
+    });
+    item_templates["荒古莲种子"] = new Loot({
+        id: "荒古莲种子",
+        name: "荒古莲种子",
+        description: "传说中能净化万毒的古莲种子。灵田等级9以上可种。",
+        value: 16000,
+        image: "image/item/ruin_essence.png",
+    });
+    item_templates["沼泽蔓藤"] = new Loot({
+        id: "沼泽蔓藤",
+        name: "沼泽蔓藤",
+        description: "坚韧的藤蔓，可用于制作弓身。",
+        value: 5000,
+        image: "image/item/vine.png",
+    });
+    item_templates["毒腺草"] = new Loot({
+        id: "毒腺草",
+        name: "毒腺草",
+        description: "炼制避毒丹的核心药材。",
+        value: 9000,
+        image: "image/item/poison_drop.png",
+    });
+    item_templates["荒古莲"] = new Loot({
+        id: "荒古莲",
+        name: "荒古莲",
+        description: "传说中的净化之莲，可炼制顶级丹药。",
+        value: 22000,
+        image: "image/item/ruin_essence.png",
+    });
+    item_templates["沼泽之心"] = new Loot({
+        id: "沼泽之心",
+        name: "沼泽之心",
+        description: "魔鬼藤母体的核心。",
+        value: 0,
+        image: "image/item/ruin_essence.png",
+    });
+
+    // --- 内丹（软上限加属性物品，参考极品黄宝石形式）---
+    item_templates["沼泽内丹"] = new UsableItem({
+        id: "沼泽内丹",
+        name: "沼泽内丹",
+        description: "凝聚沼泽精华的内丹。使用时随机增加攻击/防御/敏捷300点或生命1.5万。",
+        value: 300,
+        image: "image/item/gem33_2k.png",
+        effects: [],
+        gem_value: 300,
+    });
+    item_templates["魔沼内丹"] = new UsableItem({
+        id: "魔沼内丹",
+        name: "魔沼内丹",
+        description: "魔鬼藤母体凝结的内丹，品质更高。使用时随机增加攻击/防御/敏捷600点或生命3万。",
+        value: 600,
+        image: "image/item/gem43_50k.png",
+        effects: [],
+        gem_value: 600,
+    });
+
+    // --- 阵法相关 ---
+    item_templates["阵旗"] = new OtherItem({
+        id: "阵旗",
+        name: "阵旗",
+        description: "布置阵法的基础道具。",
+        value: 500,
+        image: "image/item/halo_ending.png",
+    });
+    item_templates["阵法核心"] = new OtherItem({
+        id: "阵法核心",
+        name: "阵法核心",
+        description: "阵法中枢，决定阵法强度。",
+        value: 2000,
+        image: "image/item/inherit_pink.png",
+    });
+
+    // --- 符箓 ---
+    item_templates["雷符"] = new UsableItem({
+        id: "雷符",
+        name: "雷符",
+        description: "对目标造成攻击力×0.8的雷属性伤害。对【机械系】敌人伤害翻倍。",
+        value: 200,
+        image: "image/item/B9_spiritdodge.png",
+        effects: [],
+        spec: "talisman_thunder",
+    });
+    item_templates["火符"] = new UsableItem({
+        id: "火符",
+        name: "火符",
+        description: "对目标造成攻击力×0.6的火焰伤害，并附加3秒灼烧。对【植物系】敌人伤害翻倍。",
+        value: 250,
+        image: "image/item/B9_blowfire.png",
+        effects: [],
+        spec: "talisman_fire",
+    });
+    item_templates["冰符"] = new UsableItem({
+        id: "冰符",
+        name: "冰符",
+        description: "对目标造成攻击力×0.5的冰霜伤害，并降低其20%攻速3秒。对【火焰系】敌人伤害翻倍。",
+        value: 220,
+        image: "image/item/B9_hard.png",
+        effects: [],
+        spec: "talisman_ice",
+    });
+    item_templates["治愈符"] = new UsableItem({
+        id: "治愈符",
+        name: "治愈符",
+        description: "回复自身生命上限4%的生命值。",
+        value: 300,
+        image: "image/item/A8_medicine.png",
+        effects: [],
+        spec: "talisman_heal",
+    });
+
+    // --- 丹药（属性增长/回复）---
+    item_templates["攻玄丹"] = new UsableItem({
+        id: "攻玄丹",
+        name: "攻玄丹",
+        description: "永久增加攻击力500点。上限100颗。",
+        value: 2500,
+        image: "image/item/A9_booster.png",
+        effects: [],
+        spec: "pill_atk",
+    });
+    item_templates["御玄丹"] = new UsableItem({
+        id: "御玄丹",
+        name: "御玄丹",
+        description: "永久增加防御力500点。上限100颗。",
+        value: 2500,
+        image: "image/item/A9_hard.png",
+        effects: [],
+        spec: "pill_def",
+    });
+    item_templates["风玄丹"] = new UsableItem({
+        id: "风玄丹",
+        name: "风玄丹",
+        description: "永久增加敏捷500点。上限100颗。",
+        value: 2500,
+        image: "image/item/A9_rewind.png",
+        effects: [],
+        spec: "pill_agi",
+    });
+    item_templates["血玄丹"] = new UsableItem({
+        id: "血玄丹",
+        name: "血玄丹",
+        description: "永久增加生命上限5万。上限100颗。",
+        value: 2500,
+        image: "image/item/A9_magic.png",
+        effects: [],
+        spec: "pill_hp",
+    });
+	item_templates["避毒丹"] = new UsableItem({
+		id: "避毒丹",
+		name: "避毒丹",
+		description: "使用后获取大量【毒液抗性】经验值，快速提升毒抗等级。",
+		value: 1800,
+		image: "image/item/B1_life_medicine.png",
+		effects: [],
+		spec: "toxic_resistance_xp",
+	});
+
+    // --- 晶化相关 ---
+    item_templates["晶化粉末"] = new OtherItem({
+        id: "晶化粉末",
+        name: "晶化粉末",
+        description: "从深渊晶体里提取的奇异粉末，能强化材料。",
+        value: 5000,
+        image: "image/item/rainbow_rubber.png",
+    });
+    item_templates["晶化铁锭"] = new Material({
+        id: "晶化铁锭",
+        name: "晶化铁锭",
+        description: "掺杂晶化粉末的铁锭，强度显著提升。",
+        value: 2000,
+        material_type: "metal",
+        image: "image/item/icealloy_ingot.png",
+    });
+
+    // --- 周远航升级用 ---
+    item_templates["魔力抵消器·壹"] = new Special({
+        id: "魔力抵消器·壹",
+        name: "魔力抵消器·壹",
+        description: "受到魔攻伤害时，减少当前护甲值25%等值的伤害，并减少5%的魔攻伤害。",
+        value: 1e6,
+        stats: {
+            attack_power: { multiplier: 1.02 },
+            defense:      { multiplier: 1.02 },
+            agility:      { multiplier: 1.02 },
+            max_health:   { multiplier: 1.02 },
+        }
+    });
+
+    // --- 图书馆技能书 ---
+    item_templates["剑心要诀"] = new Book({
+        name: "剑心要诀",
+        description: "记载着剑道感悟的秘籍。阅读后解锁剑被动【剑心】。",
+        value: 80000,
+    });
+    item_templates["炼体秘典"] = new Book({
+        name: "炼体秘典",
+        description: "记载着炼体心得的秘籍。阅读后皮肤经验获取+5%。",
+        value: 60000,
+    });
+})();
+
+// ========== 新增书籍数据 ==========
+book_stats["剑心要诀"] = new BookData({
+    required_time: 180,
+    literacy_xp_rate: 3,
+    unlocks: {
+        flags: ["is_sword_heart_unlocked"],
+    },
+});
+book_stats["炼体秘典"] = new BookData({
+    required_time: 180,
+    literacy_xp_rate: 2,
+    rewards: {
+        xp_multipliers: {
+            "Iron skin": 1.05,
+        }
+    },
+});
 
 Object.keys(item_templates).forEach(id => {
     item_templates[id].id = id;

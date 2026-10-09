@@ -157,6 +157,7 @@ const flag_unlock_texts = {
 	
 	is_shadow_step_unlocked: "解锁匕首被动【影步】！",
     is_bow_focus_unlocked: "解锁弓被动【集中】！",
+	is_sword_heart_unlocked: "解锁剑被动【剑心】！",
 }
 
 // special stats
@@ -523,6 +524,12 @@ let travel_interval = null;
 function start_traveling({destination, duration = 20, text = "旅途中..."}) {
     if(current_traveling) return; // 已有旅行在进行中，忽略
 
+    // ★ 保险：清除可能残留的 interval
+    if(travel_interval) {
+        clearInterval(travel_interval);
+        travel_interval = null;
+    }
+
     // 按旅行技能等级缩短时间
     const speed_mult = Math.pow(0.95, skills["Traveling"].current_level);
     const actual_duration = duration * speed_mult;
@@ -566,9 +573,19 @@ function start_traveling({destination, duration = 20, text = "旅途中..."}) {
 
     const start_time = Date.now();
     const total_ms = actual_duration * 1000;
-    current_traveling = {destination};
+
+    // ★ 关键修复：使用局部变量作为本次旅行的 token
+    const my_travel = {destination};
+    current_traveling = my_travel;
 
     travel_interval = setInterval(() => {
+        // ★ 首先检查还是不是"当前"这次旅行
+        if(current_traveling !== my_travel) {
+            clearInterval(travel_interval);
+            travel_interval = null;
+            return;
+        }
+
         const elapsed = Date.now() - start_time;
         const pct = Math.min(elapsed / total_ms, 1);
         progress_bar.style.width = (385 * pct) + "px";
@@ -578,10 +595,16 @@ function start_traveling({destination, duration = 20, text = "旅途中..."}) {
         if(elapsed >= total_ms) {
             clearInterval(travel_interval);
             travel_interval = null;
-            const dest = current_traveling.destination;
+
+            // ★ 二次确认
+            if(current_traveling !== my_travel) {
+                return;
+            }
+
+            const dest = my_travel.destination;
             current_traveling = null;
 
-            // 加经验: duration/20 (传原始 duration，不受技能缩短影响)
+            // 加经验: duration/20
             add_xp_to_skill({
                 skill: skills["Traveling"],
                 xp_to_add: actual_duration / 2,
@@ -1195,6 +1218,109 @@ function textline_special(t_key){
 				}
 			}
         }
+        else if(t_key == "upgrade_ma_off"){
+            // 检查材料
+            const need = {
+                "{\"id\":\"岩心\"}": 1,
+                "{\"id\":\"晶石碎片\"}": 10,
+                "{\"id\":\"铁矿石\"}": 20,
+            };
+            let ok = true;
+            for(const k in need){
+                if((character.inventory[k]?.count || 0) < need[k]) { ok = false; break; }
+            }
+            if(!ok){
+                displayed_text += "材料不足！需要 岩心×1 + 晶石碎片×10 + 铁矿石×20。<br>";
+            } else {
+                for(const k in need){
+                    remove_from_character_inventory([{ item_key: k, item_count: need[k] }]);
+                }
+                // 移除旧魔力抵消器
+                if(character.equipment.special?.name === "魔力抵消器") {
+                    character.equipment.special = null;
+                }
+                // 移除物品栏中的旧版本
+                const oldKey = "{\"id\":\"魔力抵消器\"}";
+                if(character.inventory[oldKey]) {
+                    remove_from_character_inventory([{ item_key: oldKey, item_count: character.inventory[oldKey].count }]);
+                }
+                add_to_character_inventory([{ item: getItem(item_templates["魔力抵消器·壹"]), count: 1 }]);
+                update_displayed_equipment();
+                character.stats.add_all_equipment_bonus();
+                update_character_stats();
+                displayed_text += "升级成功！【魔力抵消器·壹】已放入物品栏。<br>";
+            }
+        }
+        else if(t_key == "buy_flag"){
+            if(character.money < 5000){
+                displayed_text += "余额不足！需要 5000C。<br>";
+            } else {
+                character.money -= 5000;
+                add_to_character_inventory([{item: getItem(item_templates["阵旗"]), count: 10}]);
+                update_displayed_money();
+                displayed_text += "购买成功！阵旗×10 已放入物品栏。<br>";
+            }
+        }
+        else if(t_key == "buy_core"){
+            if(character.money < 20000){
+                displayed_text += "余额不足！需要 20000C。<br>";
+            } else {
+                character.money -= 20000;
+                add_to_character_inventory([{item: getItem(item_templates["阵法核心"]), count: 1}]);
+                update_displayed_money();
+                displayed_text += "购买成功！阵法核心×1 已放入物品栏。<br>";
+            }
+        }		
+		else if(t_key == "formation_check"){
+			inf_combat.formation = inf_combat.formation || {level: 0};
+			const lv = inf_combat.formation.level;
+			if(lv === 0){
+				displayed_text += `尚未布置聚灵阵。<br>`;
+				displayed_text += `布置需要：<b>阵法核心 ×1</b>，<b>阵旗 ×5</b>，<b>阵法技能等级 ≥ 5</b><br>`;
+				displayed_text += `<br>聚灵阵会在[你的住宅]睡觉时缓慢提供额外经验。<br>`;
+			} else {
+				displayed_text += `当前聚灵阵等级：<b>${lv}</b><br>`;
+				displayed_text += `[你的住宅]睡觉时额外获取 <b>${format_number(100 * lv * lv)}</b> 经验/秒<br>`;
+				displayed_text += `<br>升级到 <b>${lv + 1}</b> 级需要：<br>`;
+				displayed_text += `阵法核心 ×${lv + 1}，阵旗 ×${lv * 3 + 5}，阵法技能等级 ≥ ${5 + lv * 2}<br>`;
+			}
+		}
+		else if(t_key == "formation_upgrade"){
+			inf_combat.formation = inf_combat.formation || {level: 0};
+			const lv = inf_combat.formation.level;
+			const required_skill = 5 + lv * 2;
+			const required_core = lv + 1;
+			const required_flag = lv === 0 ? 5 : lv * 3 + 5;
+
+			if(skills["Formation"].current_level < required_skill){
+				displayed_text += `阵法技能等级不足！<br>需要 <b>${required_skill}</b> 级，当前 <b>${skills["Formation"].current_level}</b> 级。<br>`;
+				displayed_text += `<br>提示：可以在阵法演练场练习阵法提升等级。<br>`;
+				return displayed_text;
+			}
+
+			const core_key = "{\"id\":\"阵法核心\"}";
+			const flag_key = "{\"id\":\"阵旗\"}";
+			const core_owned = character.inventory[core_key]?.count || 0;
+			const flag_owned = character.inventory[flag_key]?.count || 0;
+
+			if(core_owned < required_core || flag_owned < required_flag){
+				displayed_text += `材料不足！<br>`;
+				displayed_text += `需要：阵法核心 ×${required_core}（拥有 ${core_owned}），阵旗 ×${required_flag}（拥有 ${flag_owned}）<br>`;
+				displayed_text += `<br>提示：阵旗和阵法核心可在阵法楼【阵法商人】处购买。<br>`;
+				return displayed_text;
+			}
+
+			remove_from_character_inventory([
+				{item_key: core_key, item_count: required_core},
+				{item_key: flag_key, item_count: required_flag},
+			]);
+			inf_combat.formation.level = lv + 1;
+			displayed_text += `聚灵阵${lv === 0 ? "布置" : "升级"}成功！<br>`;
+			displayed_text += `当前等级：<b>${inf_combat.formation.level}</b><br>`;
+			displayed_text += `睡觉时额外获取 <b>${format_number(100 * (lv + 1) * (lv + 1))}</b> 经验/秒<br>`;
+
+			log_message(`聚灵阵${lv === 0 ? "布置" : "升级"}到 ${inf_combat.formation.level} 级！`, "location_unlocked");
+		}		
         else if(t_key == "huizhang"){
 			let h_cnt = 0;
             if(character.inventory["{\"id\":\""+"一级炼丹师徽章"+"\"}"] != undefined){
@@ -1211,6 +1337,46 @@ function textline_special(t_key){
 				displayed_text += `觉得差不多了也可以去主城丹盟考核下等级，很多地方都能用得到<br>`;
 			}
         }		
+		else if(t_key == "submit_zhaoze"){
+			const kill = enemy_killcount["魔鬼藤母体[BOSS]"] || 0;
+			if(kill < 1){
+				displayed_text += `任务目标未完成！<br>`;
+				displayed_text += `击杀【魔鬼藤母体[BOSS]】: <b>${kill}/1</b> ❌<br>`;
+				displayed_text += `<br>提示: 前往【邪恶沼泽 - X】挑战即可。<br>`;
+			} else {
+				add_to_character_inventory([{item: getItem(item_templates["贡献点"]), count: 3000}]);
+				log_message(`完成【邪恶沼泽清剿任务】，获取 贡献点 x3000`, "location_reward");
+				displayed_text += `任务提交成功！<br>`;
+				displayed_text += `获得 <b>贡献点 x3000</b> 的奖励。<br>`;
+				// ★ 锁定任务：下次打开对话时该选项消失
+				dialogues["任务阁学姐"].textlines["提交邪恶沼泽任务"].is_finished = true;
+				dialogues["任务阁学姐"].textlines["提交邪恶沼泽任务完成"].is_unlocked = true;
+			}
+		}
+		else if(t_key == "submit_kuangshan"){
+			const kill = enemy_killcount["石精霸主[BOSS]"] || 0;
+			const iron_key = "{\"id\":\"铁锭\"}";
+			const iron_count = character.inventory[iron_key]?.count || 0;
+			const kill_ok = kill >= 1;
+			const iron_ok = iron_count >= 50;
+
+			if(!kill_ok || !iron_ok){
+				displayed_text += `任务目标未完成！<br>`;
+				displayed_text += `击杀【石精霸主[BOSS]】: <b>${kill}/1</b> ${kill_ok ? "✔" : "❌"}<br>`;
+				displayed_text += `持有【铁锭】: <b>${iron_count}/50</b> ${iron_ok ? "✔" : "❌"}<br>`;
+				displayed_text += `<br>提示: 石精霸主位于【矿山 - X】；铁锭可通过开采后熔炼获取。<br>`;
+			} else {
+				// 先消耗铁锭，再给奖励
+				remove_from_character_inventory([{item_key: iron_key, item_count: 50}]);
+				add_to_character_inventory([{item: getItem(item_templates["贡献点"]), count: 2000}]);
+				log_message(`完成【矿山清剿任务】，获取 贡献点 x2000`, "location_reward");
+				displayed_text += `任务提交成功！<br>`;
+				displayed_text += `消耗了 <b>铁锭 x50</b>。<br>`;
+				displayed_text += `获得 <b>贡献点 x2000</b> 的奖励。<br>`;
+				dialogues["任务阁学姐"].textlines["提交矿山任务"].is_finished = true;
+				dialogues["任务阁学姐"].textlines["提交矿山任务完成"].is_unlocked = true;
+			}
+		}		
         else if(t_key == "A8-killcount"){
             let killcount = get_enemy_killcount();
             displayed_text += `目前为止，${character.name} <br>已经制造了 ${killcount} 份杀戮。<br><br>`;
@@ -1552,8 +1718,8 @@ function textline_special(t_key){
 
         else if(t_key.includes("gf")){
             let T_S = t_key;
-            let pz_map = {"gf-dagger":"影步要诀","gf-bow":"集中心法","gf-dan":"聚气丹"};//凭证
-            let cs_map = {"gf-dagger":10000,"gf-bow":10000,"gf-dan":3000};//cost
+            let pz_map = {"gf-dagger":"影步要诀","gf-bow":"集中心法","gf-dan":"聚气丹","gf-skin":"炼体秘典","gf-sword":"剑心要诀"};//凭证
+            let cs_map = {"gf-dagger":10000,"gf-bow":10000,"gf-dan":3000,"gf-skin":10000,"gf-sword":10000};//cost
             //检查物品是否足够，扣除物品，如果不够就返回
             let pz_key = "{\"id\":\""+"贡献点"+"\"}";//凭证
             let C_pz = cs_map[T_S];//Cost_凭证
@@ -2137,6 +2303,11 @@ function do_enemy_attack_loop(enemy_id, count, E_round = 1,isnew = false) {//E_r
                 }
                 else do_enemy_combat_action(enemy_id,Spec_S,1);//普攻
 
+                // ★ 每次攻击后检查敌人是否还活着，避免后续操作访问已 dispose 的敌人
+                if(!current_enemies || !current_enemies[enemy_id] || !current_enemies[enemy_id].is_alive) {
+                    return;
+                }
+
                 if(current_enemies != null) if(current_enemies[enemy_id].spec.includes(13) && E_round <= 3)//惑幻
                 {
                     do_enemy_combat_action(enemy_id,"[惑幻]"+Spec_S,0);
@@ -2207,7 +2378,11 @@ function do_enemy_attack_loop(enemy_id, count, E_round = 1,isnew = false) {//E_r
 
                 }
             }
-            do_enemy_attack_loop(enemy_id, count,E_round + atk_sign,false);
+            
+            // ★ 再次确认敌人存活再进入下一轮循环
+            if(current_enemies && current_enemies[enemy_id] && current_enemies[enemy_id].is_alive) {
+                do_enemy_attack_loop(enemy_id, count,E_round + atk_sign,false);
+            }
 
     }, frametime);
 }
@@ -2379,11 +2554,16 @@ function do_enemy_combat_action(enemy_id,spec_hint,E_atk_mul = 1,E_dmg_mul = 1) 
     sometimes results in enemy attack animation still finishing before character retreats,
     launching this function and causing an error
     */
-    if(!current_enemies) { 
+    if(!current_enemies || !current_enemies[enemy_id]) { 
         return;
     }
     
     const attacker = current_enemies[enemy_id];
+    
+    // ★ 关键：敌人可能已经被影步追伤 / 其他来源提前 dispose
+    if(!attacker.stats || !attacker.is_alive) {
+        return;
+    }
 
     let evasion_agi_modifier = current_enemies.filter(enemy => enemy.is_alive).length**(-1/3); //more enemies will restrict neko resulted in harder evasion
 
@@ -2581,6 +2761,8 @@ function do_enemy_combat_action(enemy_id,spec_hint,E_atk_mul = 1,E_dmg_mul = 1) 
         update_displayed_health_of_enemies();
 		if(attacker.stats.health <= 0) {
 			handle_enemy_death(attacker, dmg);
+            // ★ 关键：追伤击杀敌人后，attacker.stats 已被置 null，必须立即返回
+            return;
 		}
     }
 
@@ -2645,11 +2827,18 @@ function do_enemy_combat_action(enemy_id,spec_hint,E_atk_mul = 1,E_dmg_mul = 1) 
 
     
     if(!attacker.spec.includes(28)) add_xp_to_skill({skill: skills["Iron skin"], xp_to_add: enemy_base_damage*spec_mul/10});
-    if(attacker.spec.includes(31)){
-        attacker.stats.health += attacker.stats.max_health * 0.30;
-        log_message(attacker.name + " 恢复了 " + format_number(attacker.stats.max_health * 0.30)  + " 点血量","enemy_enhanced");
-        update_displayed_health_of_enemies();
-    }//回春
+	if(attacker.spec.includes(31)){
+		const before_hp = attacker.stats.health;
+		attacker.stats.health = Math.min(
+			attacker.stats.health + attacker.stats.max_health * 0.30,
+			attacker.stats.max_health
+		);
+		const actual_heal = attacker.stats.health - before_hp;
+		if(actual_heal > 0) {
+			log_message(attacker.name + " 恢复了 " + format_number(actual_heal) + " 点血量", "enemy_enhanced");
+		}
+		update_displayed_health_of_enemies();
+	}//回春
 
     if(attacker.spec.includes(66)){
         chara_cd -= 500 / character.stats.full.attack_speed;
@@ -2846,6 +3035,10 @@ function handle_enemy_death(target, damage_dealt) {
     if (!target || !target.stats || target.stats.health > 0 || target.death_processed) {
         return;
     }
+    // ★ 确保 spec 数组存在（避免 spec_value 等被提前清空）
+    if (!Array.isArray(target.spec)) {
+        target.spec = [];
+    }
     target.death_processed = true;
 
     damage_dealt = Math.max(damage_dealt, target.stats.max_health); // 防止超杀伤害计算出错，或直接给最大血量作为经验基数
@@ -3013,6 +3206,9 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
     if (!target || !target.is_alive || !target.stats) {
         return;
     }
+    
+    // ★ 记录本次攻击是否打死目标（延迟处理，避免中途 dispose 导致 target.stats 为 null 崩溃）
+    let target_is_dead = false;
 
     let satk_mul = 1;//角色攻击乘数
     let sdmg_mul = 1;//角色伤害乘数
@@ -3161,11 +3357,7 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
             
             if(sdmg_mul == Infinity) sdmg_mul = 9999.99;//防止除以0
         }
-
-        if(target.stats.health <= 0) {
-            handle_enemy_death(target, damage_dealt);
-        }
-        update_displayed_health_of_enemies();    
+ 
 
         if(target.spec.includes(1))
         {
@@ -3197,8 +3389,11 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
         let b_health = target.stats.health;
         target.stats.health -= damage_dealt;
 
+        // ★ 只记录死亡状态，不立即处理；等到函数末尾统一处理
+        target_is_dead = (target.stats.health <= 0);
+
 		// ★ 新增：武器词条 - 流血（目标还活着才挂）
-		if(target.stats.health > 0 && target.is_alive) {
+		if(!target_is_dead && target.stats.health > 0 && target.is_alive) {
 			const weapon = character.equipment.weapon;
 			if(weapon?.hasTrait?.("bleed")) {
 				const bleed = weapon.getTrait("bleed");
@@ -3212,7 +3407,7 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
 		}
 		
         let filter = false;
-        if(options.option_combat_filter && ((damage_dealt == 0) || (target.stats.health <= 0))) filter = true;
+        if(options.option_combat_filter && ((damage_dealt == 0) || target_is_dead)) filter = true;
         if(critted) {
             if(!filter) log_message(target.name + " 受到了 " + format_number(damage_dealt) + " 伤害[暴击]" + Spec_E, "enemy_attacked_critically");
         }
@@ -3220,7 +3415,9 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
             if(!filter) log_message(target.name + " 受到了 " + format_number(damage_dealt) + " 伤害" + Spec_E, "enemy_attacked");
         }
         
-        if(active_effects["吹火 C6"]!=undefined){
+		update_displayed_health_of_enemies();       
+        
+		if(!target_is_dead && active_effects["吹火 C6"]!=undefined){
             cur_cd[target_num] -= 500 / target.stats.attack_speed;
             log_message(`${character.name} 将 ${target.name} 的攻击 延迟了0.5轮![吹火 C6].`,"hero_regened");
         }//吹火 C6
@@ -3264,7 +3461,7 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
 			log_message(`${character.name} 恢复了 ${format_number(character.stats.full.health - pre_health)} 点血量${ls_label}`, "hero_regened");
 		}
 
-        if(target.spec.includes(32)){
+		if(!target_is_dead && target.is_alive && target.spec.includes(32)){
             let {damage_taken, fainted} = character.take_damage([],{damage_value: damage_dealt*0.2},0);
             
             log_message(character.name + "受到了" + format_number(damage_taken) + "点伤害[反戈]", "hero_attacked");
@@ -3290,12 +3487,17 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
         }
         else if(!options.option_combat_filter) log_message(character.name + " 未命中", "hero_missed");
     }
-    if(target.spec.includes(35)){
+    if(target.is_alive && target.spec.includes(35)){
         let {damage_taken, fainted} = character.take_damage([],{damage_value: Math.max(target.spec_value[35]-character.stats.full.agility,0)},0);
         update_displayed_health();
         log_message(character.name + "受到了" + format_number(damage_taken) + "点伤害[领域]", "hero_attacked");
         if(fainted) faint(" 被领域击败")
     }//领域
+    
+    // ★ 最终统一处理死亡：所有需要读 target.stats 的逻辑都已执行完毕，现在才能安全 dispose
+    if(target_is_dead && target.is_alive) {
+        handle_enemy_death(target, damage_dealt);
+    }
 }
 
 /**
@@ -3731,13 +3933,35 @@ function get_location_rewards(location) {
 
     //activities
     for(let i = 0; i < location.repeatable_reward.activities?.length; i++) {
-        if(locations[location.repeatable_reward.activities[i].location].activities[location.repeatable_reward.activities[i].activity].tags?.gathering 
-            && !global_flags.is_gathering_unlocked) {
-                return;
-            }
+        const act_entry = location.repeatable_reward.activities[i];
 
-        unlock_activity({location: locations[location.repeatable_reward.activities[i].location].name, 
-                            activity: locations[location.repeatable_reward.activities[i].location].activities[location.repeatable_reward.activities[i].activity]});
+        // ★ 防御性检查：避免引用了不存在的地点/活动
+        if(!act_entry || !act_entry.location || !act_entry.activity) {
+            console.warn(`[get_location_rewards] 无效的 activity 引用（缺少 location 或 activity 字段）:`, act_entry, `来自 ${location.name}`);
+            continue;
+        }
+
+        const act_loc = locations[act_entry.location];
+        if(!act_loc) {
+            console.warn(`[get_location_rewards] 引用了不存在的地点 "${act_entry.location}"（来自 ${location.name} 的 repeatable_reward.activities）`);
+            continue;
+        }
+        if(!act_loc.activities) {
+            console.warn(`[get_location_rewards] 地点 "${act_entry.location}" 没有 activities 字段（来自 ${location.name}）`);
+            continue;
+        }
+
+        const act_def = act_loc.activities[act_entry.activity];
+        if(!act_def) {
+            console.warn(`[get_location_rewards] 地点 "${act_entry.location}" 中不存在 activity "${act_entry.activity}"（来自 ${location.name}）。已定义的活动:`, Object.keys(act_loc.activities));
+            continue;
+        }
+
+        if(act_def.tags?.gathering && !global_flags.is_gathering_unlocked) {
+            return;
+        }
+
+        unlock_activity({location: act_loc.name, activity: act_def});
     }
 
     if(location.name == "纳家秘境 - ∞" && Math.floor(inf_combat.A6.cur * 1.25) > inf_combat.A6.cap){
@@ -4218,11 +4442,74 @@ function use_item(item_key,stated = false){
             
             update_displayed_character_inventory({was_anything_new_added:true});
         }
-        else if(I_spec = "HeartDemon_nerf"){
+        else if(I_spec == "HeartDemon_nerf"){
             global_flags["qz_percent"] = (global_flags["qz_percent"] || 0) + 1;
             if(global_flags["qz_percent"]>100) global_flags["qz_percent"] = 100;
             log_message(`牵制领悟度提升到了 ${global_flags["qz_percent"]}%!`,"gather_loot");
         }
+		
+		else if(I_spec == "toxic_resistance_xp"){
+			// 避毒丹 -> 转换为毒抗经验
+			const xp_gain = 500;
+			add_xp_to_skill({skill: skills["Toxic resistance"], xp_to_add: xp_gain, should_info: true, use_bonus: true});
+			log_message(`通过【${item_templates[id].name}】获取了 ${xp_gain} 点【毒液抗性】经验值`, "gather_loot");
+		}
+		else if(I_spec == "pill_atk" || I_spec == "pill_def" || I_spec == "pill_agi" || I_spec == "pill_hp"){
+			// 永久属性丹
+			inf_combat.PILLS = inf_combat.PILLS || {atk:0, def:0, agi:0, hp:0};
+			const pill_target = {
+				pill_atk: {key: "atk", stat: "attack_power", per: 500, name: "攻击力"},
+				pill_def: {key: "def", stat: "defense",     per: 500, name: "防御力"},
+				pill_agi: {key: "agi", stat: "agility",     per: 500, name: "敏捷"},
+				pill_hp:  {key: "hp",  stat: "max_health",  per: 50000, name: "生命上限"},
+			};
+			const target = pill_target[I_spec];
+			if((inf_combat.PILLS[target.key] || 0) >= 100){
+				log_message(`【${item_templates[id].name}】已达服用上限（100颗），无法继续服用！`, "enemy_enhanced");
+				return;
+			}
+			inf_combat.PILLS[target.key] = (inf_combat.PILLS[target.key] || 0) + 1;
+			character.stats.flat.pills[target.stat] = (character.stats.flat.pills[target.stat] || 0) + target.per;
+			log_message(`服用了【${item_templates[id].name}】，永久获得 +${target.per} ${target.name}（累计 ${inf_combat.PILLS[target.key]}/100）`, "gather_loot");
+			used = true;
+		}
+		else if(I_spec == "talisman_thunder" || I_spec == "talisman_fire" || I_spec == "talisman_ice"){
+			// 攻击类符箓：对随机敌人造成一次伤害
+			const aliveEnemies = current_enemies ? current_enemies.filter(e => e.is_alive) : [];
+			if(aliveEnemies.length === 0){
+				log_message(`【${item_templates[id].name}】只能在战斗中使用！`, "enemy_enhanced");
+				return;
+			}
+			const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+			const atk = character.get_attack_power();
+			let mul = 0, tag = "", base_mul = 0;
+			if(I_spec == "talisman_thunder"){
+				mul = 0.8; base_mul = 0.8; tag = "雷符";
+				if(target.tags && target.tags["机械"]) mul *= 2;
+			} else if(I_spec == "talisman_fire"){
+				mul = 0.6; base_mul = 0.6; tag = "火符";
+				if(target.tags && target.tags["plant"]) mul *= 2;
+			} else {
+				mul = 0.5; base_mul = 0.5; tag = "冰符";
+				if(target.tags && target.tags["flame"]) mul *= 2;
+			}
+			const damage = atk * mul;
+			target.stats.health -= damage;
+			log_message(`使用【${tag}】，对 ${target.name} 造成了 ${format_number(damage)} 点伤害${mul !== base_mul ? "（属性克制加成！）" : ""}`, "enemy_attacked_critically");
+			update_displayed_health_of_enemies();
+			if(target.stats.health <= 0){
+				handle_enemy_death(target, damage);
+			}
+			used = true;
+		}
+		else if(I_spec == "talisman_heal"){
+			// 治愈符
+			const heal = character.stats.full.max_health * 0.04;
+			character.stats.full.health = Math.min(character.stats.full.health + heal, character.stats.full.max_health);
+			log_message(`使用了【治愈符】，回复了 ${format_number(heal)} 点生命值`, "hero_regened");
+			update_displayed_health();
+			used = true;
+		}		
     }
     if(item_templates[id].realmcap!=-1)
     {
@@ -4421,11 +4708,17 @@ function use_item_max(item_key)
         return;
     }//特判:B9药剂解包
 
-    while(character.is_in_inventory(item_key))
-    {
-        use_item(item_key,true);
-        cnt++;
-    }
+	let safety = 0;
+	while(character.is_in_inventory(item_key) && safety < 10000)
+	{
+		const before = character.inventory[item_key]?.count || 0;
+		use_item(item_key,true);
+		const after = character.inventory[item_key]?.count || 0;
+		if(after >= before) break; // 未被消耗，跳出避免死循环
+		cnt++;
+		safety++;
+	}
+	
     update_displayed_character_inventory(character_sorting);
     character.stats.add_active_effect_bonus();
     update_character_stats();
@@ -4721,7 +5014,16 @@ function load(save_data) {
     character.name = save_data.character.name;
     character.bonus_skill_levels = save_data.character.bonus_skill_levels;
     character.stats.flat.gems = save_data.gem_stats;
-
+	
+	// ★ 重建永久属性丹加成
+	character.stats.flat.pills = {};
+	if(inf_combat.PILLS) {
+		if(inf_combat.PILLS.atk) character.stats.flat.pills.attack_power = inf_combat.PILLS.atk * 500;
+		if(inf_combat.PILLS.def) character.stats.flat.pills.defense      = inf_combat.PILLS.def * 500;
+		if(inf_combat.PILLS.agi) character.stats.flat.pills.agility      = inf_combat.PILLS.agi * 500;
+		if(inf_combat.PILLS.hp)  character.stats.flat.pills.max_health   = inf_combat.PILLS.hp  * 50000;
+	}
+	
     last_location_with_bed = save_data.last_location_with_bed;
     last_combat_location = save_data.last_combat_location;
 
@@ -6186,8 +6488,9 @@ const FARM_CROPS = [
     { name: "铁线草种子", time: 180,  crop: "铁线草", count: [1, 2], xp: 150,   unlock_level: 3 },
 	{ name: "生命木树种", time: 240, crop: "生命木", count: [1, 3], xp: 600,  unlock_level: 5 },
 	{ name: "常青藤种子", time: 240, crop: "常青藤", count: [1, 3], xp: 600,  unlock_level: 5 },
-    // { name: "青花鱼", time: 3600, crop: "青花鱼", count: [1, 1], xp: 2000, unlock_level: 9 },
-];
+    { name: "沼泽蔓藤种子", time: 300, crop: "沼泽蔓藤", count: [2, 4], xp: 1200, unlock_level: 7 },
+    { name: "毒腺草种子", time: 360, crop: "毒腺草", count: [1, 3], xp: 2200, unlock_level: 7 },
+    { name: "荒古莲种子", time: 480, crop: "荒古莲", count: [1, 2], xp: 4000, unlock_level: 8 },];
 
 // 升级到下一级的消耗。key 是当前等级。
 const FARM_UPGRADES = {
@@ -6197,11 +6500,9 @@ const FARM_UPGRADES = {
     4:  { money: 8000, crops: [["绝音蕨", 15], ["噬芒兰", 3]] },
     5:  { money: 16000,     crops: [["噬芒兰", 10], ["生命木", 3]] },
     6:  { money: 32000,     crops: [["生命木", 20]] },
-    // 7:  { money: 1e9,     crops: [["青花鱼", 10]] },
-    // 8:  { money: 1e10,    crops: [["青花鱼", 20]] },
-    // 9:  { money: 1e11,    crops: [["青花鱼", 30]] },
-    // 10: { money: 1e12,    crops: [["青花鱼", 50]] },
-    // 11: { money: 1e13,    crops: [["青花鱼", 80]] },
+    7:  { money: 96000,     crops: [["沼泽蔓藤", 10], ["毒腺草", 5]] },
+    8:  { money: 288000,    crops: [["毒腺草", 15], ["荒古莲", 3]] },
+    9:  { money: 864000,    crops: [["荒古莲", 10]] },
 };
 const FARM_MAX_LEVEL = 12;
 
@@ -7431,13 +7732,19 @@ function update() {
             //nothing here i guess?
 			processBleedEffects();   // ★ 新增
         } else { //everything other than combat
-            if(is_sleeping) {
-                do_sleeping();
-                add_xp_to_skill({skill: skills["Sleeping"], xp_to_add: current_location.sleeping?.xp});
-                if(current_location.sleeping?.xp >= 10){
-                    add_xp_to_character(Math.pow(current_location.sleeping?.xp,2),false);
-                }
-            }
+			if(is_sleeping) {
+				do_sleeping();
+				add_xp_to_skill({skill: skills["Sleeping"], xp_to_add: current_location.sleeping?.xp});
+				if(current_location.sleeping?.xp >= 10){
+					add_xp_to_character(Math.pow(current_location.sleeping?.xp,2),false);
+				}
+				// ★ 聚灵阵：仅在"你的住宅"生效
+				inf_combat.formation = inf_combat.formation || {level: 0};
+				if(inf_combat.formation.level > 0 && current_location.name === "你的住宅"){
+					const pill_xp = 100 * inf_combat.formation.level * inf_combat.formation.level;
+					add_xp_to_character(pill_xp, false);
+				}
+			}
             else {
                 if(is_resting) {
                     do_resting();
@@ -7569,12 +7876,16 @@ function update() {
         });
         update_displayed_effect_durations();
         update_displayed_effects();
-        //health regen
+		//health regen
         if(character.stats.full.health_regeneration_flat) {
             character.stats.full.health += character.stats.full.health_regeneration_flat;
         }
         if(character.stats.full.health_regeneration_percent) {
             character.stats.full.health += character.stats.full.max_health * character.stats.full.health_regeneration_percent/100;
+        }
+        // ★ 毒液伤害：独立计算，不受生命恢复的倍率影响
+        if(character.stats.environment_toxic_damage && character.stats.environment_toxic_damage > 0) {
+            character.stats.full.health -= character.stats.environment_toxic_damage;
         }
         if(character.stats.full.health > character.stats.full.max_health) {
             character.stats.full.health = character.stats.full.max_health
@@ -7655,6 +7966,16 @@ function update() {
     //(instead of only stabilizing relative to previous tick, it stabilizes relative to sum of deviations)
     //probably completely unnecessary lol, but hey, it sounds cool
 }
+
+// ★ 启动补丁：拥有岩心但还没解锁升级对话的老存档，自动解锁
+(function(){
+    const hasRockHeart = character.is_in_inventory("{\"id\":\"岩心\"}");
+    const upgradeLine = dialogues["与周远航对话"]?.textlines?.["升级魔力抵消器"];
+    if(hasRockHeart && upgradeLine && !upgradeLine.is_unlocked) {
+        upgradeLine.is_unlocked = true;
+        console.log("[补丁] 检测到老存档已拥有岩心，已自动解锁【升级魔力抵消器】对话");
+    }
+})();
 
 function run() {
     if(typeof current_location === "undefined") {

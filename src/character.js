@@ -115,6 +115,7 @@ character.base_stats = {
 
 character.stats = {};
 character.stats.full = {...character.base_stats};
+character.stats.environment_toxic_damage = 0;
 character.stats.total_flat = {};
 character.stats.total_multiplier = {};
 /*
@@ -140,6 +141,7 @@ character.stats.flat = {
     environment: {},
     gems: {},
     coins: {},
+    pills: {},   // ★ 新增：永久属性丹提供的加成	
 };
 
 character.stats.multiplier = {
@@ -658,6 +660,14 @@ character.stats.add_weapon_type_bonuses = function() {
                 }
                 //character.stats.multiplier.skills.attack_points = skills[weapon_type_to_skill[character.equipment.weapon.weapon_type]].get_coefficient()**0.3333;
         }
+		if(character.equipment.weapon?.weapon_type === "sword" && window.global_flags?.is_sword_heart_unlocked) {
+			const lv = skills["Swords"].current_level;
+			const mul = 1 + lv * 0.005; // 每级+0.5%
+			character.stats.multiplier.skills.attack_power = (character.stats.multiplier.skills.attack_power || 1) * mul;
+			character.stats.multiplier.skills.defense = (character.stats.multiplier.skills.defense || 1) * mul;
+			character.stats.multiplier.skills.agility = (character.stats.multiplier.skills.agility || 1) * mul;
+			character.stats.multiplier.skills.max_health = (character.stats.multiplier.skills.max_health || 1) * mul;
+		}		
 }
 
 /**
@@ -734,13 +744,7 @@ character.stats.add_location_penalties = function() {
                         character.stats.multiplier.light_level.attack_speed = 1;
                 }
                 character.stats.flat.environment.health_regeneration_flat = 0;
-                for(let i = 0; i < current_location.types.length; i++) {
-                        if(current_location.types[i].type =='toxic'){
-                                character.stats.flat.environment.health_regeneration_flat = -800e8*(1-skills["Toxic resistance"].current_level*0.05)*(0.99**skills["Iron skin"].current_level);
-                        }
-                        //toxic提供flat而不是multiplier，并且公式特殊，所以需要特殊判定
-                }
-        }
+		}
         
 
         character.stats.multiplier.environment = {};
@@ -813,6 +817,21 @@ character.update_stats = function () {
                 }
         }
     });
+	
+    // ★ 毒液伤害：基于最终的 max_health 计算，不受任何倍率影响
+    // 公式：最大生命 × 3% × (1 - 毒抗等级 × 4%)
+    character.stats.environment_toxic_damage = 0;
+    if(current_location && Array.isArray(current_location.types)) {
+        for(let i = 0; i < current_location.types.length; i++) {
+            if(current_location.types[i].type === 'toxic') {
+                const base = character.stats.full.max_health * 0.03;
+                const reduction = Math.min(skills["Toxic resistance"].current_level * 0.04, 1);
+                character.stats.environment_toxic_damage = base * (1 - reduction);
+                break; // 只算一次
+            }
+        }
+    }
+	
 }
 
 

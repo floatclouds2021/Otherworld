@@ -398,19 +398,11 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         name: "弓身",
         materials: [
             {material_id: "木头", count: 3, result_id: "木弓身"}, 
-            //未完待续
-        ],
-        item_type: "Component",
-        recipe_skill: "Forging"
-    });
-    forging_recipes.components["弓身"] = new ComponentRecipe({
-        name: "弓身",
-        materials: [
             {material_id: "生命木", count: 3, result_id: "生命木弓身"}, 
-            //未完待续
+            {material_id: "硬化沼泽滕蔓", count: 5, result_id: "沼泽滕蔓弓身"},
         ],
         item_type: "Component",
-        recipe_skill: "Forging"
+        recipe_skill: "Forging",
     });
 
 
@@ -418,19 +410,11 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         name: "弓弦",
         materials: [
             {material_id: "稻草", count: 3, result_id: "稻草弓弦"}, 
-            //未完待续
-        ],
-        item_type: "Component",
-        recipe_skill: "Forging"
-    });	
-    forging_recipes.components["弓弦"] = new ComponentRecipe({
-        name: "弓弦",
-        materials: [
             {material_id: "常青藤", count: 3, result_id: "常青藤弓弦"}, 
-            //未完待续
+			{material_id: "沼泽蔓藤", count: 5, result_id: "沼泽滕蔓弓弦"},
         ],
         item_type: "Component",
-        recipe_skill: "Forging"
+        recipe_skill: "Forging",
     });
 	
     forging_recipes.components["轮锋"] = new ComponentRecipe({
@@ -692,7 +676,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
     });
     crafting_recipes.equipment["匕首"] = new EquipmentRecipe({
         name: "匕首",
-        components: ["triple blade", "short handle"],
+        components: ["short blade", "short handle"],   // ★ 匕首 = 短刃 + 短柄
         item_type: "Weapon",
     });
     crafting_recipes.equipment["月轮"] = new EquipmentRecipe({
@@ -967,7 +951,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         recipe_level: [1,22],
         recipe_skill: "Crafting",
     }); */
-    
+/*     
     crafting_recipes.items2["柳木注灵"] = new ItemRecipe({
         name: "柳木注灵",
         recipe_type: "material",
@@ -1219,7 +1203,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         success_chance: [0.5,1],
         recipe_level: [1,116],
         recipe_skill: "Crafting",
-    });
+    }); */
     
 })();
 //熔炼配方
@@ -1235,9 +1219,18 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         recipe_level: [0,5],
         recipe_skill: "Smelting",
     });
+    smelting_recipes.items["熔炼铁锭-改"] = new ItemRecipe({
+        name: "熔炼铁锭-改",
+        recipe_type: "material",
+        materials: [{material_id: "磁铁矿", count: 3},{material_id: "煤炭", count: 1}], 
+        result: {result_id: "铁锭", count: 10},
+        success_chance: [0.6,1],
+        recipe_level: [0,5],
+        recipe_skill: "Smelting",
+    });	
     //1-2
     
-    smelting_recipes.items["熔炼精钢"] = new ItemRecipe({
+    /* smelting_recipes.items["熔炼精钢"] = new ItemRecipe({
         name: "熔炼精钢",
         recipe_type: "material",
         materials: [{material_id: "铁锭", count: 1},{material_id: "合金残片", count: 2},{material_id: "魔力碎晶", count: 3}], 
@@ -1448,7 +1441,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         success_chance: [0.5,1],
         recipe_level: [111,111],
         recipe_skill: "Smelting",
-    });
+    }); */
 })();
 
 
@@ -1490,7 +1483,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         recipe_level: [12,12],
         recipe_skill: "Cooking",
     }); */
-    cooking_recipes.items2["大地级·烤肉 II"] = new ItemRecipe({
+    /* cooking_recipes.items2["大地级·烤肉 II"] = new ItemRecipe({
         name: "大地级·烤肉 II",
         recipe_type: "material",
         materials: [{material_id: "森林·荒兽肉块", count: 1},{material_id: "A4·能量核心", count: 1}], 
@@ -1646,12 +1639,12 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         success_chance: [0.3,1],
         recipe_level: [80,80],
         recipe_skill: "Cooking",
-    });
+    }); */
 })();
 //锻造[镐头]
 (function(){
     
-    forging_recipes.items["精钢镐"] = new ItemRecipe({
+    /* forging_recipes.items["精钢镐"] = new ItemRecipe({
         name: "精钢镐",
         recipe_type: "material",
         materials: [{material_id: "精钢锭", count: 3},{material_id: "铜骨", count: 1}], 
@@ -1736,7 +1729,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         recipe_level: [1,80],
         Q_able:240,
         recipe_skill: "Forging",
-    });
+    }); */
     
 })();
 
@@ -1773,7 +1766,8 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         recipe_skill: "Alchemy",
 		is_unlocked: false, // ★ 新增这一行
     }); 	
-	
+
+
 /*    alchemy_recipes.items["粘合织料"] = new ItemRecipe({
         name: "粘合织料",
         recipe_type: "material",
@@ -1847,7 +1841,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         recipe_level: [20,20],
         recipe_skill: "Alchemy",
     }); */
-
+/* 
     
     alchemy_recipes.items2["炼金药剂-魔攻"] = new ItemRecipe({
         name: "炼金药剂-魔攻",
@@ -2059,11 +2053,174 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         success_chance: [0.5,1],
         recipe_level: [1,110],
         recipe_skill: "Alchemy",
-    });
+    }); */
 
     
 })();
+// ========== 新增：晶化配方 ==========
+(function(){
+    smelting_recipes.items["晶化铁锭"] = new ItemRecipe({
+        name: "晶化铁锭",
+        recipe_type: "material",
+        materials: [
+            {material_id: "铁锭", count: 1},
+            {material_id: "晶化粉末", count: 2},
+        ],
+        result: {result_id: "晶化铁锭", count: 1},
+        success_chance: [0.5, 1],
+        recipe_level: [1, 60],
+        recipe_skill: "Smelting",
+    });
+})();
 
+// ========== 新增：符箓配方 ==========
+(function(){
+    alchemy_recipes.items2["雷符"] = new ItemRecipe({
+        name: "雷符X3",
+        recipe_type: "material",
+        materials: [
+            {material_id: "磁铁矿", count: 5},
+            {material_id: "晶石碎片", count: 2},
+        ],
+        result: {result_id: "雷符", count: 3},
+        success_chance: [0.3, 1],
+        recipe_level: [1, 15],
+        recipe_skill: "Talismans",
+    });
+    alchemy_recipes.items2["火符"] = new ItemRecipe({
+        name: "火符X3",
+        recipe_type: "material",
+        materials: [
+            {material_id: "毒腺草", count: 3},
+            {material_id: "煤炭", count: 5},
+        ],
+        result: {result_id: "火符", count: 3},
+        success_chance: [0.3, 1],
+        recipe_level: [1, 15],
+        recipe_skill: "Talismans",
+    });
+    alchemy_recipes.items2["冰符"] = new ItemRecipe({
+        name: "冰符X3",
+        recipe_type: "material",
+        materials: [
+            {material_id: "荒古莲", count: 1},
+            {material_id: "灵液", count: 5},
+        ],
+        result: {result_id: "冰符", count: 3},
+        success_chance: [0.3, 1],
+        recipe_level: [1, 15],
+        recipe_skill: "Talismans",
+    });
+    alchemy_recipes.items2["治愈符"] = new ItemRecipe({
+        name: "治愈符X3",
+        recipe_type: "material",
+        materials: [
+            {material_id: "沼泽蔓藤", count: 3},
+            {material_id: "灵血草", count: 5},
+        ],
+        result: {result_id: "治愈符", count: 3},
+        success_chance: [0.3, 1],
+        recipe_level: [1, 10],
+        recipe_skill: "Talismans",
+    });
+})();
+
+// ========== 新增：丹药配方 ==========
+(function(){
+    alchemy_recipes.items["攻玄丹"] = new ItemRecipe({
+        name: "攻玄丹",
+        recipe_type: "material",
+        materials: [
+            {material_id: "沼泽内丹", count: 1},
+            {material_id: "大力参", count: 3},
+            {material_id: "磁铁矿", count: 2},
+        ],
+        result: {result_id: "攻玄丹", count: 1},
+        success_chance: [0.4, 1],
+        recipe_level: [1, 20],
+        recipe_skill: "Alchemy",
+    });
+    alchemy_recipes.items["御玄丹"] = new ItemRecipe({
+        name: "御玄丹",
+        recipe_type: "material",
+        materials: [
+            {material_id: "沼泽内丹", count: 1},
+            {material_id: "虎骨藤", count: 3},
+            {material_id: "晶石碎片", count: 2},
+        ],
+        result: {result_id: "御玄丹", count: 1},
+        success_chance: [0.4, 1],
+        recipe_level: [1, 20],
+        recipe_skill: "Alchemy",
+    });
+    alchemy_recipes.items["风玄丹"] = new ItemRecipe({
+        name: "风玄丹",
+        recipe_type: "material",
+        materials: [
+            {material_id: "沼泽内丹", count: 1},
+            {material_id: "铁线草", count: 3},
+            {material_id: "晶石碎片", count: 2},
+        ],
+        result: {result_id: "风玄丹", count: 1},
+        success_chance: [0.4, 1],
+        recipe_level: [1, 20],
+        recipe_skill: "Alchemy",
+    });
+    alchemy_recipes.items["血玄丹"] = new ItemRecipe({
+        name: "血玄丹",
+        recipe_type: "material",
+        materials: [
+            {material_id: "沼泽内丹", count: 1},
+            {material_id: "荒古莲", count: 1},
+            {material_id: "灵血草", count: 5},
+        ],
+        result: {result_id: "血玄丹", count: 1},
+        success_chance: [0.4, 1],
+        recipe_level: [1, 20],
+        recipe_skill: "Alchemy",
+    });
+    alchemy_recipes.items["避毒丹"] = new ItemRecipe({
+        name: "避毒丹",
+        recipe_type: "material",
+        materials: [
+            {material_id: "毒腺草", count: 2},
+            {material_id: "荒古莲", count: 1},
+            {material_id: "止血丹", count: 3},
+        ],
+        result: {result_id: "避毒丹", count: 1},
+        success_chance: [0.4, 1],
+        recipe_level: [1, 15],
+        recipe_skill: "Alchemy",
+    });
+})();
+
+// ========== 新增：弓/匕首配方（沼泽+矿山素材）==========
+(function(){
+/*     crafting_recipes.items["皮甲强化"] = new ItemRecipe({
+        name: "皮甲强化",
+        recipe_type: "material",
+        materials: [
+            {material_id: "沼泽蔓藤", count: 3},
+            {material_id: "异兽皮", count: 2},
+        ],
+        result: {result_id: "活性织料", count: 1},
+        success_chance: [0.5, 1],
+        recipe_level: [1, 25],
+        recipe_skill: "Crafting",
+    }); */
+    alchemy_recipes.items4["硬化沼泽滕蔓"] = new ItemRecipe({
+        name: "硬化沼泽滕蔓",
+        recipe_type: "items",
+        materials: [
+            {material_id: "沼泽蔓藤", count: 3},
+            {material_id: "灵液", count: 2},
+        ],
+        result: {result_id: "硬化沼泽滕蔓", count: 1},
+        success_chance: [0.5, 1],
+        recipe_level: [10, 20],
+        recipe_skill: "Alchemy",
+    });	
+})();
 
 const recipes = {
     crafting: crafting_recipes, 
