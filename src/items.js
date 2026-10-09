@@ -3367,7 +3367,7 @@ const TRAIT_ArmorPenetration = {
 	item_templates["沼泽滕蔓弓身"] = new WeaponComponent({
         name: "沼泽滕蔓弓身", description: "硬化的沼泽滕蔓编制而成的弓身",
         component_type: "bent body",
-        value: 20,
+        value: 80000,
         component_tier: 0,
 		name_prefix: "沼泽滕蔓",        		
         attack_value: 300,
@@ -3376,7 +3376,7 @@ const TRAIT_ArmorPenetration = {
 	item_templates["沼泽滕蔓弓弦"] = new WeaponComponent({
         name: "沼泽滕蔓弓弦", description: "沼泽滕蔓编制而成的弓弦",
         component_type: "bowstring",
-        value: 20,
+        value: 30000,
         component_tier: 0,
 		stats: {
 			agility: {
