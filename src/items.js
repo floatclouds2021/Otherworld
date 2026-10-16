@@ -3498,7 +3498,21 @@ const TRAIT_ArmorPenetration = {
 		},
 		traits: [TRAIT_BLEED]      // ★				
 	});
-
+	item_templates["短铁刃"] = new WeaponComponent({
+		name: "短铁刃",
+		description: "用铁锭制作的匕首尖端",
+		component_type: "short blade",   // ★ 匕首必须用 short blade
+		value: 900,
+		component_tier: 4,
+		name_prefix: "铁质",
+		attack_value: 420,               // 100%品质下约等于180攻击
+		stats: {
+			agility: { flat: 110 },
+			attack_speed: { multiplier: 1.12 },
+			crit_multiplier: { flat: 0.20 },
+			crit_rate: { flat: 0.06 },
+		},
+	});
 	
     item_templates["铁剑刃"] = new WeaponComponent({
         name: "铁剑刃", description: "由铁锭打造出的剑刃，是铁剑的核心部件",
@@ -3620,25 +3634,6 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-/*     item_templates["充能戟头"] = new WeaponComponent({
-        name: "充能戟头", description: "充能合金锭制造的三叉戟头。一次可以戳出三个洞，但有些难以拔出来...",
-        component_type: "triple blade",
-        value: 4.5e7,
-        component_tier: 5,
-        name_prefix: "充能",
-        attack_value: 6000,
-        stats: {
-            crit_rate: {
-                flat: 0.10,
-            },
-            attack_mul: {
-                multiplier: 3.00,
-            },
-            attack_speed: {
-                multiplier: 0.50,
-            },
-        }
-    }); */
     
     item_templates["脉冲剑刃"] = new WeaponComponent({
         name: "脉冲剑刃", description: "脉冲合金锭制造的剑刃。剑刃系列后续主要增长暴击和攻速。",
@@ -3656,25 +3651,6 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-/*     item_templates["脉冲戟头"] = new WeaponComponent({
-        name: "脉冲戟头", description: "脉冲合金锭制造的三叉戟头。普攻倍率比充能戟头强一线？",
-        component_type: "triple blade",
-        value: 180e6,
-        component_tier: 6,
-        name_prefix: "脉冲",
-        attack_value: 24000,
-        stats: {
-            crit_rate: {
-                flat: 0.10,
-            },
-            attack_mul: {
-                multiplier: 3.10,
-            },
-            attack_speed: {
-                multiplier: 0.50,
-            },
-        }
-    }); */
     
     item_templates["蓝金剑刃"] = new WeaponComponent({
         name: "蓝金剑刃", description: "蓝金锭制造的剑刃。攻速和爆率又强了一线",
@@ -3692,25 +3668,6 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-/*     item_templates["蓝金戟头"] = new WeaponComponent({
-        name: "蓝金戟头", description: "蓝金锭制造的三叉戟头。普攻倍率又强了一线。",
-        component_type: "triple blade",
-        value: 1440e6,
-        component_tier: 7,
-        name_prefix: "蓝金",
-        attack_value: 60000,
-        stats: {
-            crit_rate: {
-                flat: 0.10,
-            },
-            attack_mul: {
-                multiplier: 3.20,
-            },
-            attack_speed: {
-                multiplier: 0.50,
-            },
-        }
-    }); */
     
     item_templates["海绿剑刃"] = new WeaponComponent({
         name: "海绿剑刃", description: "海绿锭制造的剑刃。",
@@ -3728,25 +3685,6 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-/*     item_templates["海绿戟头"] = new WeaponComponent({
-        name: "海绿戟头", description: "海绿锭制造的三叉戟头。",
-        component_type: "triple blade",
-        value: 3600e6,
-        component_tier: 8,
-        name_prefix: "海绿",
-        attack_value: 180000,
-        stats: {
-            crit_rate: {
-                flat: 0.10,
-            },
-            attack_mul: {
-                multiplier: 3.30,
-            },
-            attack_speed: {
-                multiplier: 0.50,
-            },
-        }
-    }); */
     
     item_templates["红钢剑刃"] = new WeaponComponent({
         name: "红钢剑刃", description: "红钢锭制造的剑刃。",
@@ -3764,25 +3702,7 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-/*     item_templates["红钢戟头"] = new WeaponComponent({
-        name: "红钢戟头", description: "红钢锭制造的三叉戟头。",
-        component_type: "triple blade",
-        value: 9600e6,
-        component_tier: 9,
-        name_prefix: "红钢",
-        attack_value: 540000,
-        stats: {
-            crit_rate: {
-                flat: 0.10,
-            },
-            attack_mul: {
-                multiplier: 3.40,
-            },
-            attack_speed: {
-                multiplier: 0.50,
-            },
-        }
-    }); */
+
     item_templates["秘银剑刃"] = new WeaponComponent({
         name: "秘银剑刃", description: "秘银锭制造的剑刃。",
         component_type: "long blade",
@@ -3799,25 +3719,7 @@ const TRAIT_ArmorPenetration = {
             },
         }
     });
-/*     item_templates["秘银戟头"] = new WeaponComponent({
-        name: "秘银戟头", description: "秘银锭制造的三叉戟头。",
-        component_type: "triple blade",
-        value: 120e9,
-        component_tier: 10,
-        name_prefix: "秘银",
-        attack_value: 1800000,
-        stats: {
-            crit_rate: {
-                flat: 0.10,
-            },
-            attack_mul: {
-                multiplier: 3.60,
-            },
-            attack_speed: {
-                multiplier: 0.50,
-            },
-        }
-    }); */
+
     item_templates["旋律剑刃"] = new WeaponComponent({
         name: "旋律剑刃", description: "旋律合金锭制造的剑刃。冷兵器的潜力已经被完全挖掘，它们的额外词条不会继续加强。",
         component_type: "long blade",
@@ -3830,19 +3732,6 @@ const TRAIT_ArmorPenetration = {
             attack_speed: {multiplier: 1.16,},
         }
     });
-/*     item_templates["旋律戟头"] = new WeaponComponent({
-        name: "旋律戟头", description: "旋律合金锭制造的三叉戟头。冷兵器的潜力已经被完全挖掘，它们的额外词条不会继续加强。",
-        component_type: "triple blade",
-        value: 1800e9,
-        component_tier: 11,
-        name_prefix: "旋律",
-        attack_value: 3600000,
-        stats: {
-            crit_rate: {flat: 0.10,},
-            attack_mul: {multiplier: 3.60,},
-            attack_speed: {multiplier: 0.50,},
-        }
-    }); */
     
     item_templates["冰髓剑刃"] = new WeaponComponent({
         name: "冰髓剑刃", description: "万载冰髓制造的剑刃。这可是货真价实的【冷】兵器。",
@@ -3856,19 +3745,7 @@ const TRAIT_ArmorPenetration = {
             attack_speed: {multiplier: 1.16,},
         }
     });
-/*     item_templates["冰髓戟头"] = new WeaponComponent({
-        name: "冰髓戟头", description: "万载冰髓制造的戟头。这可是货真价实的【冷】兵器。",
-        component_type: "triple blade",
-        value: 5400e9,
-        component_tier: 12,
-        name_prefix: "冰髓",
-        attack_value: 8100000,
-        stats: {
-            crit_rate: {flat: 0.10,},
-            attack_mul: {multiplier: 3.60,},
-            attack_speed: {multiplier: 0.50,},
-        }
-    }); */
+
     item_templates["晶化剑刃"] = new WeaponComponent({
         name: "晶化剑刃", description: "晶化合金制造的剑刃。是时候该去做月轮了不是吗？",
         component_type: "long blade",
@@ -3881,19 +3758,6 @@ const TRAIT_ArmorPenetration = {
             attack_speed: {multiplier: 1.16,},
         }
     });
-/*     item_templates["晶化戟头"] = new WeaponComponent({
-        name: "晶化戟头", description: "晶化合金制造的戟头。部件经验和使用的材料量挂钩，我是说，做月轮不亏……",
-        component_type: "triple blade",
-        value: 18e12,
-        component_tier: 13,
-        name_prefix: "晶化",
-        attack_value: 16200000,
-        stats: {
-            crit_rate: {flat: 0.10,},
-            attack_mul: {multiplier: 3.60,},
-            attack_speed: {multiplier: 0.50,},
-        }
-    }); */
 	
 	item_templates["稻草剑柄"] = new WeaponComponent({
         name: "稻草剑柄", description: "稻草缠绕而成的剑柄",
@@ -8074,7 +7938,30 @@ C1·能量核心(还是你啊)
             max_health:   { multiplier: 1.02 },
         }
     });
-
+	item_templates["魔力抵消器·贰"] = new Special({
+		id: "魔力抵消器·贰",
+		name: "魔力抵消器·贰",
+		description: "受到魔攻伤害时，减少当前护甲值30%等值的伤害，并减少8%的魔攻伤害。",
+		value: 8e6,
+		stats: {
+			attack_power: { multiplier: 1.03 },
+			defense:      { multiplier: 1.03 },
+			agility:      { multiplier: 1.03 },
+			max_health:   { multiplier: 1.03 },
+		}
+	});	
+	item_templates["魔力抵消器·叁"] = new Special({
+		id: "魔力抵消器·叁",
+		name: "魔力抵消器·叁",
+		description: "受到魔攻伤害时，减少当前护甲值35%等值的伤害，并减少11%的魔攻伤害。",
+		value: 5e9,
+		stats: {
+			attack_power: { multiplier: 1.04 },
+			defense:      { multiplier: 1.04 },
+			agility:      { multiplier: 1.04 },
+			max_health:   { multiplier: 1.04 },
+		}
+	});
     // --- 图书馆技能书 ---
     item_templates["剑心要诀"] = new Book({
         name: "剑心要诀",

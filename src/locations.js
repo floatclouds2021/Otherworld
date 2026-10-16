@@ -495,6 +495,34 @@ class Combat_zone {
     }
 }
 
+
+// locations.js 里
+class Arena_zone extends Combat_zone {
+    constructor(opts) {
+        super({
+            ...opts,
+            enemies_list: ["__arena_placeholder__"],  // 占位，不会真正用到
+            enemy_group_size: [1, 1],
+        });
+        this.is_arena = true;
+    }
+
+    get_next_enemies() {
+        // 从 pending 里取
+        const arena = inf_combat.ARENA;
+        if(!arena || !arena.pending || arena.pending.length === 0) {
+            // 兜底：如果 pending 为空，临时生成
+            const mode = arena?.mode || "single";
+            const wave = arena?.wave || 1;
+            return generateArenaEnemies({mode, wave});
+        }
+        // 取完就清空 pending（防重复消费）
+        const enemies = arena.pending;
+        arena.pending = null;
+        return enemies;
+    }
+}
+
 class Challenge_zone extends Combat_zone {
     constructor({name, 
         description, 
@@ -983,14 +1011,52 @@ function get_location_type_penalty(type, stage, stat) {
     });//1-2-1
 
 	locations["主城"] = new Location({ 
-        connected_locations: [], 
-        description: "繁荣的主城，偶尔还能在此看到一些别的种族",  
+        connected_locations: [{location: locations["斗技场大厅"], custom_text: "前往斗技场"}], 
+
+		description: "繁荣的主城，偶尔还能在此看到一些别的种族",  
         bgm: 3,
         dialogues: ["公告栏","主城驿站","主城飞舟点"],
         traders: ["精灵商会","万药阁"],
         is_unlocked: false,
         name: "主城", 
     });//1-3
+
+	locations["斗技场大厅"] = new Location({
+		connected_locations: [{location: locations["主城"], custom_text: "离开斗技场"}],
+		description: "斗技场大厅。这里人来人往，都是来看热闹或者准备上场的。",
+		dialogues: ["斗技场管理"],
+		name: "斗技场大厅",
+		bgm: 3,
+	});
+	locations["主城"].connected_locations.push({ location: locations["斗技场大厅"] });
+	
+	// ============================================================
+	// 斗技场战斗区（Arena_zone）
+	// ============================================================
+	locations["斗技场 - 单场"] = new Arena_zone({
+		name: "斗技场 - 单场",
+		description: "斗技场的一对一比试。入场费一经缴纳，概不退还。",
+		parent_location: locations["斗技场大厅"],   // ★ 改为大厅
+		enemy_count: 1,
+		is_challenge: true,       // 打完自动离开，不能中途逃
+		bgm: 3,                   // ← 想换别的就改这里；不想放就写 ""
+		repeatable_reward: {},
+	});
+	locations["斗技场 - 十连"] = new Arena_zone({
+		name: "斗技场 - 十连",
+		description: "十波连续挑战，胜利后奖励更丰厚。",
+		parent_location: locations["斗技场大厅"],   // ★ 改为大厅
+		enemy_count: 1,
+		is_challenge: true,
+		bgm: 3,
+		repeatable_reward: {},
+	});
+
+	// 把入口挂到斗技场大厅（如果斗技场大厅是主城下的一个地点，就挂到它下面）
+	// 如果只是从主城进入，那就挂在主城下：
+	// locations["斗技场大厅"].connected_locations.push({ location: locations["斗技场 - 单场"] });
+	// locations["斗技场大厅"].connected_locations.push({ location: locations["斗技场 - 十连"] });
+	
 	locations["中心广场"] = new Location({ 
         connected_locations: [{location: locations["主城"], custom_text: "去其他地方看看"}], 
         description: "主城中心位置，一些重大事件会在此宣布",  
@@ -1040,6 +1106,18 @@ function get_location_type_penalty(type, stage, stat) {
     });//1-3-3
 	locations["主城"].connected_locations.push({location: locations["丹盟"]});
 	locations["丹盟"].connected_locations.push({location: locations["一级炼丹考核"]});
+
+// 【在 locations["战斗学院"] 的下方，新增演武楼】
+	locations["演武楼"] = new Location({
+		connected_locations: [{location: locations["战斗学院"], custom_text: "离开演武楼"}],
+		description: "学院专属的切磋与比试场所。新生校内赛和日常切磋都在这里进行。",
+		name: "演武楼",
+		is_unlocked: false,
+		bgm: 1,
+	});
+
+	// 将演武楼连接到战斗学院
+	locations["战斗学院"].connected_locations.push({location: locations["演武楼"]});
 
     locations["阵法楼"] = new Location({
         connected_locations: [{location: locations["战斗学院"], custom_text: "去其他地方"}],
@@ -1198,6 +1276,45 @@ function get_location_type_penalty(type, stage, stat) {
 	locations["符篆楼"].connected_locations.push({location: locations["符篆工坊"]});
 	locations["炼器楼"].connected_locations.push({location: locations["炼器实训室"]});
 
+	locations["与周远航切磋 - I"] = new Challenge_zone({
+		description: "周远航会压制实力到与你相近。",
+		enemy_count: 1,
+		enemies_list: ["周远航[压制]"],
+		enemy_group_size: [1,1],
+		is_unlocked: false, is_challenge: true,
+		name: "与周远航切磋 - I",
+		parent_location: locations["演武楼"], // 改为演武楼
+		repeatable_reward: {
+			textlines: [{dialogue: "与周远航对话", lines: ["win_I"]}],
+		},
+	});
+
+
+	locations["新生校内赛 - 32强"] = new Challenge_zone({
+		description: "校内赛第一轮。观众席上人声鼎沸。",
+		enemy_count: 1, enemies_list: ["新生校内赛选手·32强"],
+		enemy_group_size: [1,1], is_unlocked: false, is_challenge: true,
+		name: "新生校内赛 - 32强",
+		parent_location: locations["演武楼"], // 改为演武楼
+		repeatable_reward: {
+			flags: ["arena_32_done"],
+			locations: [{location: "新生校内赛 - 16强"}],
+			textlines: [{dialogue: "新生校内赛助手", lines: ["next_16"]}],
+		},
+	});
+
+	// 同理做 16强/8强/4强/决赛
+	locations["新生校内赛 - 决赛"] = new Challenge_zone({
+		description: "决赛。对面那位天才师兄神情从容。",
+		enemy_count: 1, enemies_list: ["新生校内赛选手·决赛"],
+		enemy_group_size: [1,1], is_unlocked: false, is_challenge: true,
+		name: "新生校内赛 - 决赛",
+		parent_location: locations["演武楼"], // 改为演武楼
+		repeatable_reward: {
+			flags: ["arena_final_done"],
+			textlines: [{dialogue: "新生校内赛助手", lines: ["champion"]}],
+		},
+	});
 
 	// --- 任务阁：邪恶沼泽与矿山 ---
 
@@ -6756,6 +6873,30 @@ locations["城外墓园 - 1"] = new Combat_zone({
 
 })();
 
+
+    // ==========================================================
+    // 把挑战区域挂到【演武楼】下，这样 UI 里才会出现
+    // ==========================================================
+    (function(){
+        const arena_location = locations["演武楼"];
+        if(!arena_location) return;
+
+        const challenge_names = [
+            "与周远航切磋 - I",
+            "新生校内赛 - 32强",
+            "新生校内赛 - 16强",
+            "新生校内赛 - 8强",
+            "新生校内赛 - 4强",
+            "新生校内赛 - 决赛",
+        ];
+
+        for(const name of challenge_names) {
+            const zone = locations[name];
+            if(!zone) continue;
+            if(arena_location.connected_locations.some(e => e.location === zone)) continue;
+            arena_location.connected_locations.push({location: zone});
+        }
+    })();
 //add actions
 
 export {locations, location_types, get_location_type_penalty};

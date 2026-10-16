@@ -1,6 +1,33 @@
 "use strict";
-
+import { character } from "./character.js";
 const dialogues = {};
+
+
+// ★ 魔力抵消器升级链 —— 加新等级只需在这里加一条
+const ma_off_chain = {
+    "魔力抵消器": {
+        next: "魔力抵消器·壹",
+        cost: { "岩心": 1, "晶石碎片": 10, "铁矿石": 20 },
+        description: "岩心 ×1 + 晶石碎片 ×10 + 铁矿石 ×20",
+    },
+    "魔力抵消器·壹": {
+        next: "魔力抵消器·贰",
+        cost: { "沼泽之心": 1, "沼泽蔓藤": 20, "毒腺草": 10, "荒古莲": 1 },
+        description: "沼泽之心 ×1 + 沼泽蔓藤 ×20 + 毒腺草 ×10 + 荒古莲 ×1",
+    },
+    "魔力抵消器·贰": {
+        next: null,
+        cost: {},
+    },
+	/* 后续扩展：
+	"魔力抵消器·贰": {
+		next: "魔力抵消器·叁",
+		cost: { "C1·能量核心": 100, "力场发生器": 10 },
+		description: "C1·能量核心 ×100 + 力场发生器 ×10",
+	},
+	"魔力抵消器·叁": { next: null, cost: {} },	
+	*/
+};
 
 class Dialogue {
     constructor({ name, 
@@ -1215,22 +1242,44 @@ class Textline {
                 },
 				locks_lines: ["见面礼"],
             }),
+			// 在 dialogues.js 的 "与周远航对话" 的 textlines 中添加：
+			"战斗场地": new Textline({
+				name: "学长，我们平时切磋和新生赛在哪里进行？",
+				is_unlocked: true,
+				text: "学院的【演武楼】就是专门用来比试的地方。<br>我已经帮你开通了通行权限，你可以直接去那里挑战我，或者参加新生校内赛。",
+				unlocks: { locations: ["演武楼"] },
+				locks_lines: ["战斗场地"]
+			}),			
 			"发起切磋": new Textline({
-                name: "发起切磋",
+				name: "发起切磋",
 				is_unlocked: false,
-                text: "让我看看你的实力<br>",
+				text: "好。我们学院的切磋都在【演武楼】进行，你先去那边等我一下，我随后就到。",
 				unlocks: {
-					 textlines: [{dialogue: "与周远航对话", lines: ["I", "II", "III"]}]
-                },
-            }),
-            "I": new Textline({ 
-                is_unlocked: false,
-                name: "与纳气境五层的学长切磋",
-                text: "未实装敌人属性",
-/*                 unlocks: {
-                    spec: "na5",
-                }, */
-            }),
+					locations: ["演武楼"],  // ★ 顺便解锁演武楼
+					textlines: [{dialogue: "与周远航对话", lines: ["I", "II", "III"]}]
+				},
+			}),
+			"I": new Textline({
+				name: "与纳气境五层的学长切磋",
+				is_unlocked: false,
+				text: "",
+				unlocks: { locations: ["与周远航切磋 - I"] },
+				locks_lines: ["I"]
+			}),
+			"win_I": new Textline({
+				name: "（切磋胜利）", is_unlocked: false,
+				text: "【周远航】不错！这些【晶体粉末】给你，加入材料可以炼制更好的武器和护甲，偶尔还能出现特性。<br>"
+					+ "顺便一提，这些粉末来自深渊位面，数量不多，<br>"
+					+ "副校长和一些高年级学长偶尔会去那边清剿。等你实力变强之后可以去找校长问问详情<br>"
+					+ "主城那边有一家斗技场，会根据参赛者的实力调整对手，可以去试试<br>",
+				unlocks: {
+					items: [
+						{ item_name: "晶化粉末", count: 100 },
+					],
+					flags: ["is_forging_battle_1_done"],
+				},
+				locks_lines: ["win_I"]
+			}),
             "II": new Textline({ 
                 is_unlocked: false,
                 name: "与炼气境五层的学长切磋",
@@ -1306,14 +1355,30 @@ class Textline {
 			"前往参加": new Textline({
                 name: "前往参加",
 				is_unlocked: false,
-                text: "准备的差不多了，可以去参加新生校内赛了【v0.07终点】<br>",
+                text: "准备的差不多了，可以去参加新生校内赛了(v0.07终点，可以去斗技场玩)<br>",
 /* 				unlocks: {
-					 textlines: [{dialogue: "开学典礼", lines: ["校长发言"]}]
+					 textlines: [{dialogue: "新生校内赛开始", lines: ["开幕"]}]
                 },
-				locks_lines: ["时间流逝中"], */
+				locks_lines: ["前往参加"], */
             }),
 		}
     });
+
+/* 	dialogues["新生校内赛开始"] = new Dialogue({
+        name: "新生校内赛开始",
+		textlines: {
+			"开幕": new Textline({
+                name: "开幕",
+				is_unlocked: false,
+                text: "校长上台致辞，巴拉巴拉<br>",
+				"好，新生校内赛，正式开始，先排队上来抽取号码，同号码的<br>",
+				unlocks: {
+					 textlines: [{dialogue: "新生校内赛开始", lines: ["开幕"]}]
+                },
+				locks_lines: ["前往参加"],
+            }),
+		}
+    }); */
 
 	dialogues["开学典礼"] = new Dialogue({
         name: "开学典礼",
@@ -1494,24 +1559,59 @@ class Textline {
 		},
 	});
 
-    dialogues["与周远航对话"] = dialogues["与周远航对话"] || {};
-    
-	// ★ 修复：周远航升级魔力抵消器 —— 由矿山 Boss 解锁
-	(function(){
-		const zh = dialogues["与周远航对话"];
-		if(!zh || !zh.textlines) return;
+	dialogues["斗技场管理"] = new Dialogue({
+		name: "斗技场管理",
+		textlines: {
+			"single": new Textline({
+				name: "报名单场挑战",
+				is_unlocked: true,
+				text: "",
+				unlocks: { spec: "arena_enter_single" },
+			}),
+			"wave10": new Textline({
+				name: "报名十连挑战",
+				is_unlocked: true,
+				text: "",
+				unlocks: { spec: "arena_enter_wave10" },
+			}),
+			"info": new Textline({
+				name: "了解规则",
+				is_unlocked: true,
+				text:
+					"单场入场费 = 你当前资产的 5%（最低 10 万）。<br>" +
+					"十连入场费 = 单场的 5 倍，但奖励是 8 倍。<br>" +
+					"<br><b>注意</b>：入场费一经缴纳，概不退还。<br>" +
+					"中途失败或离开，视作放弃挑战，不退款。<br>" +
+					"<br><span style='color:orange'>斗技场对手会针对你的生命恢复进行强化，纯粹拖时间打法无效。</span>",
+			}),
+		},
+	});
+/* dialogues["与周远航对话"] = dialogues["与周远航对话"] || {};
 
-		// 1. 保证 textline 存在（初始锁定）
-		if(!zh.textlines["升级魔力抵消器"]) {
-			zh.textlines["升级魔力抵消器"] = new Textline({
-				name: "升级魔力抵消器（岩心×1 + 晶石碎片×10 + 铁矿石×20）",
-				is_unlocked: false,
-				text: "升到【壹型】需要：岩心 ×1 + 晶石碎片 ×10 + 铁矿石 ×20。<br>",
-				unlocks: { spec: "upgrade_ma_off" },
-			});
-		}
-		// 注意：这里不再挂到"见面礼"上，改为由矿山 Boss 的 repeatable_reward 解锁
-	})();
+(function(){
+    const zh = dialogues["与周远航对话"];
+    if(!zh || !zh.textlines) return;
+
+    // 第一次升级：魔力抵消器 → 魔力抵消器·壹（由矿山 Boss 解锁）
+    if(!zh.textlines["升级魔力抵消器"]) {
+        zh.textlines["升级魔力抵消器"] = new Textline({
+            name: "升级魔力抵消器（岩心×1 + 晶石碎片×10 + 铁矿石×20）",
+            is_unlocked: false,
+            text: "升到【壹型】需要：岩心 ×1 + 晶石碎片 ×10 + 铁矿石 ×20。<br>",
+            unlocks: { spec: "upgrade_ma_off" },
+        });
+    }
+
+    // 第二次升级：魔力抵消器·壹 → 魔力抵消器·贰（由沼泽之心解锁）
+    if(!zh.textlines["升级魔力抵消器·贰"]) {
+        zh.textlines["升级魔力抵消器·贰"] = new Textline({
+            name: "升级魔力抵消器·贰（沼泽之心×1 + 沼泽蔓藤×20 + 毒腺草×10 + 荒古莲×1）",
+            is_unlocked: false,
+            text: "升到【贰型】需要：沼泽之心 ×1 + 沼泽蔓藤 ×20 + 毒腺草 ×10 + 荒古莲 ×1。<br>",
+            unlocks: { spec: "upgrade_ma_off_swamp" },
+        });
+    }
+})(); */
 
     // 阵法商人对话
 	dialogues["阵法商人"] = new Dialogue({
@@ -4276,5 +4376,61 @@ class Textline {
 	});
 	
 })();
+// ==========================================================
+// 魔力抵消器升级链 —— 动态显示逻辑
+// 只要玩家物品栏或装备栏里存在某级魔力抵消器，
+// 就直接显示对应下一级的升级选项（材料是否足够由点击时判断）
+// ==========================================================
+(function(){
+    const zh = dialogues["与周远航对话"];
+    if(!zh) return;
+    if(!zh.textlines) zh.textlines = {};
 
-export {dialogues};
+    // 给 Textline 加一个动态可见性属性
+    // display.js 里渲染对话时应当判断 line.is_dynamic_visible ? line.is_dynamic_visible() : line.is_unlocked
+    // 为了不改太多，这里用一个小技巧：
+    // 直接用 is_unlocked = true，然后在 update_displayed_textline_answer 里过滤掉条件不满足的
+    // 但更简单的办法是在这里定义时，is_unlocked 用一个 getter
+
+    for(const fromName of Object.keys(ma_off_chain)) {
+        const chain = ma_off_chain[fromName];
+        if(!chain.next) continue;
+
+        const textlineKey = "升级" + fromName;
+        if(zh.textlines[textlineKey]) continue;
+
+        const line = new Textline({
+            name: `升级 ${fromName} → ${chain.next}`,
+            is_unlocked: false,
+            text: "",
+            unlocks: { spec: `ma_off_upgrade:${fromName}` },
+        });
+
+        // ★ 关键：动态判断是否显示
+        line.getDynamicVisibility = function() {
+            // 装备栏里
+            if(character.equipment.special?.name === fromName) return true;
+            // 物品栏里
+            const invKey = `{"id":"${fromName}"}`;
+            return (character.inventory[invKey]?.count || 0) > 0;
+        };
+
+        // ★ 动态生成名字（显示材料数量）
+        line.getDynamicName = function() {
+            let nameStr = `升级 ${fromName} → ${chain.next}`;
+            const parts = [];
+            for(const mat in chain.cost) {
+                const key = `{"id":"${mat}"}`;
+                const have = character.inventory[key]?.count || 0;
+                const need = chain.cost[mat];
+                const ok = have >= need;
+                parts.push(`<span style="color:${ok ? '#6f6' : '#f66'}">${mat}×${need}(${have})</span>`);
+            }
+            return `${nameStr}<br><span style="font-size:12px;">${parts.join(" + ")}</span>`;
+        };
+
+        zh.textlines[textlineKey] = line;
+    }
+})();
+
+export { dialogues, ma_off_chain, Dialogue, Textline };

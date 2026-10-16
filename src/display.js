@@ -1533,9 +1533,16 @@ function update_displayed_normal_location(location) {
 			return false;
 		} else {
 			let lines_available = false;
-			Object.keys(d.textlines).forEach(line => {
+			Object.keys(d.textlines).forEach(line_key => {
 				if(lines_available) return;
-				lines_available = d.textlines[line].is_unlocked && !d.textlines[line].is_finished;
+				const line = d.textlines[line_key];
+
+				// ★ 动态可见性判断
+				if(typeof line.getDynamicVisibility === "function") {
+					if(line.getDynamicVisibility()) lines_available = true;
+				} else {
+					if(line.is_unlocked && !line.is_finished) lines_available = true;
+				}
 			});
 			return lines_available;
 		}
@@ -1705,34 +1712,26 @@ function create_location_choices({location, category, add_icons = true, is_comba
 	}
 	let choice_list = [];
     
-    if(category === "talk") {
-        for(let i = 0; i < location.dialogues.length; i++) { 
-            if(!dialogues[location.dialogues[i]].is_unlocked || dialogues[location.dialogues[i]].is_finished) { //skip if dialogue is not available
-                continue;
-            } 
-            let lines_available = false;
-            Object.keys(dialogues[location.dialogues[i]].textlines).forEach(line =>{
-                if(lines_available) {
-                    return;
-                } else {
-                   lines_available = dialogues[location.dialogues[i]].textlines[line].is_unlocked && !dialogues[location.dialogues[i]].textlines[line].is_finished;
-                }
-            })
+	if(category === "talk") {
+		for(let i = 0; i < location.dialogues.length; i++) { 
+			if(!dialogues[location.dialogues[i]].is_unlocked || dialogues[location.dialogues[i]].is_finished) { //skip if dialogue is not available
+				continue;
+			} 
+			let lines_available = false;
+			Object.keys(dialogues[location.dialogues[i]].textlines).forEach(line_key =>{
+				if(lines_available) return;
+				const line = dialogues[location.dialogues[i]].textlines[line_key];
 
-            // const lines_available = location.dialogues.filter(dialogue => {
-            //         let lines_available = false;
-            //         Object.keys(dialogues[dialogue].textlines).forEach(line => {
-            //             if(lines_available) {
-            //                 return;
-            //             } else {
-            //                 lines_available = dialogues[dialogue].textlines[line].is_unlocked && !dialogues[dialogue].textlines[line].is_finished;
-            //             }
-            //         });
-            //         return lines_available;
-            // }).length > 0;
-            if(!lines_available) {
-                continue;
-            }
+				// ★ 动态可见性判断
+				if(typeof line.getDynamicVisibility === "function") {
+					if(line.getDynamicVisibility()) lines_available = true;
+				} else {
+					if(line.is_unlocked && !line.is_finished) lines_available = true;
+				}
+			})
+			if(!lines_available) {
+				continue;
+			}
 
 
             
@@ -1968,11 +1967,14 @@ function update_displayed_combat_location(location,disable_switch = false) {
     enemy_count_div.style.display = "block";
     combat_div.style.display = "block";
 
-    if(!options.disable_combat_autoswitch && !disable_switch) {
-        combat_switch.click();
-        combat_switch.classList.add("active_selection_button");
-        inventory_switch.classList.remove("active_selection_button");
-    } 
+	if(!options.disable_combat_autoswitch && !disable_switch) {
+		// ★ 不触发 click，只改 class
+		document.getElementById("switch_to_combat").classList.add("active_selection_button");
+		document.getElementById("switch_to_inventory").classList.remove("active_selection_button");
+		// 手动切换面板显示（这两行是 switchToCombat() 函数里做的事）
+		document.documentElement.style.setProperty('--inventory_div_display', 'none');
+		document.documentElement.style.setProperty('--character_combat_div_display', 'block');
+	}
     combat_switch.style.pointerEvents = "auto";
     combat_switch.style.cursor = "pointer";
     combat_switch.style.color = "white";
@@ -2309,7 +2311,23 @@ function add_crafting_recipe_to_display({category, subcategory, recipe_id}) {
         }
         
         recipe_div.children[0].innerHTML = '<i class="material-icons icon crafting_dropdown_icon"> keyboard_double_arrow_down </i>' +  recipe_div.children[0].innerHTML;
-        let ComponentNameMap = {"long blade":"剑刃","triple blade":"匕首刃","short handle":"剑柄","helmet exterior":"头部外甲","chestplate exterior":"胸部外甲","leg armor exterior":"腿部外甲","shoes exterior":"脚部外甲","helmet interior":"头部内甲","chestplate interior":"胸部内甲","leg armor interior":"腿部内甲","shoes interior":"脚部内甲","wheel core":"轮芯","wheel head":"轮锋","bent body":"弓身","bowstring":"弓弦"}
+		let ComponentNameMap = {
+			"long blade":"剑刃",
+			"short blade":"匕首刃",         // ← 从 "triple blade" 改成 "short blade"
+			"short handle":"剑柄",
+			"helmet exterior":"头部外甲",
+			"chestplate exterior":"胸部外甲",
+			"leg armor exterior":"腿部外甲",
+			"shoes exterior":"脚部外甲",
+			"helmet interior":"头部内甲",
+			"chestplate interior":"胸部内甲",
+			"leg armor interior":"腿部内甲",
+			"shoes interior":"脚部内甲",
+			"wheel core":"轮芯",
+			"wheel head":"轮锋",
+			"bent body":"弓身",
+			"bowstring":"弓弦"
+		}
         const component_selection_1 = document.createElement("div"); //weapon head or internal armor
         component_selection_1.innerHTML = `<span class="crafting_selection"><i class="material-icons icon subcrafting_dropdown_icon"> keyboard_double_arrow_down </i>选择一个[${ComponentNameMap[recipe.components[0]]}]</span>`;
         
@@ -2755,8 +2773,27 @@ function update_displayed_material_choice({category, subcategory, recipe_id, ref
     });
 
     for(let i = 0; i < materials.length; i++) {
-        const material_recipe = recipe.materials.filter(material => material.material_id === materials[i].item.id)[0];
-        const item_div = document.createElement("div");
+		const material_recipe = recipe.materials.filter(material => material.material_id === materials[i].item.id)[0];
+		
+		// ★ 防 A
+		if(!material_recipe) {
+			console.error(
+				`[材料选择] 配方 "${recipe.name}" (${recipe_id}) 在 recipe.materials 中找不到 material_id="${materials[i].item.id}" 的项。请检查 crafting_recipes.js。`
+			);
+			continue;
+		}
+		// ★ 防 B
+		const result_template = item_templates[material_recipe.result_id];
+		if(!result_template) {
+			console.error(
+				`[材料选择] 配方 "${recipe.name}" (${recipe_id}) 中的 result_id="${material_recipe.result_id}" 在 item_templates 里不存在！请检查 crafting_recipes.js 中的拼写。`,
+				{ material: material_recipe, material_id: materials[i].item.id }
+			);
+			continue;
+		}
+
+		const item_div = document.createElement("div");
+		item_div.innerHTML = `<i class="material-icons icon selected_material_icon"> check </i>${result_template.getName()}`;
         item_div.innerHTML = `<i class="material-icons icon selected_material_icon"> check </i>${item_templates[material_recipe.result_id].getName()}`;
         item_div.classList.add("selectable_material");
         item_div.dataset.item_key = materials[i].item.getInventoryKey();
@@ -3158,37 +3195,48 @@ function update_displayed_dialogue(dialogue_key) {
     const dialogue_answer_div = document.createElement("div");
     dialogue_answer_div.id = "dialogue_answer_div";
     action_div.appendChild(dialogue_answer_div);
-    Object.keys(dialogue.textlines).forEach(function(key) { //add buttons for textlines
-            if(dialogue.textlines[key].is_unlocked && !dialogue.textlines[key].is_finished) { //do only if text_line is not unavailable
-                if(dialogue.textlines[key].required_flags) {
-                    if(dialogue.textlines[key].required_flags.yes && !Array.isArray(dialogue.textlines[key].required_flags.yes) || dialogue.textlines[key].required_flags.no && !Array.isArray(dialogue.textlines[key].required_flags.no)) {
-                        console.error(`Textline "${key}" in dialogue "${dialogue_key}" has required flag passed as a single value but it should be an array!`)
-                    }
-                    if(dialogue.textlines[key].required_flags.yes) {
-                        for(let i = 0; i < dialogue.textlines[key].required_flags.yes.length; i++) {
-                            
-                            if(!global_flags[dialogue.textlines[key].required_flags.yes[i]]) {
-                                return;
-                            }
-                        }
-                    }
-                    if(dialogue.textlines[key].required_flags.no) {
-                        for(let i = 0; i < dialogue.textlines[key].required_flags.no.length; i++) {
-                            if(global_flags[dialogue.textlines[key].required_flags.no[i]]) {
-                                return;
-                            }
-                        }
-                    }
-                }
-                
-                const textline_div = document.createElement("div");
-                textline_div.innerHTML = `"${dialogue.textlines[key].name}"`;
-                textline_div.classList.add("dialogue_textline");
-                textline_div.setAttribute("data-textline", key);
-                textline_div.setAttribute("onclick", `start_textline(this.getAttribute('data-textline'))`);
-                action_div.appendChild(textline_div);
-            }
-    });
+	Object.keys(dialogue.textlines).forEach(function(key) { //add buttons for textlines
+			const textline = dialogue.textlines[key];
+
+			// ★ 动态可见性判断
+			if(typeof textline.getDynamicVisibility === "function") {
+				if(!textline.getDynamicVisibility()) return;
+			} else {
+				if(!textline.is_unlocked || textline.is_finished) return;
+			}
+
+			if(textline.required_flags) {
+				if(textline.required_flags.yes && !Array.isArray(textline.required_flags.yes) || textline.required_flags.no && !Array.isArray(textline.required_flags.no)) {
+					console.error(`Textline "${key}" in dialogue "${dialogue_key}" has required flag passed as a single value but it should be an array!`)
+				}
+				if(textline.required_flags.yes) {
+					for(let i = 0; i < textline.required_flags.yes.length; i++) {
+						if(!global_flags[textline.required_flags.yes[i]]) {
+							return;
+						}
+					}
+				}
+				if(textline.required_flags.no) {
+					for(let i = 0; i < textline.required_flags.no.length; i++) {
+						if(global_flags[textline.required_flags.no[i]]) {
+							return;
+						}
+					}
+				}
+			}
+
+			// ★ 动态名字
+			const displayName = typeof textline.getDynamicName === "function"
+				? textline.getDynamicName()
+				: textline.name;
+
+			const textline_div = document.createElement("div");
+			textline_div.innerHTML = `"${displayName}"`;
+			textline_div.classList.add("dialogue_textline");
+			textline_div.setAttribute("data-textline", key);
+			textline_div.setAttribute("onclick", `start_textline(this.getAttribute('data-textline'))`);
+			action_div.appendChild(textline_div);
+	});
     //dialogue_answer_div.innerHTML = dialogue.textlines;
 
     if(dialogue.trader) {

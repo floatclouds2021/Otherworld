@@ -361,8 +361,8 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         item_type: "Component",
         recipe_skill: "Forging"
     });
-    forging_recipes.components["剑柄"] = new ComponentRecipe({
-        name: "剑柄",
+	forging_recipes.components["短柄"] = new ComponentRecipe({
+	name: "短柄",
         materials: [
 			{material_id: "稻草", count: 2, result_id: "稻草剑柄"}, 
             {material_id: "骨头", count: 2, result_id: "骨剑柄"}, 
@@ -372,27 +372,21 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
             {material_id: "缠绕水晶", count: 2, result_id: "水晶剑柄"}, 
             {material_id: "固态凝胶", count: 2, result_id: "凝胶剑柄"}, 
             {material_id: "光暗枝丫", count: 2, result_id: "光暗剑柄"}, 
+			{material_id: "晶化龙骨", count: 2, result_id: "晶化龙骨短柄"},
         ],
         item_type: "Component",
         recipe_skill: "Forging"
     });
-/*     forging_recipes.components["匕首刃"] = new ComponentRecipe({
-        name: "匕首刃",
-        materials: [
-            {material_id: "充能合金锭", count: 6, result_id: "充能戟头"}, 
-            {material_id: "脉冲合金锭", count: 6, result_id: "脉冲戟头"}, 
-            {material_id: "蓝金锭", count: 6, result_id: "蓝金戟头"}, 
-            {material_id: "海绿锭", count: 6, result_id: "海绿戟头"}, 
-            {material_id: "红钢锭", count: 6, result_id: "红钢戟头"}, 
-            {material_id: "秘银锭", count: 6, result_id: "秘银戟头"},
-            {material_id: "旋律合金锭", count: 6, result_id: "旋律戟头"},  
-            {material_id: "万载冰髓锭", count: 6, result_id: "冰髓戟头"}, 
-            {material_id: "晶化合金锭", count: 6, result_id: "晶化戟头"}, 
-            //未完待续
-        ],
-        item_type: "Component",
-        recipe_skill: "Forging"
-    }); */
+	forging_recipes.components["匕首刃"] = new ComponentRecipe({
+		name: "匕首刃",
+		materials: [
+			{material_id: "铁锭", count: 3, result_id: "短铁刃"},     // 需在 items.js 里加
+			{material_id: "晶化暗影钢锭", count: 3, result_id: "晶化暗影匕锋"},
+			// ...其他 short blade
+		],
+		item_type: "Component",
+		recipe_skill: "Forging",
+	});
 	
     forging_recipes.components["弓身"] = new ComponentRecipe({
         name: "弓身",
@@ -1643,7 +1637,18 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
 })();
 //锻造[镐头]
 (function(){
-    
+/* 	forging_recipes.items["铁质匕首"] = new ItemRecipe({
+		name: "铁质匕首",
+		recipe_type: "material",
+		materials: [
+			{material_id: "铁锭", count: 2},
+			{material_id: "木头", count: 1},
+		],
+		result: {result_id: "Iron dagger", count: 1},
+		success_chance: [0.5, 1],
+		recipe_level: [1, 8],
+		recipe_skill: "Forging",
+	});  */   
     /* forging_recipes.items["精钢镐"] = new ItemRecipe({
         name: "精钢镐",
         recipe_type: "material",

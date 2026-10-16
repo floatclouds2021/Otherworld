@@ -1,11 +1,11 @@
 "use strict";
-
+import { clear_action_div} from "./display.js";
 import { current_game_time } from "./game_time.js";
 import { item_templates, getItem, book_stats, setLootSoldCount, loot_sold_count, recoverItemPrices, rarity_multipliers, getArmorSlot, WeaponComponent} from "./items.js";
 import { locations } from "./locations.js";
 import { skills, weapon_type_to_skill, which_skills_affect_skill } from "./skills.js";
-import { dialogues } from "./dialogues.js";
-import { enemy_killcount, enemy_templates } from "./enemies.js";
+import { dialogues, ma_off_chain } from "./dialogues.js";
+import { Enemy, enemy_killcount, enemy_templates } from "./enemies.js";
 import { traders } from "./traders.js";
 import { is_in_trade, start_trade, cancel_trade, accept_trade, exit_trade, add_to_trader_inventory,
          add_to_buying_list, remove_from_buying_list, add_to_selling_list, remove_from_selling_list} from "./trade.js";
@@ -130,6 +130,7 @@ window.REALMS=[
 //境界，X级存储了该等级的数据
 //命名空间：0为境界编号，1为境界名（含颜色），2为提升属性，3为增加血量，4为需要经验值，5为display时使用realm_xxx类
 
+
 const global_flags = {
     is_gathering_unlocked: false,
     is_crafting_unlocked: false,
@@ -158,12 +159,22 @@ const flag_unlock_texts = {
 	is_shadow_step_unlocked: "解锁匕首被动【影步】！",
     is_bow_focus_unlocked: "解锁弓被动【集中】！",
 	is_sword_heart_unlocked: "解锁剑被动【剑心】！",
+	
+	is_forging_battle_1_done: "你已经在切磋中击败过周远航学长！",   // ★ 新增
 }
 
 // special stats
 
 //infinity combat
-let inf_combat = {"A6":{cur:6,cap:8},"A7":{cur:0}, "VP":{num:0}, "RM":0,"MP":0,"B3":0,"ST":0,"S3":{live:false,sp:0,b1:8,b2:8,b3:0},"InP":0};
+let inf_combat = {
+    "A6":{cur:6,cap:8},
+    "A7":{cur:0},
+    "VP":{num:0},
+    "RM":0, "MP":0, "B3":0, "ST":0,
+    "S3":{live:false,sp:0,b1:8,b2:8,b3:0},
+    "InP":0,
+    "ARENA": { pending: null },   // ★ 加这一行
+};
 //A6:秘境
 //A7:赶往声律城
 //RM:不是现实机器。是Realm(领域)层数
@@ -246,6 +257,195 @@ const faved_stances = {};
 const tickrate = 1;
 //how many ticks per second
 //1 is the default value; going too high might make the game unstable
+
+
+/**
+ * 估算玩家每秒回复量（血量/秒）。
+ * 包括 flat 和 percent 两种回复，都参与计算。
+ */
+function getPlayerRegenPerSecond() {
+    const flatRegen = character.stats.full.health_regeneration_flat || 0;
+    const percentRegen = (character.stats.full.health_regeneration_percent || 0) / 100;
+    const percentValue = character.stats.full.max_health * percentRegen;
+    return flatRegen + percentValue;
+}
+/**
+ * 生成斗技场敌人
+ * @param {Object} opts
+ * @param {string} opts.mode   "single" | "wave10"
+ * @param {number} opts.wave   当前波次（1~10），单场固定为 1
+ * @returns {Array<Enemy>}
+ */
+function generateArenaEnemies({mode, wave = 1}) {
+    // 强度基准：主角当前攻防敏的几何平均
+    const heroAtk = character.get_attack_power();
+    const heroDef = character.stats.full.defense;
+    const heroAgi = character.stats.full.agility;
+    const base = Math.pow(heroAtk * heroDef * heroAgi, 1/3);
+
+    // 波次加成：后面波次略微增强
+    const waveMul = mode === "wave10" ? 1 + (wave - 1) * 0.08 : 1;
+
+    // 每波随机 1~3 只
+    const count = mode === "single"
+        ? 1
+        : 1 + Math.floor(Math.random() * 3);
+
+    const enemies = [];
+    for(let i = 0; i < count; i++) {
+		enemies.push(makeOneArenaEnemy({base, waveMul, mode, index: i, wave: wave}));
+	}
+    return enemies;
+}
+function makeOneArenaEnemy({base, waveMul, mode, index, wave}) {
+    // 属性倍率：单场波动小，10波后面略高
+    const low = mode === "wave10" ? 0.90 : 0.80;
+    const high = mode === "wave10" ? 1.25 : 1.20;
+    const stat = () => base * (low + Math.random() * (high - low)) * waveMul;
+
+    // 攻击速度随机
+    const atkSpeed = 0.8 + Math.random() * 0.8;
+
+    // ★ 关键：把玩家的每秒回复量折算成敌人攻击力
+    // 敌人每秒伤害 ≈ attack * atkSpeed，希望它至少高于玩家回复 2 倍
+    const regenPerSec = getPlayerRegenPerSecond();
+    // 若玩家回复为 0，此项直接是 0，不影响普通玩家
+    const regenAttackBonus = regenPerSec > 0
+        ? (regenPerSec / Math.max(atkSpeed, 0.1)) * 1.25
+        : 0;
+
+    const baseAttack = stat();
+    const finalAttack = baseAttack + regenAttackBonus;
+
+    // 生命 = 攻击力 × 30~60 倍，随波数递增
+    // ★ 也把回复纳入血量计算，避免玩家伤害超高而秒杀
+    const hpBase = (finalAttack * (30 + Math.random() * 30))
+        * (1 + (waveMul - 1) * 0.5)
+        + regenPerSec * 5; // 回复越高，血越多，避免被一刀秒
+
+    // 技能池
+    const specPoolBasic = [0, 3, 5, 6, 7, 8, 10, 17, 20, 22, 23];
+    const specPoolAdv   = [1, 9, 26, 27, 31, 35, 37, 42, 48, 50, 62, 67];
+
+    const spec = [];
+    const specCount = 1 + Math.floor(Math.random() * 2);
+    const used = new Set();
+
+    const conflict = (a, b) => {
+        const pairs = [
+            [5, 51],
+            [0, 9],
+            [1, 9],
+            [37, 68],
+            [3, 6, 22, 33, 40],
+            [23, 40],
+        ];
+        for(const grp of pairs) {
+            if(grp.includes(a) && grp.includes(b)) return true;
+        }
+        return false;
+    };
+
+    while(spec.length < specCount) {
+        const pool = (mode === "wave10" && wave >= 5) ? specPoolBasic.concat(specPoolAdv) : specPoolBasic;
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        if(used.has(pick)) continue;
+        if(spec.some(s => conflict(s, pick))) continue;
+        spec.push(pick);
+        used.add(pick);
+    }
+
+    const specValue = {};
+    if(spec.includes(8))  specValue[8]  = 10;
+    if(spec.includes(18)) specValue[18] = 1e9;
+    if(spec.includes(21)) specValue[21] = base * 0.5;
+    if(spec.includes(29)) specValue[29] = base * 0.3;
+    if(spec.includes(33)) specValue[33] = 2 + Math.floor(Math.random() * 4);
+    if(spec.includes(35)) specValue[35] = base * 0.5;
+    if(spec.includes(43)) specValue[43] = base * 0.4;
+    if(spec.includes(48)) specValue[48] = 1e7;
+    if(spec.includes(49)) specValue[49] = {rnd: base * 5, hp: base * 0.1};
+    if(spec.includes(50)) specValue[50] = base * 0.3;
+    if(spec.includes(54)) specValue[54] = 100;
+    if(spec.includes(65)) specValue[65] = 0;
+
+    const name = `斗技场${mode === "wave10" ? ` 第${wave}波` : ""} 挑战者 #${index + 1}`;
+    const enemy = new Enemy({
+        name,
+        description: "斗技场的挑战者。",
+        xp_value: 20 * waveMul,
+        rank: 9999,
+        size: "small",
+        tags: [],
+        spec,
+        spec_value: specValue,
+		realm: `<span class=realm_${window.REALMS[character.xp.current_level][5]}><b>${window.REALMS[character.xp.current_level][1]}</b></span>`,
+		image: "image/enemy/E1101.png",
+        stats: {
+            health: hpBase * 0.5,
+            attack: finalAttack,
+            defense: base * (low + Math.random() * (high - low)) * waveMul * 0.5,
+            agility: base * (low + Math.random() * (high - low)) * waveMul,
+            attack_speed: atkSpeed,
+        },
+        loot_list: [],
+        add_to_bestiary: false,
+    });
+    enemy.is_alive = true;
+    return enemy;
+}
+
+/**
+ * 进入斗技场
+ * @param {string} mode  "single" | "wave10"
+ */
+function enterArena(mode) {
+    const fee = getArenaEntryFee(mode);
+    if(character.money < fee) {
+        log_message(`入场费不足（需要 ${format_money(fee)}）。`, "enemy_enhanced");
+        return false;
+    }
+
+    character.money -= fee;
+    update_displayed_money();
+
+    inf_combat.ARENA = inf_combat.ARENA || {};
+    inf_combat.ARENA.mode = mode;
+    inf_combat.ARENA.wave = 1;
+    inf_combat.ARENA.entry_fee = fee;
+    inf_combat.ARENA.pending = generateArenaEnemies({mode, wave: 1});
+
+    const target_zone_name = mode === "wave10" ? "斗技场 - 十连" : "斗技场 - 单场";
+    if(locations[target_zone_name]) {
+        locations[target_zone_name].is_finished = false;
+    }
+
+	// 3. 立即存档（防 SL 关键）
+	if(is_on_dev()) {
+		save_to_localStorage({key: dev_save_key});
+	} else {
+		save_to_localStorage({key: save_key});
+	}
+
+	// 4. ★ 重置两个斗技场战斗区的 is_finished，防止被 change_location 拦
+	const zones = ["斗技场 - 单场", "斗技场 - 十连"];
+	for(const z of zones) {
+		if(locations[z]) locations[z].is_finished = false;
+	}
+
+	// 5. 清 UI
+	clear_action_div();
+
+	// 6. 进入战斗区
+	change_location(mode === "wave10" ? "斗技场 - 十连" : "斗技场 - 单场");
+	return true;
+}
+
+function getArenaEntryFee(mode) {
+    // 基于主角当前资产：扣掉 5%
+    const base = Math.max(1e5, character.money * 0.05);
+    return Math.round(mode === "wave10" ? base * 5 : base);
+}
 
 //stuff from options panel
 const options = {
@@ -466,12 +666,31 @@ function option_uniform_textsize(option) {
 
 
 function change_location(location_name) {
-    let location = locations[location_name];
-    if(location.bgm != "") switchBGM(location.bgm);
 
-    if(location_name !== current_location?.name && location.is_finished) {
+console.log(`[change_location] 尝试进入 "${location_name}", is_finished=${locations[location_name]?.is_finished}, is_arena=${locations[location_name]?.is_arena}, current=${current_location?.name}`);
+	
+	// 如果玩家从斗技场战斗区离开，视为失败
+    if(current_location?.is_arena && location_name !== current_location.name) {
+        if(inf_combat.ARENA?.pending !== null) {
+            finishArena({success: false});
+            return;
+        }
+    }
+	
+    let location = locations[location_name];
+    
+    // ★ 加防御
+    if(!location) {
+        console.error(`[change_location] 未定义的地点: "${location_name}"`);
+        log_message(`错误: 目标地点 "${location_name}" 不存在。`, "message_critical");
         return;
     }
+    
+	if(location_name !== current_location?.name && location.is_finished && !location.is_arena) {
+		return;
+	}
+	
+    if(location.bgm != "") switchBGM(location.bgm);
 
     clear_all_enemy_attack_loops();
     clear_character_attack_loop();
@@ -498,14 +717,23 @@ function change_location(location_name) {
     if("connected_locations" in current_location) { 
         // basically means it's a normal location and not a combat zone (as combat zone has only "parent")
         update_displayed_normal_location(current_location);
-    } else { //so if entering combat zone
-        chara_cd = 0;
-        update_displayed_combat_location(current_location);
-        if(!current_location.is_challenge) {
-            last_combat_location = current_location.name;
-        }
-        start_combat();
-    }
+	} else { //so if entering combat zone
+		chara_cd = 0;
+		update_displayed_combat_location(current_location);
+		if(!current_location.is_challenge) {
+			last_combat_location = current_location.name;
+		}
+		start_combat();
+
+		// ★ 斗技场：延迟重绘一次，防止被 click 监听器覆盖
+		if(current_location.is_arena) {
+			setTimeout(() => {
+				if(current_location && current_location.is_arena) {
+					update_displayed_combat_location(current_location);
+				}
+			}, 0);
+		}
+	}
 }
 
 window.change_location = change_location;
@@ -1085,6 +1313,11 @@ function textline_special(t_key){
         {   
             displayed_text = "如今也算是历经了" + format_number(total_deaths)  + "次生死呢，<br>也知道了父亲大人的话是什么意思。";
         }
+		else if(t_key.startsWith("ma_off_upgrade:")){
+			const fromName = t_key.substring("ma_off_upgrade:".length);
+			const result = tryUpgradeMaOff(fromName);
+			displayed_text += result.msg;
+		}		
         else if(t_key == "Realm-A3"){   
             displayed_text = `……<span class="realm_terra">${window.REALMS[character.xp.current_level][1]}</span>？！` ;
         }
@@ -1177,6 +1410,12 @@ function textline_special(t_key){
             add_xp_to_skill({skill: skills["Farming"], xp_to_add: 10});
             //displayed_text += `<br><br> 获取了9999亿【秘法精通】经验值。`;
         }	
+		else if(t_key === "arena_enter_single") {
+			enterArena("single");
+		}
+		else if(t_key === "arena_enter_wave10") {
+			enterArena("wave10");
+		}		
 		else if(t_key == "linggen"){
 			if(skills["system"].current_level <3){
 				displayed_text += `【无灵根，不过可以回训练场杀敌解锁灵根】<br>`;
@@ -1251,6 +1490,38 @@ function textline_special(t_key){
                 displayed_text += "升级成功！【魔力抵消器·壹】已放入物品栏。<br>";
             }
         }
+		else if(t_key == "upgrade_ma_off_swamp"){
+			const need = {
+				"{\"id\":\"沼泽之心\"}":  1,
+				"{\"id\":\"沼泽蔓藤\"}":  20,
+				"{\"id\":\"毒腺草\"}":    10,
+				"{\"id\":\"荒古莲\"}":    1,
+			};
+			let ok = true;
+			for(const k in need){
+				if((character.inventory[k]?.count || 0) < need[k]) { ok = false; break; }
+			}
+			if(!ok){
+				displayed_text += "材料不足！需要 沼泽之心×1 + 沼泽蔓藤×20 + 毒腺草×10 + 荒古莲×1。<br>";
+			} else {
+				for(const k in need){
+					remove_from_character_inventory([{ item_key: k, item_count: need[k] }]);
+				}
+				// ★ 从【壹】升级到【贰】
+				if(character.equipment.special?.name === "魔力抵消器·壹"){
+					character.equipment.special = null;
+				}
+				const oldKey = "{\"id\":\"魔力抵消器·壹\"}";
+				if(character.inventory[oldKey]) {
+					remove_from_character_inventory([{ item_key: oldKey, item_count: character.inventory[oldKey].count }]);
+				}
+				add_to_character_inventory([{ item: getItem(item_templates["魔力抵消器·贰"]), count: 1 }]);
+				update_displayed_equipment();
+				character.stats.add_all_equipment_bonus();
+				update_character_stats();
+				displayed_text += "升级成功！【魔力抵消器·贰】已放入物品栏。<br>";
+			}
+		}		
         else if(t_key == "buy_flag"){
             if(character.money < 5000){
                 displayed_text += "余额不足！需要 5000C。<br>";
@@ -1947,13 +2218,20 @@ function start_textline(textline_key){
     const dialogue = dialogues[current_dialogue];
     const textline = dialogue.textlines[textline_key];
 
-    for(let i = 0; i < textline.unlocks.flags.length; i++) {
-        const flag = global_flags[textline.unlocks.flags[i]];
-        if(!flag) {
-            global_flags[textline.unlocks.flags[i]] = true;
-            log_message(`${flag_unlock_texts[textline.unlocks.flags[i]]}`, "activity_unlocked");
-        }
-    }
+	for(let i = 0; i < textline.unlocks.flags.length; i++) {
+		const flag_name = textline.unlocks.flags[i];
+		const flag = global_flags[flag_name];
+		if(!flag) {
+			global_flags[flag_name] = true;
+
+			// ★ 有文案就显示文案；没有文案就只记 console，不在 UI 里刷 undefined
+			if(flag_unlock_texts[flag_name]) {
+				log_message(`${flag_unlock_texts[flag_name]}`, "activity_unlocked");
+			} else {
+				console.log(`[flag] 已解锁内部标记 "${flag_name}"（未登记 UI 文案，不显示于消息栏）`);
+			}
+		}
+	}
 	for(let i = 0; i < textline.unlocks.items.length; i++) {
 		const item_data = textline.unlocks.items[i];
 		const item_id = item_data.item_name;
@@ -2485,18 +2763,76 @@ function do_character_attack_loop({base_cooldown, actual_cooldown, attack_power,
 
             if(current_enemies.filter(enemy => enemy.is_alive).length != 0) { //set next loop if there's still an enemy left;
                 set_character_attack_loop({base_cooldown});
-            } else { //all enemies defeated, do relevant things and set new combat
+			} else { //all enemies defeated, do relevant things and set new combat
+				current_location.enemy_groups_killed += 1;
 
-                current_location.enemy_groups_killed += 1;
-                if(current_location.enemy_groups_killed > 0 && current_location.enemy_groups_killed % current_location.enemy_count == 0) {
-                    get_location_rewards(current_location);
-                }
-                document.getElementById("enemy_count_div").children[0].children[1].innerHTML = current_location.enemy_count - current_location.enemy_groups_killed % current_location.enemy_count;
-        
-                set_new_combat();
-            }
+				// ★ 斗技场特殊处理
+				if(current_location.is_arena && inf_combat.ARENA) {
+					const arena = inf_combat.ARENA;
+					if(arena.mode === "wave10" && arena.wave < 10) {
+						arena.wave += 1;
+						arena.pending = generateArenaEnemies({mode: "wave10", wave: arena.wave});
+						log_message(`斗技场：进入第 ${arena.wave} 波！`, "activity_unlocked");
+					} else {
+						// 通关，发奖励
+						finishArena({success: true});
+						return;
+					}
+				}
+				
+				if(current_location.enemy_groups_killed > 0 && current_location.enemy_groups_killed % current_location.enemy_count == 0) {
+					get_location_rewards(current_location);
+				}
+				document.getElementById("enemy_count_div").children[0].children[1].innerHTML = current_location.enemy_count - current_location.enemy_groups_killed % current_location.enemy_count;
+				set_new_combat();
+			}
         }
     }, frametime);
+}
+
+/**
+ * 斗技场结束（胜利或失败）
+ * @param {Object} opts
+ * @param {boolean} opts.success  是否胜利
+ */
+let is_finishing_arena = false;
+function finishArena({success}) {
+	if(is_finishing_arena) return;
+    is_finishing_arena = true;
+	try {
+		
+		const arena = inf_combat.ARENA;
+		if(!arena) return;
+
+		if(success) {
+			const reward = Math.round(arena.entry_fee * (arena.mode === "wave10" ? 8 : 2.5));
+			character.money += reward;
+			log_message(`斗技场胜利！获得 ${format_money(reward)} 奖励。`, "location_reward");
+			update_displayed_money();
+		} else {
+			log_message(`斗技场挑战失败。入场费不予退还。`, "enemy_enhanced");
+		}
+
+		// 清空状态
+		inf_combat.ARENA = {pending: null};
+
+		// 标记为 finished，必须重新付费才能再进
+		locations["斗技场 - 单场"].is_finished = true;
+		locations["斗技场 - 十连"].is_finished = true;
+
+		// 手动存档
+		if(is_on_dev()) {
+			save_to_localStorage({key: dev_save_key});
+		} else {
+			save_to_localStorage({key: save_key});
+		}
+
+		// 回到斗技场大厅
+		change_location("斗技场大厅");
+	
+	} finally {
+        is_finishing_arena = false;
+    }
 }
 
 function clear_character_attack_loop() {
@@ -2516,14 +2852,75 @@ function start_combat() {
 }
 
 /**
+ * 通用魔力抵消器升级：把玩家持有的 fromName 升级为 ma_off_chain[fromName].next
+ * @param {string} fromName 玩家当前持有的物品名（例如 "魔力抵消器·壹"）
+ * @returns {{ok: boolean, msg: string}}
+ */
+function tryUpgradeMaOff(fromName) {
+    const chain = ma_off_chain[fromName];
+    if(!chain || !chain.next) {
+        return { ok: false, msg: `【${fromName}】没有后续升级。<br>` };
+    }
+
+    const invKey = `{"id":"${fromName}"}`;
+    const hasInInventory = (character.inventory[invKey]?.count || 0) > 0;
+    const hasInEquipment = character.equipment.special?.name === fromName;
+
+    if(!hasInInventory && !hasInEquipment) {
+        return { ok: false, msg: `你没有【${fromName}】。<br>` };
+    }
+
+    // 材料检查
+    const missing = [];
+    for(const matName in chain.cost) {
+        const need = chain.cost[matName];
+        const matKey = `{"id":"${matName}"}`;
+        const have = character.inventory[matKey]?.count || 0;
+        if(have < need) missing.push(`${matName} ×${need}（拥有 ${have}）`);
+    }
+    if(missing.length > 0) {
+        return { ok: false, msg: `材料不足：<br>${missing.join("<br>")}<br>` };
+    }
+
+    // 扣材料
+    const removal = [];
+    for(const matName in chain.cost) {
+        removal.push({ item_key: `{"id":"${matName}"}`, item_count: chain.cost[matName] });
+    }
+    remove_from_character_inventory(removal);
+
+    // 移除旧的
+    if(hasInEquipment) character.equipment.special = null;
+    if(hasInInventory) remove_from_character_inventory([{ item_key: invKey, item_count: 1 }]);
+
+    // 发新的
+    const newTemplate = item_templates[chain.next];
+    if(!newTemplate) {
+        return { ok: false, msg: `配置错误：未找到物品【${chain.next}】。<br>` };
+    }
+    add_to_character_inventory([{ item: getItem(newTemplate), count: 1 }]);
+
+    update_displayed_equipment();
+    character.stats.add_all_equipment_bonus();
+    update_character_stats();
+
+    log_message(`魔力抵消器升级：${fromName} → ${chain.next}`, "location_unlocked");
+    return { ok: true, msg: `升级成功！【${chain.next}】已放入物品栏。<br>` };
+}
+
+/**
  * performs a single combat action (that is attack, as there isn't really any other kind for now),
  * called when attack cooldown finishes
  * 
  * @param {String} attacker id of enemy
 */ 
-function faint(c_log)
-{
-    total_deaths++;
+function faint(c_log){
+	total_deaths++;
+    // ★ 斗技场失败处理
+    if(current_location.is_arena) {
+        finishArena({success: false});
+        return;
+    }
     log_message(character.name + c_log, "hero_defeat");
     end_activity_animation(); //clears the "animation"
     current_activity = null;

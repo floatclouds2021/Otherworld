@@ -9119,6 +9119,16 @@ C4 225851433717/365435296162/591286729879
         stats: {health: 2600, attack:155, agility: 35, attack_speed: 1.2, defense: 50}, 
         loot_list: [{item_name:"三级妖兽内丹",chance:1.00}],
     });	
+	enemy_templates["周远航[压制]"] = new Enemy({
+		name: "周远航[压制]", description: "周远航压制了实力，但依旧从容。",
+		xp_value: 100, rank: 3000,
+		realm: "<span class=realm_basic><b>纳气境五层</b></span>",
+		size: "small", tags: [], spec: [],
+		stats: {health: 200000, attack: 15000, agility: 8000, attack_speed: 1.2, defense: 8000},
+		loot_list: [],
+	});
+	
+	
     enemy_templates["纳家待从[BOSS]"] = new Enemy({
         name: "纳家待从[BOSS]", 
         description: "用出全部力量的纳家待从。在家里出手就是无所顾忌！", 
@@ -10119,6 +10129,49 @@ C4 225851433717/365435296162/591286729879
         loot_list: [
         ],
     });
+	//校内赛
+	enemy_templates["新生校内赛选手·32强"] = new Enemy({
+		name: "新生校内赛选手·32强", description: "凡人境八层。",
+		xp_value: 50, rank: 3001,
+		realm: "<span class=realm_basic><b>凡人境八层</b></span>",
+		size: "small", tags: [], spec: [],
+		stats: {health: 50000, attack: 3000, agility: 2000, attack_speed: 1.0, defense: 1000},
+		loot_list: [],
+	});
+	// 16强、8强、4强 类似改名字和数值
+	enemy_templates["新生校内赛选手·16强"] = new Enemy({
+		name: "新生校内赛选手·16强", description: "纳气境二层。天才师兄，气势非凡。",
+		xp_value: 500, rank: 3002,
+		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
+		size: "small", tags: [], spec: [3, 20],
+		stats: {health: 1500000, attack: 25000, agility: 10000, attack_speed: 1.2, defense: 12000},
+		loot_list: [],
+	});	
+	enemy_templates["新生校内赛选手·8强"] = new Enemy({
+		name: "新生校内赛选手·8强", description: "纳气境二层。天才师兄，气势非凡。",
+		xp_value: 500, rank: 3003,
+		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
+		size: "small", tags: [], spec: [3, 20],
+		stats: {health: 1500000, attack: 25000, agility: 10000, attack_speed: 1.2, defense: 12000},
+		loot_list: [],
+	});	
+	enemy_templates["新生校内赛选手·4强"] = new Enemy({
+		name: "新生校内赛选手·4强", description: "纳气境二层。天才师兄，气势非凡。",
+		xp_value: 500, rank: 3004,
+		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
+		size: "small", tags: [], spec: [3, 20],
+		stats: {health: 1500000, attack: 25000, agility: 10000, attack_speed: 1.2, defense: 12000},
+		loot_list: [],
+	});		
+	enemy_templates["新生校内赛选手·决赛"] = new Enemy({
+		name: "新生校内赛选手·决赛", description: "纳气境二层。天才师兄，气势非凡。",
+		xp_value: 500, rank: 3005,
+		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
+		size: "small", tags: [], spec: [3, 20],
+		stats: {health: 1500000, attack: 25000, agility: 10000, attack_speed: 1.2, defense: 12000},
+		loot_list: [],
+	});	
+	
 /*
 
 B8 11'3490'3170           /18'3631'1903           exp
