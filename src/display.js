@@ -3360,6 +3360,10 @@ function update_displayed_ongoing_activity(current_activity, is_job){
         }
     }
 	const action_xp_div = document.getElementById("action_xp_div");
+	
+	// ★ 新增：如果界面被其他系统意外清空，直接 return，防止主循环彻底崩溃
+    if(!action_xp_div) return;
+	
 	const sk = getPrimarySkillForDisplay(activities[current_activity.activity_name]);
 	if (sk) {
 		const needed_xp = sk.current_level == sk.max_level

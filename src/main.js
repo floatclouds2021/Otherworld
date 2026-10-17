@@ -927,6 +927,10 @@ function does_location_have_unavailable_unlocks(location_name) {
  * @param {Object} selected_activity - {id} of activity in Location's activities list??
  */
 function start_activity(selected_activity) {
+    // ★ 新增：如果正在读书，强行终止读书
+    if(is_reading) {
+        end_reading();
+    }
     current_activity = Object.assign({},current_location.activities[selected_activity]);
     current_activity.id = selected_activity;
 
@@ -1074,13 +1078,20 @@ function start_reading(book_key) {
 }
 
 function end_reading() {
-    change_location(current_location.name);
-    end_activity_animation();
-    
+    // ★ 修改：不要粗暴调用 change_location，避免破坏玩家的其他活动状态
     const book_id = is_reading;
     is_reading = null;
 
-    update_displayed_book(book_id);
+    if(book_id) {
+        update_displayed_book(book_id);
+    }
+
+    // 如果玩家正在做其他动作，不重置整个界面；如果没做动作，再恢复地点面板
+    if(!current_activity) {
+        reload_normal_location();
+    } else {
+        end_activity_animation();
+    }
 }
 
 /**
@@ -6158,6 +6169,13 @@ function load(save_data) {
     if(save_data.is_reading) {
         start_reading(save_data.is_reading);
     }
+	
+	// 如果读档时发现既在活动又在读书，强制以读书为准，重置活动面板
+    if(current_activity && is_reading) {
+        end_activity();
+        start_reading(save_data.is_reading);
+    }
+	
     update_quests();
 	//种田新增
 	const farm_cb = document.getElementById("options_farm_auto");
