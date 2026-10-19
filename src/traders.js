@@ -280,6 +280,15 @@ class TradeItem {
         profit_margin: 2.8,
         act:1,
     });		
+    // ★ v0.11 丹盟二层商铺：通过二级考核后由林大师开放，卖凝元草/雪参的种子与成药
+    traders["丹盟二层商铺"] = new Trader({
+        name: "丹盟二层商铺",
+        inventory_template: "Alchemy II",
+        is_unlocked: false,
+        location_name: "丹盟·二层",
+        profit_margin: 2.4,
+        act: 3,   // 永不闭店
+    });
     traders["阵法商人"] = new Trader({
         name: "阵法商人",
         inventory_template: "Array",
@@ -618,6 +627,14 @@ class TradeItem {
 			new TradeItem({item_name: "大力参", count: [80,100]}),
 			new TradeItem({item_name: "铁线草", count: [80,200]}),
     ];	
+    inventory_templates["Alchemy II"] = 
+    [
+            new TradeItem({item_name: "凝元草种子", count: [80, 200]}),
+			new TradeItem({item_name: "雪参种子", count: [40, 120]}),
+			new TradeItem({item_name: "凝元草", count: [40, 120]}),
+			new TradeItem({item_name: "雪参", count: [20, 60]}),
+			new TradeItem({item_name: "大力参", count: [80, 100]}),
+    ];
     inventory_templates["Array"] = [
         new TradeItem({item_name: "阵旗", count: [15, 25]}),
         new TradeItem({item_name: "阵法核心", count: [3, 9]}),

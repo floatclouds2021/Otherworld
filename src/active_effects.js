@@ -530,4 +530,29 @@ effect_templates["压制 C6"] = new ActiveEffect({
     name: "压制 C6",
     effects: {stats: {}}
 });
+
+// ===== v0.08 新增状态 =====
+// 禁疗：存在期间玩家的生命恢复(flat/percent)完全无效，由嗜血魔犬的咒印施加
+effect_templates["禁疗"] = new ActiveEffect({
+    name: "禁疗",
+    effects: { stats: {} }
+});
+
+// ===== v0.10 时封：生命上限随层数缩减（具体倍率由 main.js 动态写入） =====
+effect_templates["时封"] = new ActiveEffect({
+    name: "时封",
+    effects: { stats: { max_health: { multiplier: 1 } } }
+});
+
+// ===== v0.11 凝元丹：百分比回血 + 少量攻防 =====
+effect_templates["凝元"] = new ActiveEffect({
+    name: "凝元",
+    effects: {
+        stats: {
+            health_regeneration_percent: { flat: 5 },
+            attack_power: { flat: 800 },
+            defense: { flat: 800 },
+        }
+    }
+});
 export {effect_templates, ActiveEffect};

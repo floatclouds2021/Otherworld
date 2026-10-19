@@ -517,7 +517,7 @@ class Enemy {
 		name: "石精",
 		description: "在矿洞中孕育出的岩石生命体，防御力极强。",
 		xp_value: 30,
-		rank: 5101,
+		rank: 2101,
         image: "image/enemy/E1116.png",
 		realm: "<span class=realm_basic><b>纳气境一层</b></span>",
 		size: "medium",
@@ -535,7 +535,7 @@ class Enemy {
 		name: "铁矿石精",
 		description: "富含铁矿的石精，击杀后可以获得更多铁矿。",
 		xp_value: 60,
-		rank: 5102,
+		rank: 2102,
         image: "image/enemy/E2604.png",
 		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
 		size: "medium",
@@ -554,7 +554,7 @@ class Enemy {
 		name: "铁矿虫",
 		description: "啃食铁矿为生的巨虫，外壳坚硬如铁。",
 		xp_value: 80,
-		rank: 5103,
+		rank: 2103,
 		image: "image/enemy/E1109.png",
 		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
 		size: "medium",
@@ -572,7 +572,7 @@ class Enemy {
 		name: "晶石精",
 		description: "吸收晶石精华的岩石生命，攻击附带魔力。",
 		xp_value: 110,
-		rank: 5104,
+		rank: 2104,
 		image: "image/enemy/E1116.png",
 		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
 		size: "medium",
@@ -590,7 +590,7 @@ class Enemy {
 		name: "矿脉傀儡",
 		description: "矿脉深处游荡的傀儡，比普通石精强大数倍。",
 		xp_value: 180,
-		rank: 5105,
+		rank: 2105,
 		image: "image/enemy/E2604.png",
 		realm: "<span class=realm_basic><b>纳气境四层</b></span>",
 		size: "medium",
@@ -608,7 +608,7 @@ class Enemy {
 		name: "深岩守卫",
 		description: "沉睡在矿脉最深处的岩石守卫，身上嵌满了晶石碎片。",
 		xp_value: 260,
-		rank: 5106,
+		rank: 2106,
 		image: "image/enemy/E1414.png",
 		realm: "<span class=realm_basic><b>纳气境五层</b></span>",
 		size: "medium",
@@ -628,7 +628,7 @@ class Enemy {
 		name: "吸血藤",
 		description: "会主动攻击并吸取生命力的藤蔓植物。",
 		xp_value: 20,
-		rank: 5001,
+		rank: 2201,
 		image: "image/enemy/E5001.png", // 假设的图片路径
 		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
 		size: "medium",
@@ -645,7 +645,7 @@ class Enemy {
 		name: "魔鬼藤",
 		description: "邪恶沼泽深处盘踞的藤蔓，拥有更强的攻击性和生命力。",
 		xp_value: 50,
-		rank: 5002,
+		rank: 2202,
 		image: "image/enemy/E5002.png",
 		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
 		size: "medium",
@@ -663,7 +663,7 @@ class Enemy {
 		name: "沼泽蟒",
 		description: "潜伏在毒沼里的巨蟒，攻击带剧毒。",
 		xp_value: 90,
-		rank: 5003,
+		rank: 2203,
 		image: "image/enemy/E5002.png",
 		realm: "<span class=realm_basic><b>纳气境四层</b></span>",
 		size: "medium",
@@ -681,7 +681,7 @@ class Enemy {
 		name: "腐毒花",
 		description: "会主动散播毒孢子的食人花。",
 		xp_value: 120,
-		rank: 5004,
+		rank: 2204,
 		image: "image/enemy/E1317.png",
 		realm: "<span class=realm_basic><b>纳气境五层</b></span>",
 		size: "medium",
@@ -700,7 +700,7 @@ class Enemy {
 		name: "荒古莲兽",
 		description: "守护荒古莲的魔物，拥有净化毒素的力量。",
 		xp_value: 200,
-		rank: 5005,
+		rank: 2205,
 		image: "image/enemy/E1319.png",
 		realm: "<span class=realm_basic><b>纳气境六层</b></span>",
 		size: "medium",
@@ -719,7 +719,7 @@ class Enemy {
 		name: "石精霸主[BOSS]",
 		description: "矿脉深处的最强石精，全身覆盖晶化岩甲。",
 		xp_value: 1500,
-		rank: 5199,
+		rank: 2199,
 		image: "image/boss/B5101.png",
 		realm: "<span class=realm_basic><b>纳气境巅峰</b></span>",
 		size: "large",
@@ -738,7 +738,7 @@ class Enemy {
 		name: "魔鬼藤母体[BOSS]",
 		description: "沼泽最深处孕育的巨型藤蔓，触手遍布整个沼泽。",
 		xp_value: 1800,
-		rank: 5099,
+		rank: 2299,
 		image: "image/boss/B5002.png",
 		realm: "<span class=realm_basic><b>纳气境巅峰</b></span>",
 		size: "large",
@@ -9121,7 +9121,7 @@ C4 225851433717/365435296162/591286729879
     });	
 	enemy_templates["周远航[压制]"] = new Enemy({
 		name: "周远航[压制]", description: "周远航压制了实力，但依旧从容。",
-		xp_value: 100, rank: 3000,
+		xp_value: 100, rank: 2306,
 		realm: "<span class=realm_basic><b>纳气境五层</b></span>",
 		size: "small", tags: [], spec: [],
 		stats: {health: 200000, attack: 15000, agility: 8000, attack_speed: 1.2, defense: 8000},
@@ -10129,48 +10129,78 @@ C4 225851433717/365435296162/591286729879
         loot_list: [
         ],
     });
-	//校内赛
-	enemy_templates["新生校内赛选手·32强"] = new Enemy({
-		name: "新生校内赛选手·32强", description: "凡人境八层。",
-		xp_value: 50, rank: 3001,
+	//校内赛（rank 5701~5705 → 怪物手册归入【演武楼】分组）
+	enemy_templates["铁拳·石猛"] = new Enemy({
+		name: "铁拳·石猛", description: "凡人境八层。拳头比脑子先动的新生，赛前放话说要一拳解决你。",
+		xp_value: 50, rank: 2301,
 		realm: "<span class=realm_basic><b>凡人境八层</b></span>",
-		size: "small", tags: [], spec: [],
-		stats: {health: 50000, attack: 3000, agility: 2000, attack_speed: 1.0, defense: 1000},
+		size: "small", tags: ["living", "human"], spec: [],
+		stats: {health: 120000, attack: 4000, agility: 3000, attack_speed: 1.0, defense: 500},
 		loot_list: [],
 	});
-	// 16强、8强、4强 类似改名字和数值
-	enemy_templates["新生校内赛选手·16强"] = new Enemy({
-		name: "新生校内赛选手·16强", description: "纳气境二层。天才师兄，气势非凡。",
-		xp_value: 500, rank: 3002,
-		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
-		size: "small", tags: [], spec: [3, 20],
-		stats: {health: 1500000, attack: 25000, agility: 10000, attack_speed: 1.2, defense: 12000},
+	enemy_templates["快剑·沈青云"] = new Enemy({
+		name: "快剑·沈青云", description: "纳气境一层。剑走轻灵，出手极快，据说半息能出三剑。",
+		xp_value: 500, rank: 2302,
+		realm: "<span class=realm_basic><b>纳气境一层</b></span>",
+		size: "small", tags: ["living", "human"], spec: [],
+		stats: {health: 600000, attack: 12000, agility: 12000, attack_speed: 1.2, defense: 3000},
 		loot_list: [],
 	});	
-	enemy_templates["新生校内赛选手·8强"] = new Enemy({
-		name: "新生校内赛选手·8强", description: "纳气境二层。天才师兄，气势非凡。",
-		xp_value: 500, rank: 3003,
+	enemy_templates["灵巧·白小婉"] = new Enemy({
+		name: "灵巧·白小婉", description: "纳气境二层。身形飘忽，惯用双短刃，缠斗起来让人眼花。",
+		xp_value: 500, rank: 2303,
 		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
-		size: "small", tags: [], spec: [3, 20],
-		stats: {health: 1500000, attack: 25000, agility: 10000, attack_speed: 1.2, defense: 12000},
+		size: "small", tags: ["living", "human"], spec: [3],
+		stats: {health: 1500000, attack: 20000, agility: 18000, attack_speed: 1.3, defense: 5000},
 		loot_list: [],
 	});	
-	enemy_templates["新生校内赛选手·4强"] = new Enemy({
-		name: "新生校内赛选手·4强", description: "纳气境二层。天才师兄，气势非凡。",
-		xp_value: 500, rank: 3004,
+	enemy_templates["秘法·陆行舟"] = new Enemy({
+		name: "秘法·陆行舟", description: "纳气境二层。学院公认的天才，剑上缠着凝而不散的灵光。",
+		xp_value: 500, rank: 2304,
 		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
-		size: "small", tags: [], spec: [3, 20],
-		stats: {health: 1500000, attack: 25000, agility: 10000, attack_speed: 1.2, defense: 12000},
+		size: "small", tags: ["living", "human"], spec: [20, 3],
+		stats: {health: 3000000, attack: 36000, agility: 24000, attack_speed: 1.4, defense: 7000},
 		loot_list: [],
 	});		
-	enemy_templates["新生校内赛选手·决赛"] = new Enemy({
-		name: "新生校内赛选手·决赛", description: "纳气境二层。天才师兄，气势非凡。",
-		xp_value: 500, rank: 3005,
+	enemy_templates["天才·顾寒山"] = new Enemy({
+		name: "天才·顾寒山", description: "纳气境二层。入学就被称作「十年一遇」的人，从头到尾没有出过第二招。",
+		xp_value: 500, rank: 2305,
 		realm: "<span class=realm_basic><b>纳气境二层</b></span>",
-		size: "small", tags: [], spec: [3, 20],
-		stats: {health: 1500000, attack: 25000, agility: 10000, attack_speed: 1.2, defense: 12000},
+		size: "small", tags: ["living", "human"], spec: [20, 3],
+		stats: {health: 4000000, attack: 52000, agility: 30000, attack_speed: 1.5, defense: 9000},
 		loot_list: [],
-	});	
+	});
+
+	// ==========================================================
+	// v0.08 邪恶沼泽·精灵踪迹（邪教 & 魔犬）
+	// spec 70 = 禁疗(造成伤害后数秒内玩家生命恢复无效)
+	// spec 71 = 嘲讽(玩家优先攻击此目标)
+	// spec 72 = 守护(每有一只存活的魔犬,受到伤害降低20%)
+	// spec 73 = 场外箭雨支援(每10秒对全体敌人造成最大生命10%的伤害)
+	// ==========================================================
+	enemy_templates["嗜血魔犬"] = new Enemy({
+		name: "嗜血魔犬",
+		description: "被邪法喂大的猎犬，皮毛下的血线一直在游动。它的爪子上带着让人止不住血的咒印。",
+		xp_value: 8000, rank: 2297,
+		image: "image/enemy/E3524.png",
+		realm: "<span class=realm_basic><b>纳气境三层</b></span>",
+		size: "medium", tags: ["living", "beast", "monster"], spec: [0, 70, 71],
+		stats: {health: 700000, attack: 35000, agility: 60000, attack_speed: 1.6, defense: 500},
+		loot_list: [
+			{item_name: "魔犬獠牙", chance: 0.8},
+		],
+	});
+	enemy_templates["邪教执事[BOSS]"] = new Enemy({
+		name: "邪教执事[BOSS]", description: "黑袍上绣着扭曲的血纹。他不急着杀人，只是站在魔犬后面，一遍遍念着同一段祷词。",
+		xp_value: 40000, rank: 2298,
+		image: "image/boss/B1401.png",
+		realm: "<span class=realm_basic><b>纳气境五层</b></span>",
+		size: "small", tags: ["living", "human"], spec: [0, 72, 73],
+		stats: {health: 2400000, attack: 90000, agility: 40000, attack_speed: 1.1, defense: 4000},
+		loot_list: [
+			{item_name: "邪教密信", chance: 1},
+		],
+	});
 	
 /*
 

@@ -1076,6 +1076,28 @@ class Textline {
 				},
 				locks_lines: ["开始考核"],
 			}),			
+			"二级考核": new Textline({
+				name: "报名二级炼丹师考核（需一级徽章）",
+				is_unlocked: true,
+				text: "",
+				unlocks: {
+					spec: "exam2_start",
+				},
+			}),
+			"二级通过": new Textline({
+				name: "（二级考核通过）",
+				is_unlocked: false,
+				text: "林大师把那枚二级徽章翻来覆去看了看，然后推到你面前。<br>"+
+					"「成了。从今天起你就是二级炼丹师了——丹盟二层对你开着，那儿卖的灵草种子，外面可买不到。」<br>"+
+					"「还有件事：过些日子丹盟要办炼丹大会，各族都会来人。请柬我会让人送到你住宅的信箱里，你记得去看。」<br>"+
+					"「大会之前，二层的东西你随便挑，需要什么尽管买。」",
+				unlocks: {
+					locations: ["丹盟·二层"],
+					traders: ["丹盟二层商铺"],
+					flags: ["alchemy_meet_announced"],
+				},
+				locks_lines: ["二级通过"],
+			}),
 		}
 	});
 
@@ -1108,6 +1130,54 @@ class Textline {
                 text: "阅读丹方，炼制一枚强体丹即可通过",
 				unlocks: {
 					spec: "end1",	
+                },
+            }),
+        }
+    });
+
+	dialogues["结束二级考核"] = new Dialogue({
+        name: "结束二级考核",
+		textlines: {
+			"结束二级考核": new Textline({
+                name: "提交丹药，结束考核",
+				is_unlocked: true,
+                text: "把炼好的凝元丹交给监考的人过目即可",
+				unlocks: {
+					spec: "end2",
+                },
+            }),
+        }
+    });
+
+	dialogues["拿起二级丹方"] = new Dialogue({
+        name: "拿起二级丹方",
+		textlines: {
+			"拿起二级丹方": new Textline({
+                name: "阅读丹方并取用材料",
+				is_unlocked: true,
+                text: "丹方上写着凝元丹的配伍，旁边三个木盒里各装着三份药材。",
+				unlocks: {
+                    items: [
+						{ item_name: "凝元丹配方", count: 1 },
+						{ item_name: "凝元草", count: 6 },
+						{ item_name: "雪参", count: 3 },
+						{ item_name: "大力参", count: 3 },
+					],
+                },
+				locks_lines: ["拿起二级丹方"],
+            }),
+        }
+    });
+
+	dialogues["信箱"] = new Dialogue({
+        name: "信箱",
+		textlines: {
+			"查看信箱": new Textline({
+                name: "看看信箱",
+				is_unlocked: true,
+                text: "",
+				unlocks: {
+					spec: "alchemy_letter",
                 },
             }),
         }
@@ -1173,8 +1243,8 @@ class Textline {
         }
     });
 
-	dialogues["用贡献点兑换功法"] = new Dialogue({
-        name: "用贡献点兑换功法",
+	dialogues["用贡献点兑换物品"] = new Dialogue({
+        name: "用贡献点兑换物品",
 		textlines: {
             // ★ 修正：将具体的武器选项放在同一级
             "影步要诀": new Textline({ 
@@ -1217,6 +1287,22 @@ class Textline {
                     spec: "gf-dan",
                 },
             }),
+			"词缀洗练石": new Textline({ 
+                is_unlocked: true,
+                name: "词缀洗练石（随机重铸武器词条），需要8000贡献点",
+                text: "",
+                unlocks: {
+                    spec: "gf-traitstone",
+                },
+            }),
+			"晶化粉末": new Textline({ 
+				is_unlocked: true,
+				name: "晶化粉末x50，需要20000贡献点",
+				text: "",
+				unlocks: {
+					spec: "gf-fenmo", // 必须和 main.js 里的对应
+				},
+			}),			
 		}
     });
 
@@ -1355,11 +1441,13 @@ class Textline {
 			"前往参加": new Textline({
                 name: "前往参加",
 				is_unlocked: false,
-                text: "准备的差不多了，可以去参加新生校内赛了(v0.07终点，可以去斗技场玩)<br>",
-/* 				unlocks: {
-					 textlines: [{dialogue: "新生校内赛开始", lines: ["开幕"]}]
+                text: "演武楼前已经聚满了人，报名的长队从门口一直排到台阶下。<br>"+
+                      "你在名册上写下名字，被分到了第三十二号签。<br>"+
+                      "第一轮，就在今天。<br>",
+				unlocks: {
+					locations: ["演武楼", "新生校内赛 - 32强"],
                 },
-				locks_lines: ["前往参加"], */
+				locks_lines: ["前往参加"],
             }),
 		}
     });
@@ -1556,6 +1644,25 @@ class Textline {
                 },
 				locks_lines: ["提交矿山任务完成"],
 			}),			
+			// ★ v0.10 可重复委托（不会消失，随时可以再交）
+			"常驻委托-药材": new Textline({
+				name: "【常驻委托】沼泽药材：沼泽蔓藤×10 + 毒腺草×10 → 800贡献点",
+				is_unlocked: true,
+				text: "",
+				unlocks: { spec: "repeat_turnin:800:沼泽蔓藤=10;毒腺草=10" },
+			}),
+			"常驻委托-矿石": new Textline({
+				name: "【常驻委托】矿脉精铁：铁锭×20 → 600贡献点",
+				is_unlocked: true,
+				text: "",
+				unlocks: { spec: "repeat_turnin:600:铁锭=20" },
+			}),
+			"常驻委托-荒古莲": new Textline({
+				name: "【常驻委托】荒古莲：荒古莲×3 → 1200贡献点",
+				is_unlocked: true,
+				text: "",
+				unlocks: { spec: "repeat_turnin:1200:荒古莲=3" },
+			}),
 		},
 	});
 
@@ -4431,6 +4538,303 @@ class Textline {
 
         zh.textlines[textlineKey] = line;
     }
+})();
+
+// ==========================================================================
+// v0.08 剧情线：新生校内赛 -> 石猛商铺 -> 精灵求救 -> 校长与残图 -> 精灵商会
+// ==========================================================================
+(function(){
+
+    // ------------------ 校内赛助手（每场结束后的过场） ------------------
+    dialogues["新生校内赛助手"] = new Dialogue({
+        name: "新生校内赛助手",
+        is_unlocked: false,
+        textlines: {
+            "next_16": new Textline({
+                name: "（第一轮结束）",
+                is_unlocked: false,
+                text: "裁判举手：「胜者——！」<br>"+
+                      "看台上安静了一瞬，随后炸开一片喧哗。<br>"+
+                      "石猛躺在地上，半天才爬起来，一边揉着脸一边瞪你：「你、你等着……」<br>"+
+                      "下一轮，十六强。",
+                locks_lines: ["next_16"],
+                unlocks: { locations: ["新生校内赛 - 16强"] },
+            }),
+            "next_8": new Textline({
+                name: "（十六强赛结束）",
+                is_unlocked: false,
+                text: "沈青云收剑入鞘，很干脆地认了输：「快，但没我快；狠，比我狠。」<br>"+
+                      "他笑了笑：「八强，别输给陆行舟。」<br>"+
+                      "下一轮，八强。",
+                locks_lines: ["next_8"],
+                unlocks: { locations: ["新生校内赛 - 8强"] },
+            }),
+            "next_4": new Textline({
+                name: "（八强赛结束）",
+                is_unlocked: false,
+                text: "白小婉把双刃一合，蹲在地上直喘气：「不打了不打了，你这人怎么打不死啊……」<br>"+
+                      "她抬头看你，眼睛发亮：「四强那位可是会真秘法的，你小心点。」<br>"+
+                      "下一轮，四强。",
+                locks_lines: ["next_4"],
+                unlocks: { locations: ["新生校内赛 - 4强"] },
+            }),
+            "next_final": new Textline({
+                name: "（四强赛结束）",
+                is_unlocked: false,
+                text: "陆行舟的剑「当」地掉在地上。<br>"+
+                      "他愣了整整三息，才苦笑着说：「原来天剑也不是无敌的。」<br>"+
+                      "他捡起剑，很认真地朝你抱了抱拳：「决赛，替我赢下来。」<br>"+
+                      "下一场，决赛。对面是顾寒山。",
+                locks_lines: ["next_final"],
+                unlocks: { locations: ["新生校内赛 - 决赛"] },
+            }),
+            "champion": new Textline({
+                name: "（决赛结束）",
+                is_unlocked: false,
+                text: "顾寒山后退三步，抬手止住了还想再战的念头。<br>"+
+                      "「我输了。」他说得很平静，随即又补了一句，「——下一次不会了。」<br>"+
+                      "整座演武楼静了足足十息，然后掌声从四面八方涌下来。<br>"+
+                      "校长韩墨白站起身，抬手压了压，声音传遍全场：「本届新生校内赛的冠军，已经决出。」<br>"+
+                      "「冠军，散场后到我那儿来一趟——奖励还没发。」<br>"+
+                      "<br>散场时，你在演武楼门口被人拦住了。<br>"+
+                      "是石猛。脸上还留着第一轮被打出来的印子，搓着手，笑得有点谄媚。<br>"+
+                      "「大哥！大哥等一下！」他追上两步，「我服了，真的服了。」<br>"+
+                      "「我这人打架不行，脑子倒是好使。主城的铺子怎么开，进货、定价、客流，我从小就跟着我爹算这些。」<br>"+
+                      "「你出个名头罩着我，我替你赚钱，赚的钱六四分——不，七三分，你七我三！」<br>"+
+                      "「铺子我已经看好地方了，就在主城街角，叫石记杂货。你点个头，我明天就开张。」<br>"+
+                      "你点了点头。石猛当场乐得差点跳起来，转身就往主城跑，连脸上的伤都忘了揉。",
+                locks_lines: ["champion"],
+                unlocks: {
+                    flags: ["shop_opened"],
+                    locations: ["石记杂货"],
+                    textlines: [
+                        {dialogue: "与校长对话", lines: ["校内赛冠军"]},
+                        {dialogue: "石猛", lines: ["打理店铺"]},
+                        {dialogue: "精灵商会", lines: ["宣传店铺"]},
+                    ],
+                    dialogues: ["石猛"],
+                },
+            }),
+        }
+    });
+
+    // ------------------ 校长：冠军奖励 ------------------
+    dialogues["与校长对话"].textlines["校内赛冠军"] = new Textline({
+        name: "（领取冠军奖励）",
+        is_unlocked: false,
+        text: "校长韩墨白把一杯茶推到你面前。<br>"+
+              "「打得不错。尤其是四强和决赛那两场，看得我这把老骨头都有点手痒。」<br>"+
+              "他从抽屉里翻出一枚金质徽章，放在桌上。<br>"+
+              "「冠军奖金，还有这枚徽章。挂身上吧，学院里有点眼力见的人见了，麻烦会少很多。」<br>"+
+              "「另外——」他顿了顿，「影部那边昨天递了份东西上来，说精灵一族派人来求援了，指名要学院帮忙。」<br>"+
+              "「我本来打算让影部自己去，但你现在这个名声，去一趟比他们十个人都管用。」<br>"+
+              "「去找影部导师问问详情吧。」",
+        unlocks: {
+            items: [
+                { item_name: "新生赛·金徽章", count: 1 },
+                { item_name: "聚气丹", count: 20 },
+                { item_name: "贡献点", count: 50000 },
+            ],
+            spec: "money:5000000",
+            textlines: [
+                { dialogue: "与影部导师对话", lines: ["精灵求援"] },
+            ],
+            dialogues: ["石猛"],
+        },
+        locks_lines: ["校内赛冠军"],
+    });
+
+    // ------------------ 影部：精灵求援 ------------------
+    dialogues["与影部导师对话"].textlines["精灵求援"] = new Textline({
+        name: "（精灵一族的求援）",
+        is_unlocked: false,
+        text: "影部导师把一张薄薄的纸片推过来，纸上有一道淡淡的绿色叶脉印记。<br>"+
+              "「精灵一族发来的消息。他们有一支小队进了邪恶沼泽，之后就断了联系。」<br>"+
+              "「我们已经派了三批人进去，什么都没找到——连尸体都没有。」<br>"+
+              "他敲了敲桌子：「沼泽太大，外围的毒瘴又压着搜寻的人。你要是愿意走一趟，学院不会亏待你。」<br>"+
+              "他推过来一个布袋：「止血丹、雷符、治愈符。别逞强，能回来才叫本事。」",
+        unlocks: {
+            items: [
+                { item_name: "止血丹", count: 20 },
+                { item_name: "雷符", count: 5 },
+                { item_name: "治愈符", count: 5 },
+            ],
+            locations: ["邪恶沼泽"],
+            textlines: [
+                { dialogue: "沼泽搜索", lines: ["搜索一"] },
+                { dialogue: "学院飞舟点", lines: ["去邪恶沼泽（特别免费）"] },
+            ],
+            dialogues: ["沼泽搜索"],
+        },
+        locks_lines: ["精灵求援"],
+    });
+
+    // ------------------ 邪恶沼泽：搜索 ------------------
+    dialogues["沼泽搜索"] = new Dialogue({
+        name: "沼泽搜索",
+        is_unlocked: false,
+        textlines: {
+            "搜索一": new Textline({
+                name: "在沼泽里展开搜索（耗时较长）",
+                is_unlocked: false,
+                text: "",
+                unlocks: { spec: "swamp_search_1" },
+                locks_lines: ["搜索一"],
+            }),
+            "搜索二": new Textline({
+                name: "顺着血迹继续追踪（耗时较短）",
+                is_unlocked: false,
+                text: "",
+                unlocks: { spec: "swamp_search_2" },
+                locks_lines: ["搜索二"],
+            }),
+        }
+    });
+
+    // ------------------ 精灵小队：脱困后的感谢 ------------------
+    dialogues["精灵小队"] = new Dialogue({
+        name: "精灵小队",
+        is_unlocked: false,
+        textlines: {
+            "感谢": new Textline({
+                name: "（精灵小队队长）",
+                is_unlocked: false,
+                text: "魔犬倒下的那一刻，围在中央的精灵们几乎同时松了一口气。<br>"+
+                      "为首的女精灵拨开额前的湿发走过来，耳尖还带着战斗留下的红：「我是艾莉希尔，这队人的队长。」<br>"+
+                      "「谢谢你。若不是你，我们大概会像前几批人一样，被那东西拖进沼泽深处。」<br>"+
+                      "她抬手按在你肩上，指尖泛起一层淡绿色的光，你身上的伤口一点点合拢。<br>"+
+                      "「报酬不多，但总得给。」她递来一张残破的图和一片永不枯黄的叶子。<br>"+
+                      "「这张残图是我们前些日子意外得到的。刚拿到手，邪教的人就找上门来——一路追，一路杀。」<br>"+
+                      "「我们守不住它。你拿着吧，说不定你们校长能看出点什么。」<br>"+
+                      "「另外，拿着这片叶子，以后精灵一族都认你这份情。」",
+                unlocks: {
+                    spec: "elf_thanks",
+                    items: [
+                        { item_name: "精灵赠予的残图", count: 1 },
+                        { item_name: "精灵信物", count: 1 },
+                    ],
+                    textlines: [
+                        { dialogue: "与影部导师对话", lines: ["汇报情况"] },
+                    ],
+                },
+                locks_lines: ["感谢"],
+            }),
+        }
+    });
+
+    // ------------------ 影部：汇报情况 ------------------
+    dialogues["与影部导师对话"].textlines["汇报情况"] = new Textline({
+        name: "（向影部汇报）",
+        is_unlocked: false,
+        text: "你把沼泽深处的事说了一遍，包括那些魔犬身上的咒印，和那个黑袍人念的祷词。<br>"+
+              "影部导师听完，沉默了很久。<br>"+
+              "「禁疗……那是专门用来对付我们这种靠恢复硬撑的人的术。」他把纸片翻过来，背面已经写满了字。<br>"+
+              "「邪教在沼泽里找东西，而且找得很急。既然他们这么想要那张残图——」他抬眼，「这东西你留好。」<br>"+
+              "「学院会加大对邪教的追踪。至于这张残图，去找校长看看吧，他年轻时游历过的地方比我们加起来都多。」<br>"+
+              "「贡献点已经打到你徽章里了。」",
+        unlocks: {
+            items: [
+                { item_name: "贡献点", count: 30000 },
+            ],
+            textlines: [
+                { dialogue: "与校长对话", lines: ["残图请教"] },
+            ],
+        },
+        locks_lines: ["汇报情况"],
+    });
+
+    // ------------------ 校长：辨认残图 ------------------
+    dialogues["与校长对话"].textlines["残图请教"] = new Textline({
+        name: "（向校长请教残图）",
+        is_unlocked: false,
+        text: "韩墨白把两块布片摊在桌上，看了很久。<br>"+
+              "「这是秘境的残图。」他用指甲沿着断口刮了一下，「而且十有八九，是一处传承。」<br>"+
+              "「年轻的时候我游历过不少地方，也拿到过类似的东西。后来……」他笑了笑，「后来忙起来，就丢在戒指里积灰了。」<br>"+
+              "他摘下右手那枚戒指，翻找了一阵，捏出一片颜色发黄的残图，往桌上一按。<br>"+
+              "两块残图的断口严丝合缝地咬在了一起。图上的山势连绵起来，中间隐约露出一道竖直的裂口。<br>"+
+              "「四块。」他伸出四根手指，「一共四块才能拼全。你现在有两块了。」<br>"+
+              "「邪教既然已经盯上这东西，就别让人知道你手里有。」他指尖在图上点了几下，一层极淡的墨色纹路顺着残图的边缘蔓延开来，随即隐没。<br>"+
+              "「封印阵法，我加了一层。以后若是有人用术法追查残图，只会查到一片空白。」<br>"+
+              "「主城的精灵商会应该会认得这些东西，去问问他们。精灵对古老地图的嗅觉，比人族灵敏得多。」",
+        unlocks: {
+            items: [
+                { item_name: "韩墨白的残图", count: 1 },
+            ],
+            spec: "seal_map",
+            textlines: [
+                { dialogue: "精灵商会", lines: ["残图与推广"] },
+            ],
+            dialogues: ["精灵商会"],
+        },
+        locks_lines: ["残图请教"],
+    });
+
+    // ------------------ 主城 · 精灵商会 ------------------
+    dialogues["精灵商会"] = new Dialogue({
+        name: "精灵商会",
+        is_unlocked: false,
+        textlines: {
+            "残图与推广": new Textline({
+                name: "（拿出残图与精灵信物）",
+                is_unlocked: false,
+                text: "商会里飘着草木的清香。柜台后那位精灵看见你递过去的叶子，立刻放下了手里的账簿。<br>"+
+                      "「世界树的叶子……你救过我们的族人。」<br>"+
+                      "她仔细看过那两张残图，指尖在断口上摩挲了片刻：「这是古时的秘境图，我们族里也收着些来历不明的碎片。可惜，这里只有两片。」<br>"+
+                      "「你身上有封印阵法的痕迹，很好。邪教那帮人若知道这图在你身上，会像疯狗一样追着不放。」<br>"+
+                      "她从柜台下取出一个小木盒：「几颗世界树的果子，算我们的一点心意。吃下去，身子骨会结实些。」<br>"+
+                      "「听说你在主城开了铺子？」她忽然笑了一下，「那正好——精灵商会可以替你宣传一番。我们的人脉，在主城还算管用。」<br>"+
+                      "「有新的消息，我会让人知会你。」",
+                unlocks: {
+                    items: [
+                        { item_name: "世界树生命果", count: 5 },
+                    ],
+                    spec: "elf_promo",
+                },
+                locks_lines: ["残图与推广"],
+            }),
+            "宣传店铺": new Textline({
+                name: "（请商会帮忙宣传店铺）",
+                is_unlocked: false,
+                text: "你把铺子的事说了说，柜台后的精灵笑着点头：「小事。我们商会在主城还算有几个熟人。」<br>"+
+                      "（如果店铺还没开张，这里就不会有反应。）",
+                unlocks: { spec: "elf_promo" },
+            }),
+        }
+    });
+
+    // ------------------ 石猛：投奔 & 商铺 ------------------
+    dialogues["石猛"] = new Dialogue({
+        name: "石猛",
+        is_unlocked: false,
+        textlines: {
+            "投奔": new Textline({
+                name: "（石猛找上门来）",
+                is_unlocked: false,
+                text: "决赛散场时，石猛在演武楼门口拦住了你。<br>"+
+                      "「大哥！」他搓着手，脸上还留着上一场被打出来的印子，「我服了，真的服了。」<br>"+
+                      "「我这人打架不行，脑子倒是好使。你知道主城的铺子怎么开的吧？进货、定价、客流，我从小就跟着我爹算这些。」<br>"+
+                      "「你出个名头罩着我，我替你赚钱，赚的钱六四分——不，七三分，你七我三！」<br>"+
+                      "「铺子我已经看好了，就在主城街角。你点个头，我明天就开张。」",
+                unlocks: {
+                    flags: ["shop_opened"],
+                    locations: ["石记杂货"],
+                    textlines: [
+                        { dialogue: "石猛", lines: ["打理店铺"] },
+                        { dialogue: "精灵商会", lines: ["宣传店铺"] },
+                    ],
+                },
+                locks_lines: ["投奔"],
+            }),
+            "打理店铺": new Textline({
+                name: "（看看铺子的经营情况）",
+                is_unlocked: false,
+                text: "你推开门，石猛正踩着凳子擦货架，回头一咧嘴：「大哥，你来了。」<br>"+
+                      "（打开店铺界面）",
+                unlocks: { spec: "shop" },
+            }),
+        }
+    });
+
 })();
 
 export { dialogues, ma_off_chain, Dialogue, Textline };

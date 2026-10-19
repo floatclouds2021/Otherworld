@@ -1015,7 +1015,7 @@ function get_location_type_penalty(type, stage, stat) {
 
 		description: "繁荣的主城，偶尔还能在此看到一些别的种族",  
         bgm: 3,
-        dialogues: ["公告栏","主城驿站","主城飞舟点"],
+        dialogues: ["公告栏","主城驿站","主城飞舟点","精灵商会","石猛"],
         traders: ["精灵商会","万药阁"],
         is_unlocked: false,
         name: "主城", 
@@ -1089,6 +1089,30 @@ function get_location_type_penalty(type, stage, stat) {
         is_unlocked: false,
         name: "一级炼丹考核", 
     });//1-3-3	
+	locations["二级炼丹考核"] = new Location({ 
+        connected_locations: [{location: locations["丹盟"], custom_text: "离开考场"}], 
+        description: "二级炼丹师考核点。案上摆着三份药材和一张丹方。",  
+        bgm: 3,
+        dialogues: ["拿起二级丹方","结束二级考核"],
+		crafting: {
+           is_unlocked: true, 
+            use_text: "考核用炼丹炉", 
+            tiers: {
+                alchemy: 3,
+            }
+		},
+        is_unlocked: false,
+        name: "二级炼丹考核", 
+    });
+	locations["丹盟·二层"] = new Location({ 
+        connected_locations: [{location: locations["丹盟"], custom_text: "下楼"}], 
+        description: "丹盟二层，只有持二级以上徽章的炼丹师能上来。货架上摆着外面见不到的灵草和种子。",  
+        bgm: 3,
+        dialogues: [],
+		traders: ["丹盟二层商铺"],
+        is_unlocked: false,
+        name: "丹盟·二层", 
+    });
     locations["城外墓园"] = new Location({ 
         bgm: 1,
         connected_locations: [{location: locations["主城"], custom_text: "回到主城"}], 
@@ -1106,6 +1130,8 @@ function get_location_type_penalty(type, stage, stat) {
     });//1-3-3
 	locations["主城"].connected_locations.push({location: locations["丹盟"]});
 	locations["丹盟"].connected_locations.push({location: locations["一级炼丹考核"]});
+	locations["丹盟"].connected_locations.push({location: locations["二级炼丹考核"]});
+	locations["丹盟"].connected_locations.push({location: locations["丹盟·二层"]});
 
 // 【在 locations["战斗学院"] 的下方，新增演武楼】
 	locations["演武楼"] = new Location({
@@ -1114,6 +1140,7 @@ function get_location_type_penalty(type, stage, stat) {
 		name: "演武楼",
 		is_unlocked: false,
 		bgm: 1,
+		dialogues: ["新生校内赛助手"],
 	});
 
 	// 将演武楼连接到战斗学院
@@ -1173,7 +1200,7 @@ function get_location_type_penalty(type, stage, stat) {
         description: "图书馆",
         name: "图书馆",
         is_unlocked: false,
-		dialogues: ["用贡献点兑换功法"],
+		dialogues: ["用贡献点兑换物品"],
         bgm: 1,
     })
     locations["任务阁"] = new Location({
@@ -1204,7 +1231,7 @@ function get_location_type_penalty(type, stage, stat) {
 				alchemy: 3,
 			}
 		},
-		dialogues: ["度过时间，等待开学典礼开始", "布置聚灵阵","做好准备，参加新生校内赛"],
+		dialogues: ["度过时间，等待开学典礼开始", "布置聚灵阵","做好准备，参加新生校内赛","信箱"],
 	})	
 
     locations["空间锚点"] = new Location({
@@ -1290,12 +1317,16 @@ function get_location_type_penalty(type, stage, stat) {
 	});
 
 
+	// ==========================================================
+	// v0.08 新生校内赛 32强 -> 决赛 完整赛程
+	// ==========================================================
 	locations["新生校内赛 - 32强"] = new Challenge_zone({
-		description: "校内赛第一轮。观众席上人声鼎沸。",
-		enemy_count: 1, enemies_list: ["新生校内赛选手·32强"],
+		description: "校内赛第一轮。观众席上人声鼎沸，对面那个壮实的新生正把拳头捏得咔咔响。",
+		enemy_count: 1, enemies_list: ["铁拳·石猛"],
 		enemy_group_size: [1,1], is_unlocked: false, is_challenge: true,
 		name: "新生校内赛 - 32强",
-		parent_location: locations["演武楼"], // 改为演武楼
+		parent_location: locations["演武楼"],
+		first_reward: { xp: 3000 },
 		repeatable_reward: {
 			flags: ["arena_32_done"],
 			locations: [{location: "新生校内赛 - 16强"}],
@@ -1303,17 +1334,61 @@ function get_location_type_penalty(type, stage, stat) {
 		},
 	});
 
-	// 同理做 16强/8强/4强/决赛
+	locations["新生校内赛 - 16强"] = new Challenge_zone({
+		description: "十六强赛。对面是个使剑的少年，剑已出鞘，剑尖一点寒光不晃。",
+		enemy_count: 1, enemies_list: ["快剑·沈青云"],
+		enemy_group_size: [1,1], is_unlocked: false, is_challenge: true,
+		name: "新生校内赛 - 16强",
+		parent_location: locations["演武楼"],
+		first_reward: { xp: 12000 },
+		repeatable_reward: {
+			flags: ["arena_16_done"],
+			locations: [{location: "新生校内赛 - 8强"}],
+			textlines: [{dialogue: "新生校内赛助手", lines: ["next_8"]}],
+		},
+	});
+
+	locations["新生校内赛 - 8强"] = new Challenge_zone({
+		description: "八强赛。白小婉绕着场地走了半圈，双刃垂在身侧，笑意里全是挑衅。",
+		enemy_count: 1, enemies_list: ["灵巧·白小婉"],
+		enemy_group_size: [1,1], is_unlocked: false, is_challenge: true,
+		name: "新生校内赛 - 8强",
+		parent_location: locations["演武楼"],
+		first_reward: { xp: 30000 },
+		repeatable_reward: {
+			flags: ["arena_8_done"],
+			locations: [{location: "新生校内赛 - 4强"}],
+			textlines: [{dialogue: "新生校内赛助手", lines: ["next_4"]}],
+		},
+	});
+
+	locations["新生校内赛 - 4强"] = new Challenge_zone({
+		description: "四强赛。陆行舟抬手，剑上灵光凝成一线。看台下有人在低声议论「天剑」。",
+		enemy_count: 1, enemies_list: ["秘法·陆行舟"],
+		enemy_group_size: [1,1], is_unlocked: false, is_challenge: true,
+		name: "新生校内赛 - 4强",
+		parent_location: locations["演武楼"],
+		first_reward: { xp: 80000 },
+		repeatable_reward: {
+			flags: ["arena_4_done"],
+			locations: [{location: "新生校内赛 - 决赛"}],
+			textlines: [{dialogue: "新生校内赛助手", lines: ["next_final"]}],
+		},
+		unlock_text: "四强赛开始了。对面那位天才师兄并没有把你放在眼里。",
+	});
+
 	locations["新生校内赛 - 决赛"] = new Challenge_zone({
-		description: "决赛。对面那位天才师兄神情从容。",
-		enemy_count: 1, enemies_list: ["新生校内赛选手·决赛"],
+		description: "决赛。整座演武楼安静得能听见风。顾寒山站在场地中央，从头到尾没有出过第二招。",
+		enemy_count: 1, enemies_list: ["天才·顾寒山"],
 		enemy_group_size: [1,1], is_unlocked: false, is_challenge: true,
 		name: "新生校内赛 - 决赛",
-		parent_location: locations["演武楼"], // 改为演武楼
+		parent_location: locations["演武楼"],
+		first_reward: { xp: 200000 },
 		repeatable_reward: {
-			flags: ["arena_final_done"],
+			flags: ["arena_final_done", "arena_champion"],
 			textlines: [{dialogue: "新生校内赛助手", lines: ["champion"]}],
 		},
+		unlock_text: "决赛。赢了这一场，你就是这一届的新生第一。",
 	});
 
 	// --- 任务阁：邪恶沼泽与矿山 ---
@@ -1323,7 +1398,7 @@ locations["邪恶沼泽"] = new Location({
     description: "任务阁发布的清剿任务地点。这里弥漫着毒沼的瘴气，到处都是危险的藤蔓生物。",
     name: "邪恶沼泽",
     bgm: 15,
-    dialogues: ["沼泽飞舟点"],
+    dialogues: ["沼泽飞舟点", "沼泽搜索", "精灵小队"],
     is_unlocked: false,
     unlock_text: "你接受了任务阁的委托，前往邪恶沼泽清剿魔物。",
 });
@@ -1424,6 +1499,42 @@ locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶�
 locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 3"]});
 locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 4"]});
 locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - X"]});
+
+// ==========================================================
+// v0.08 邪恶沼泽 · 精灵踪迹（剧情战斗）
+// ==========================================================
+locations["邪恶沼泽 - 精灵踪迹"] = new Challenge_zone({
+	description: "泥沼深处的一片干地。精灵小队被困在中央，四头魔犬绕着他们打转，一个黑袍人站在外围念念有词。",
+	enemy_count: 1,
+	enemy_groups_list: [["邪教执事[BOSS]", "嗜血魔犬", "嗜血魔犬", "嗜血魔犬", "嗜血魔犬"]],
+	enemy_group_size: [5, 5],
+	is_unlocked: false,
+	is_challenge: true,
+	name: "邪恶沼泽 - 精灵踪迹",
+	rank: 510,
+	bgm: 15,
+	parent_location: locations["邪恶沼泽"],
+	first_reward: { xp: 120000 },
+	repeatable_reward: {
+		flags: ["elf_rescued"],
+		textlines: [{dialogue: "精灵小队", lines: ["感谢"]}],
+	},
+	unlock_text: "找到了。精灵小队就在前面——他们被邪教的人围住了！",
+});
+locations["邪恶沼泽"].connected_locations.push({location: locations["邪恶沼泽 - 精灵踪迹"]});
+
+// ==========================================================
+// v0.08 主城 · 石记杂货（石猛开的商铺）
+// ==========================================================
+locations["石记杂货"] = new Location({
+	connected_locations: [{location: locations["主城"], custom_text: "回到主城"}],
+	description: "主城街角的一间小铺子。柜台擦得发亮，货架摆得整整齐齐，门口挂着块新写的木牌：石记杂货。",
+	name: "石记杂货",
+	bgm: 3,
+	is_unlocked: false,
+	dialogues: ["石猛"],
+});
+locations["主城"].connected_locations.push({location: locations["石记杂货"]});
 
 
 locations["矿山"] = new Location({

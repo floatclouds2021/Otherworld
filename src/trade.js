@@ -2,7 +2,7 @@
 
 import { traders } from "./traders.js";
 import { 
-    update_displayed_trader, update_displayed_trader_inventory, update_displayed_character_inventory, exit_displayed_trade, update_displayed_money } from "./display.js";
+    update_displayed_trader, update_displayed_trader_inventory, update_displayed_character_inventory, exit_displayed_trade, update_displayed_money, log_message } from "./display.js";
 import { add_to_character_inventory, remove_from_character_inventory } from "./character.js";
 import { skills } from "./skills.js";
 import { getEquipmentValue, item_templates, loot_sold_count } from "./items.js";
@@ -185,7 +185,18 @@ function is_in_trade() {
     return Boolean(current_trader);
 }
 
+// ===== 修改后 =====
 function add_to_selling_list(selected_item) {
+    // ★ v0.10 关键道具（不可出售）直接拦下
+    let parsed = null;
+    try {
+        parsed = JSON.parse(selected_item.item_key);
+    } catch(e) { /* 非 JSON key（装备槽位等）走原逻辑 */ }
+
+    if(parsed?.id && item_templates[parsed.id]?.no_sell) {
+        log_message(`【${item_templates[parsed.id].name}】是关键道具，不能出售。`, "enemy_enhanced");
+        return 0; // 彻底拦截
+    }
 
     const present_item = to_sell.items.find(a => a.item_key === selected_item.item_key);
     //find if item is already present in the sell list

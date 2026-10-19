@@ -372,7 +372,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
             {material_id: "缠绕水晶", count: 2, result_id: "水晶剑柄"}, 
             {material_id: "固态凝胶", count: 2, result_id: "凝胶剑柄"}, 
             {material_id: "光暗枝丫", count: 2, result_id: "光暗剑柄"}, 
-			{material_id: "晶化龙骨", count: 2, result_id: "晶化龙骨短柄"},
+			{material_id: "晶化粉末", count: 3, result_id: "晶化龙骨短柄"},
         ],
         item_type: "Component",
         recipe_skill: "Forging"
@@ -381,7 +381,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
 		name: "匕首刃",
 		materials: [
 			{material_id: "铁锭", count: 3, result_id: "短铁刃"},     // 需在 items.js 里加
-			{material_id: "晶化暗影钢锭", count: 3, result_id: "晶化暗影匕锋"},
+			{material_id: "暗影钢锭", count: 3, result_id: "晶化暗影匕锋"},
 			// ...其他 short blade
 		],
 		item_type: "Component",
@@ -2073,7 +2073,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         ],
         result: {result_id: "晶化铁锭", count: 1},
         success_chance: [0.5, 1],
-        recipe_level: [1, 60],
+        recipe_level: [1, 15],   // ★ v0.09 占位等级(60)调回正式等级：熔炼15 + 工作台3 = 满成功率
         recipe_skill: "Smelting",
     });
 })();
@@ -2225,6 +2225,116 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         recipe_level: [10, 20],
         recipe_skill: "Alchemy",
     });	
+})();
+
+// ========== v0.09：晶化铁部件 / 晶化硬藤 / 犬牙项链 ==========
+(function(){
+    // ---- 材料 ----
+    alchemy_recipes.items4["晶化硬沼泽滕蔓"] = new ItemRecipe({
+        name: "晶化硬沼泽滕蔓",
+        recipe_type: "material",
+        materials: [
+            {material_id: "硬化沼泽滕蔓", count: 3},
+            {material_id: "晶化粉末", count: 1},
+        ],
+        result: {result_id: "晶化硬沼泽滕蔓", count: 1},
+        success_chance: [0.6, 1],
+        recipe_level: [1, 12],
+        recipe_skill: "Alchemy",
+    });
+
+    // ---- 魔犬獠牙：净化 → 犬牙项链 ----
+    alchemy_recipes.items4["净化獠牙"] = new ItemRecipe({
+        name: "净化獠牙",
+        recipe_type: "material",
+        materials: [
+            {material_id: "魔犬獠牙", count: 1},
+            {material_id: "灵液", count: 3},
+            {material_id: "晶石碎片", count: 2},
+        ],
+        result: {result_id: "净化獠牙", count: 1},
+        success_chance: [0.5, 1],
+        recipe_level: [1, 10],
+        recipe_skill: "Alchemy",
+    });
+    crafting_recipes.items["犬牙项链"] = new ItemRecipe({
+        name: "犬牙项链",
+        recipe_type: "material",
+        materials: [
+            {material_id: "净化獠牙", count: 4},
+            {material_id: "常青藤", count: 2},
+            {material_id: "铁锭", count: 1},
+        ],
+        result: {result_id: "犬牙项链", count: 1},
+        success_chance: [0.4, 1],
+        recipe_level: [1, 12],
+        recipe_skill: "Crafting",
+    });
+
+    // ---- 5级（晶化铁）武器部件 ----
+    forging_recipes.components["剑刃"].materials.push(
+        {material_id: "晶化铁锭", count: 3, result_id: "晶铁剑刃"}
+    );
+    forging_recipes.components["短柄"].materials.push(
+        {material_id: "晶化铁锭", count: 2, result_id: "晶铁剑柄"},
+        // ★ 匕首柄用晶化硬藤（同一配方内不能出现重复 material_id，否则选择器只会认第一条）
+        {material_id: "晶化硬沼泽滕蔓", count: 2, result_id: "晶铁匕柄"}
+    );
+    forging_recipes.components["匕首刃"].materials.push(
+        {material_id: "晶化铁锭", count: 3, result_id: "晶铁匕锋"}
+    );
+    forging_recipes.components["弓身"].materials.push(
+        {material_id: "晶化硬沼泽滕蔓", count: 3, result_id: "晶铁弓身"}
+    );
+    forging_recipes.components["弓弦"].materials.push(
+        {material_id: "晶化硬沼泽滕蔓", count: 2, result_id: "晶铁弓弦"}
+    );
+
+    // ---- 5级（晶化铁）护甲：外甲用晶化铁锭 ----
+    forging_recipes.components["头部外甲"].materials.push(
+        {material_id: "晶化铁锭", count: 3, result_id: "晶铁头盔"}
+    );
+    forging_recipes.components["胸部外甲"].materials.push(
+        {material_id: "晶化铁锭", count: 4, result_id: "晶铁胸甲"}
+    );
+    forging_recipes.components["腿部外甲"].materials.push(
+        {material_id: "晶化铁锭", count: 4, result_id: "晶铁腿甲"}
+    );
+    forging_recipes.components["脚部外甲"].materials.push(
+        {material_id: "晶化铁锭", count: 3, result_id: "晶铁战靴"}
+    );
+
+    // ---- 5级（晶化铁）护甲：内甲用晶化硬藤 ----
+    crafting_recipes.components["头部内甲"].materials.push(
+        {material_id: "晶化硬沼泽滕蔓", count: 2, result_id: "晶铁衬盔"}
+    );
+    crafting_recipes.components["胸部内甲"].materials.push(
+        {material_id: "晶化硬沼泽滕蔓", count: 3, result_id: "晶铁衬甲"}
+    );
+    crafting_recipes.components["腿部内甲"].materials.push(
+        {material_id: "晶化硬沼泽滕蔓", count: 3, result_id: "晶铁腿衬"}
+    );
+    crafting_recipes.components["脚部内甲"].materials.push(
+        {material_id: "晶化硬沼泽滕蔓", count: 2, result_id: "晶铁鞋垫"}
+    );
+})();
+
+// ========== v0.11 丹盟二级考核：凝元丹 ==========
+(function(){
+    alchemy_recipes.items["凝元丹"] = new ItemRecipe({
+        name: "凝元丹",
+        recipe_type: "material",
+        materials: [
+            {material_id: "凝元草", count: 2},
+            {material_id: "雪参", count: 1},
+            {material_id: "大力参", count: 1},
+        ],
+        result: {result_id: "凝元丹", count: 1},
+        success_chance: [0.5, 1],
+        recipe_level: [8, 14],
+        recipe_skill: "Alchemy",
+        is_unlocked: false, // 读完《凝元丹配方》才解锁
+    });
 })();
 
 const recipes = {

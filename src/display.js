@@ -295,6 +295,10 @@ function create_item_tooltip_content({item, options={}}) {
     if(item.description) {
         item_tooltip += `<br>${item.description}`; 
     }
+    // ★ v0.10 关键道具：不可出售
+    if(item.no_sell) {
+        item_tooltip += `<br><span style="color:#ff9a3c"><b>【不可出售】</b></span>`;
+    }
 
     let quality = item.quality;
     if(options?.quality && options.quality) {
@@ -1353,8 +1357,20 @@ function create_inventory_item_div({key, item_count, target, is_equipped, trade_
         }
     } 
     
-    item_additional.appendChild(create_trade_buttons());
-
+	// ===== 替换为以下代码 =====
+    // 如果是玩家背包内的物品，且标记为不可出售，则不显示交易按钮
+    let can_sell = true;
+    if(target === "character") {
+        let p = null;
+        try { p = JSON.parse(target_item.getInventoryKey()); } catch(e) {}
+        if(p?.id && item_templates[p.id]?.no_sell) {
+            can_sell = false;
+        }
+    }
+    
+    if(can_sell) {
+        item_additional.appendChild(create_trade_buttons());
+    }
 
     let item_value_span = document.createElement("span");
     item_value_span.innerHTML = `${format_money(round_item_price(target_item.getValue()*price_multiplier), true)}`;
@@ -4020,6 +4036,11 @@ let spec_stat = [[0, '魔攻', '#bbb0ff','这个敌人似乎掌握了魔法。<b
 [67, "血杀","#f55882","你曾为自己的使命流过多少血？<br>当<span style='color:#FFFF00'>角色生命多于敌人</span>时，敌人伤害<span style='color:#87CEFA'>增加一半</span>，反之<span style='color:#87CEFA'>减少一半</span>。"],
 [68, "散华·改", "#d08e53","奇妙的能力，感应血气并作用于攻击。<br>角色攻击的效力削弱（敌人生命/角色生命）的<span style='color:#87CEFA'>10%</span><br>。"],
 [69, "反击" , "#B30000", "战斗前，敌人将角色攻击的<span style='color:#87CEFA'>100%</span>加到自己的攻击上"],
+// ★ v0.08 邪教线新增
+[70, "禁疗", "#c94bb0", "邪法催生的咒印，专门用来对付靠恢复硬撑的人。<br>敌人命中角色后，角色的<span style='color:#87CEFA'>生命恢复在6秒内完全失效</span>（只影响恢复，不影响一次性回血）。"],
+[71, "嘲讽", "#ff9a3c", "魔犬会死死缠住你，根本不给你绕过去的机会。<br>只要场上还有带【嘲讽】的敌人存活，<span style='color:#87CEFA'>角色只能攻击它们</span>。"],
+[72, "守护", "#8fa7ff", "邪教执事用魔犬当盾牌。<br>每有<span style='color:#87CEFA'>一只存活的魔犬</span>，敌人受到的伤害<span style='color:#87CEFA'>降低20%</span>（最多80%）。"],
+[73, "箭雨", "#7fe0a0", "精灵小队的场外支援。<br>每隔<span style='color:#87CEFA'>10秒</span>，对所有敌人造成其<span style='color:#87CEFA'>最大生命10%</span>的伤害。"],
 
 ];
 //超过25倍倍率的攻击暂时视为必中！
@@ -4268,11 +4289,13 @@ function clear_bestiary_tooltip(enemy_name){
 
 function add_bestiary_lines(zone)
 {
+    // ★ v0.08 同一个区域标题只建一次，否则每个该区域的怪都会再插一个标题
+    if(bestiary_entry_divs[zone] != undefined) return;
     //zone 11-> 1-1，rank作为1200处理
     //sorts bestiary_list div by enemy rank
     bestiary_entry_divs[zone] = document.createElement("div");
-    let ZoneNameMap = {10:"训练场",11:"未知平原",12:"城外墓园",15:"地宫核心",21:"荒兽森林",22:"清野江畔",23:"纳家秘境",24:"结界湖",25:"声律城废墟",26:"声律城战场",27:"天外飞船",28:"飞船核心",31:"赫尔沼泽",32:"黑暗森林",33:"纯白冰原",34:"极寒冰宫",35:"时封水牢",36:"传承幻境",37:"幻境核心",41:"城门战",42:"密林战",43:"古墓战",44:"毬毬山谷",45:"鲜血峰",46:"破败之域",47:"破败危壁",48:"灭门战【WIP/需要剧情修正】",51: "邪恶沼泽",52: "矿山",53:"灰魇庭院",54:"珍珠海",55:"风雷大会",56:"行道盟审判战",61:"深林【WIP】",62:"血魔海",63:"炎眸【WIP】",64:"葬地【WIP】",65:"冗音圣树",66:"冗音之塔",67:"音界",68:"圣城【WIP】"};//显示名
-    let ZoneTpMap = {10:"训练场",11:"未知平原",12:"城外墓园",15:"地宫深层",21:"荒兽森林",22:"清野江畔",23:"纳家秘境 - 战斗区",24:"结界湖",25:"声律城废墟",26:"声律城战场",27:"天外飞船",28:"飞船核心",31:"赫尔沼泽",32:"黑暗森林",33:"纯白冰原",34:"极寒冰宫",35:"时封水牢",36:"传承幻境",37:"幻境核心·地宫",41:"狩猎大赛·城门战",42:"狩猎大赛·密林战",43:"狩猎大赛·古墓战",44:"毬毬山谷",45:"鲜血峰",46:"破败之域",47:"破败危壁",48:"灭门战【WIP/需要剧情修正】",51: "邪恶沼泽",52: "矿山",53:"灰魇庭院",54:"珍珠海",55:"风雷大会",56:"行道盟审判战",61:"深林【WIP】",62:"血魔海",63:"炎眸【WIP】",64:"葬地【WIP】",65:"冗音圣树",66:"冗音之塔",67:"音界",68:"圣城【WIP】"};//TP地点名
+    let ZoneNameMap = {10:"训练场",11:"未知平原",12:"城外墓园",21: "矿山",22: "邪恶沼泽",23:"演武楼"};//显示名
+    let ZoneTpMap = {10:"训练场",11:"未知平原",12:"城外墓园",21: "矿山",22: "邪恶沼泽",23:"演武楼"};//TP地点名
     const name_div = document.createElement("div");
     name_div.innerHTML = `<b><div  onclick="change_location('${ZoneTpMap[zone]}')">【${ZoneNameMap[zone]}】</div></b>`;
     name_div.classList.add("bestiary_entry_name");
@@ -4341,8 +4364,32 @@ function add_bestiary_zones(enemy_name)
     if(enemy_name == "翩然蝶仙") add_bestiary_lines(45);
 		
 	// 在 display.js 的 add_bestiary_zones 函数中添加
-	if(enemy_name == "吸血藤") add_bestiary_lines(51);
-	if(enemy_name == "石精") add_bestiary_lines(52);
+	if(enemy_name == "吸血藤") add_bestiary_lines(22);
+	if(enemy_name == "石精") add_bestiary_lines(21);
+
+	// ★ v0.08 新增分组：邪教线（邪恶沼泽 22）与新生校内赛（演武楼 23）
+	if(enemy_name == "嗜血魔犬") add_bestiary_lines(22);
+	if(enemy_name == "邪教执事[BOSS]") add_bestiary_lines(22);
+	if(enemy_name == "铁拳·石猛") add_bestiary_lines(23);
+	if(enemy_name == "快剑·沈青云") add_bestiary_lines(23);
+	if(enemy_name == "灵巧·白小婉") add_bestiary_lines(23);
+	if(enemy_name == "秘法·陆行舟") add_bestiary_lines(23);
+	if(enemy_name == "天才·顾寒山") add_bestiary_lines(23);
+	if(enemy_name == "周远航[压制]") add_bestiary_lines(23);
+
+	// ★ v0.08 补齐早期区域分组（原本都没登记，全部堆到别人的标题下面）
+	// 训练场
+	if(enemy_name == "训练假人") add_bestiary_lines(10);
+	if(enemy_name == "训练假人EX") add_bestiary_lines(10);
+	// 城外墓园
+	if(enemy_name == "骸骨") add_bestiary_lines(12);
+	if(enemy_name == "聚灵骸骨") add_bestiary_lines(12);
+	if(enemy_name == "聚魂骸骨") add_bestiary_lines(12);
+	if(enemy_name == "凝甲骸骨") add_bestiary_lines(12);
+	if(enemy_name == "缠绕骸骨") add_bestiary_lines(12);
+	if(enemy_name == "生灵骸骨") add_bestiary_lines(12);
+	if(enemy_name == "死灵法师[BOSS]") add_bestiary_lines(12);
+	if(enemy_name == "缠绕骸骨[BOSS]") add_bestiary_lines(12);
 }
 
 function reload_bestiary(){

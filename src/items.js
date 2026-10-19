@@ -385,6 +385,9 @@ class ArmorComponent extends ItemComponent {
 
         this.stats = item_data.stats || {};
 
+        // ★ v0.09 套装名需要显式存下来，Armor.getSetName() 会读 external.set_name
+        this.set_name = item_data.set_name;
+
         this.equip_slot = item_data.equip_slot;
 
         //only used with external elements
@@ -874,9 +877,19 @@ class Weapon extends Equippable {
         }
 
 		        // ★ 新增：聚合词条（按 name 去重，head 优先）
+        // ★ v0.10 洗练：character.trait_roll[部件id] = 词条名，优先于模板自带词条
         this.traits = [];
-        const headTraits   = item_templates[this.components.head]?.traits   || [];
-        const handleTraits = item_templates[this.components.handle]?.traits || [];
+        const rollTable = (typeof character !== "undefined" && character.trait_roll) ? character.trait_roll : {};
+        const traitsOfComponent = (component_id) => {
+            const rolled = rollTable[component_id];
+            if(rolled) {
+                const t = getTraitByName(rolled);
+                if(t) return [t];
+            }
+            return item_templates[component_id]?.traits || [];
+        };
+        const headTraits   = traitsOfComponent(this.components.head);
+        const handleTraits = traitsOfComponent(this.components.handle);
         const seen = new Set();
         for(const t of [...headTraits, ...handleTraits]) {
             if(!t || !t.name || seen.has(t.name)) continue;
@@ -3318,6 +3331,59 @@ const TRAIT_ArmorPenetration = {
     suffix: "破",
     description: "攻击时忽略敌方20%护甲",
 };
+
+// ===== v0.10 新增词条 =====
+const TRAIT_OVERKILL = {
+    name: "overkill",
+    displayName: "超杀",
+    suffix: "溢",
+    description: "普通攻击（【狩猎】不算）击杀敌人时，把溢出伤害的 60% 溅射给随机一个存活敌人。",
+};
+const TRAIT_TIMESEAL = {
+    name: "timeseal",
+    displayName: "时封",
+    suffix: "封",
+    description: "战斗中每 10 秒叠加一层【时封】：造成的伤害翻倍，但生命上限减少 8%（最多 4 层）。",
+};
+const TRAIT_UMBRELLA = {
+    name: "umbrella",
+    displayName: "千机伞",
+    suffix: "伞",
+    description: "同时视为弓、匕首、剑，可以吃满三系被动；但造成的所有伤害降低 30%。",
+};
+const TRAIT_STUN = {
+    name: "stun",
+    displayName: "眩晕",
+    suffix: "晕",
+    description: "命中敌人时有 10% 概率把对方的行动条打回原点。",
+};
+const TRAIT_WEAPONBLOCK = {
+    name: "weaponblock",
+    displayName: "武器格挡",
+    suffix: "挡",
+    description: "受到魔攻以外的伤害时，有 20% 概率触发格挡：结算时防御额外加上自身攻击力。",
+};
+const TRAIT_BULLY = {
+    name: "bully",
+    displayName: "凌弱",
+    suffix: "凌",
+    description: "对攻防敏总和低于自身的敌人，造成的伤害提高 25%。",
+};
+const TRAIT_FLASH = {
+    name: "flash",
+    displayName: "一闪",
+    suffix: "闪",
+    description: "平时不出手只蓄势；蓄满 3 次后打出一次必定暴击的群体伤害。",
+};
+
+/** 洗练池：所有可被洗练出来的词条 */
+const TRAITS_POOL = [
+    TRAIT_BLEED, TRAIT_HUNT, TRAIT_PORTAL, TRAIT_REWIND, TRAIT_LIFESTEAL, TRAIT_ArmorPenetration,
+    TRAIT_OVERKILL, TRAIT_TIMESEAL, TRAIT_UMBRELLA, TRAIT_STUN, TRAIT_WEAPONBLOCK, TRAIT_BULLY, TRAIT_FLASH,
+];
+function getTraitByName(name) {
+    return TRAITS_POOL.find(t => t.name === name) || null;
+}
 
 (function(){
 	item_templates["木弓身"] = new WeaponComponent({
@@ -7286,6 +7352,7 @@ item_templates["常青藤帽子"] = new Armor({
         E_value: 3000000,
         effects:[],
         C_value: 0,
+		realmcap:19,
         //image: "image/item/A1_break_trance.png",
     });	
     item_templates["中等进化结晶"] = new  UsableItem({
@@ -7993,9 +8060,405 @@ book_stats["炼体秘典"] = new BookData({
     },
 });
 
+// ==========================================================
+// v0.08 新增物品：新生校内赛 / 商铺 / 精灵线
+// ==========================================================
+(function(){
+    // --- 校内赛冠军奖励（道具格装备） ---
+    item_templates["新生赛·金徽章"] = new Props({
+        name: "新生赛·金徽章",
+        id: "新生赛·金徽章",
+        description: "新生校内赛冠军的证明。金质徽章的背面刻着你的名字，以及一句话：何以长存，唯血与火。",
+        value: 5e6,
+        stats: {
+            attack_power: { flat: 3000 },
+            defense:      { flat: 3000 },
+            agility:      { flat: 2000 },
+            max_health:   { flat: 300000 },
+        }
+    });
+
+    // --- 精灵线任务道具 ---
+    item_templates["带血的布片"] = new Material({
+        id: "带血的布片",
+        name: "带血的布片",
+        description: "从沼泽淤泥里翻出来的一角布料。血已经干成了黑褐色，边缘还残留着焦黑的灼痕——像是被人用术法逼供过。",
+        value: 500,
+        image: "image/item/soild_blood.png",
+    });
+    item_templates["精灵赠予的残图"] = new Material({
+        id: "精灵赠予的残图",
+        name: "精灵赠予的残图",
+        description: "精灵小队在沼泽深处意外获得的一块残破地图。材质奇异，水火不侵，边缘的断口像是被硬生生撕开的。似乎只是整张图的四分之一。",
+        value: 2e5,
+        image: "image/item/evolve_script.png",
+    });
+    item_templates["韩墨白的残图"] = new Material({
+        id: "韩墨白的残图",
+        name: "韩墨白的残图",
+        description: "校长韩墨白年轻时游历时得到的东西，与精灵那块残图的断口正好对得上。两块拼在一起，已经能看出秘境入口的山势走向。",
+        value: 8e5,
+        image: "image/item/evolve_script.png",
+    });
+    item_templates["精灵信物"] = new Material({
+        id: "精灵信物",
+        name: "精灵信物",
+        description: "一片永不枯黄的世界树叶，叶脉里淌着极淡的绿光。拿着它，精灵一族会把你当作朋友。",
+        value: 5e5,
+        image: "image/item/inherit_green.png",
+    });
+    item_templates["魔犬獠牙"] = new Material({
+        id: "魔犬獠牙",
+        name: "魔犬獠牙",
+        description: "邪教用邪法催生出来的魔犬牙齿。牙根是空的，里面塞着细细的黑色纹路——那东西怕是在吃它的血。",
+        value: 2e4,
+        image: "image/item/beast_essence.png",
+    });
+    item_templates["邪教密信"] = new Material({
+        id: "邪教密信",
+        name: "邪教密信",
+        description: "从邪教执事身上搜出来的半页信笺，字迹被雨水泡烂了大半，只能认出「残图」「秘境」「追」几个词。",
+        value: 3e4,
+        image: "image/item/darkness_soul.png",
+    });
+
+    // --- 精灵特产：世界树生命果（永久生命上限，限量） ---
+    item_templates["世界树生命果"] = new UsableItem({
+        id: "世界树生命果",
+        name: "世界树生命果",
+        description: "精灵族世界树结出的果实，入口清甜(与普通的【生命果】不是同一种东西)。服用后永久增加生命上限（上限20颗）。",
+        value: 2e6,
+        effects: [],
+        spec: "fruit_life",
+        image: "image/item/ice_fruit.png",
+    });
+})();
+
+// ==========================================================
+// v0.09 晶化铁套（5级） + 犬牙项链
+// ==========================================================
+(function(){
+    // ---------------- 材料 ----------------
+    item_templates["晶化硬沼泽滕蔓"] = new Material({
+        id: "晶化硬沼泽滕蔓",
+        name: "晶化硬沼泽滕蔓",
+        description: "把晶化粉末一遍遍揉进硬化沼泽滕蔓，藤蔓硬得能当弓臂使，纤维缝里还泛着细碎的晶光。",
+        value: 420000,
+        image: "image/item/reedy_transparent.png",
+    });
+    item_templates["净化獠牙"] = new Material({
+        id: "净化獠牙",
+        name: "净化獠牙",
+        description: "用灵液反复浸泡、又拿晶石碎片磨过三遍的魔犬獠牙。牙根里那层黑色纹路总算褪干净了，摸上去只剩骨头本来的温度。",
+        value: 180000,
+        image: "image/item/beast_essence.png",
+    });
+
+    // ---------------- 犬牙项链（加攻减防） ----------------
+    item_templates["犬牙项链"] = new Props({
+        name: "犬牙项链",
+        id: "犬牙项链",
+        description: "四枚净化过的魔犬獠牙串成一条粗项链。戴上之后，那股还没散尽的凶性会顺着手臂往上涌——出手更狠了，护体灵气也散得更快。",
+        value: 2.4e7,
+        image: "image/item/beast_armor.png",
+        stats: {
+            attack_power: { flat: 7000 },
+            defense:      { flat: -5000 },
+            crit_rate:    { flat: 0.03 },
+        }
+    });
+
+    // ---------------- 5级：晶化铁武器部件 ----------------
+    // 剑：中攻 / 中攻速 / 中暴击
+    item_templates["晶铁剑刃"] = new WeaponComponent({
+        name: "晶铁剑刃",
+        description: "晶化铁锭反复折叠锻打的剑刃。晶粒细密，出鞘时刃口会浮起一层薄薄的晶雾。",
+        component_type: "long blade",
+        value: 6.0e6,
+        component_tier: 5,
+        name_prefix: "晶铁",
+        attack_value: 2000,
+        stats: {
+            crit_rate:    { flat: 0.04 },
+            attack_speed: { multiplier: 1.06 },
+        },
+        traits: [TRAIT_ArmorPenetration]   // 破甲
+    });
+    item_templates["晶铁剑柄"] = new WeaponComponent({
+        name: "晶铁剑柄",
+        description: "晶化铁锭车出的剑柄，配重压手，挥起来不容易飘。",
+        component_type: "short handle",
+        value: 3.2e6,
+        component_tier: 5,
+        attack_value: 120,
+        stats: {
+            crit_multiplier: { flat: 0.08 },
+            attack_speed:    { multiplier: 1.04 },
+        },
+    });
+
+    // 匕首：高敏 / 高暴击 / 中爆伤，攻击比剑略低、攻速比剑略高
+    item_templates["晶铁匕锋"] = new WeaponComponent({
+        name: "晶铁匕锋",
+        description: "晶化铁锭冷锻出的短匕刃，刃身薄得能透光，刃尖却硬得能撬开甲片。",
+        component_type: "short blade",
+        value: 5.4e6,
+        component_tier: 5,
+        name_prefix: "晶铁",
+        attack_value: 1800,
+        stats: {
+            agility:         { flat: 90 },
+            crit_rate:       { flat: 0.06 },
+            crit_multiplier: { flat: 0.22 },
+            attack_speed:    { multiplier: 1.12 },
+        },
+        traits: [TRAIT_BLEED]              // 流血
+    });
+    item_templates["晶铁匕柄"] = new WeaponComponent({
+        name: "晶铁匕柄",
+        description: "缠了常青藤的短柄，握起来不打滑。",
+        component_type: "short handle",
+        value: 2.6e6,
+        component_tier: 5,
+        stats: {
+            agility:         { flat: 40 },
+            attack_speed:    { multiplier: 1.05 },
+            crit_multiplier: { flat: 0.08 },
+        },
+    });
+
+    // 弓：面板攻击最高、高敏高攻速、低暴击
+    item_templates["晶铁弓身"] = new WeaponComponent({
+        name: "晶铁弓身",
+        description: "晶化铁锭做骨、晶化硬藤做衬的弓身。拉开时弓臂几乎不出声，只有极轻的一声晶鸣。",
+        component_type: "bent body",
+        value: 6.4e6,
+        component_tier: 5,
+        name_prefix: "晶铁",
+        attack_value: 2400,
+        stats: {
+            agility:      { flat: 80 },
+            attack_speed: { multiplier: 1.10 },
+            crit_rate:    { flat: 0.01 },
+        },
+        traits: [TRAIT_HUNT]               // 狩猎
+    });
+    item_templates["晶铁弓弦"] = new WeaponComponent({
+        name: "晶铁弓弦",
+        description: "晶化硬沼泽滕蔓搓成的弓弦，绷紧后纹丝不动。",
+        component_type: "bowstring",
+        value: 3.0e6,
+        component_tier: 5,
+        attack_value: 100,
+        stats: {
+            agility:      { flat: 60 },
+            attack_speed: { multiplier: 1.06 },
+        },
+    });
+
+    // ---------------- 5级：晶化铁护甲（外甲：锻造，偏防御） ----------------
+    item_templates["晶铁头盔"] = new ArmorComponent({
+        name: "晶铁头盔",
+        description: "晶化铁锭压成的头盔，内衬留了透气缝，视野不错。",
+        component_type: "helmet exterior",
+        value: 4.2e6,
+        component_tier: 5,
+        full_armor_name: "晶铁头盔",
+        set_name: "晶铁",
+        defense_value: 1200,
+        stats: {
+            attack_power: { flat: 150 },
+            defense:      { flat: 150 },
+            agility:      { flat: 120 },
+        }
+    });
+    item_templates["晶铁胸甲"] = new ArmorComponent({
+        name: "晶铁胸甲",
+        description: "晶化铁锭锻成的胸甲，护心处加厚了一层。",
+        component_type: "chestplate exterior",
+        value: 5.6e6,
+        component_tier: 5,
+        full_armor_name: "晶铁胸甲",
+        set_name: "晶铁",
+        defense_value: 1700,
+        stats: {
+            attack_power: { flat: 180 },
+            defense:      { flat: 260 },
+            agility:      { flat: 140 },
+        }
+    });
+    item_templates["晶铁腿甲"] = new ArmorComponent({
+        name: "晶铁腿甲",
+        description: "晶化铁锭打成的腿甲，膝弯处做成层叠的甲片，蹲身时不卡。",
+        component_type: "leg armor exterior",
+        value: 4.8e6,
+        component_tier: 5,
+        full_armor_name: "晶铁腿甲",
+        set_name: "晶铁",
+        defense_value: 1450,
+        stats: {
+            attack_power: { flat: 150 },
+            defense:      { flat: 220 },
+            agility:      { flat: 160 },
+        }
+    });
+    item_templates["晶铁战靴"] = new ArmorComponent({
+        name: "晶铁战靴",
+        description: "晶化铁锭做的战靴，鞋底压了一层薄藤，落地轻。",
+        component_type: "shoes exterior",
+        value: 3.6e6,
+        component_tier: 5,
+        full_armor_name: "晶铁战靴",
+        set_name: "晶铁",
+        defense_value: 1000,
+        stats: {
+            agility:      { flat: 220 },
+            attack_speed: { multiplier: 1.02 },
+        }
+    });
+
+    // ---------------- 5级：晶化铁护甲（内甲：合成，偏全属性） ----------------
+    item_templates["晶铁衬盔"] = new Armor({
+        name: "晶铁衬盔",
+        description: "晶化硬藤编的帽衬，贴着额头凉丝丝的，能压住心里的躁。",
+        value: 2.2e6,
+        component_type: "helmet interior",
+        base_defense: 500,
+        component_tier: 5,
+        stats: {
+            attack_power: { flat: 90 },
+            defense:      { flat: 90 },
+            agility:      { flat: 90 },
+        },
+    });
+    item_templates["晶铁衬甲"] = new Armor({
+        name: "晶铁衬甲",
+        description: "晶化硬藤编的背心，韧而不硬。",
+        value: 3.0e6,
+        component_type: "chestplate interior",
+        base_defense: 700,
+        component_tier: 5,
+        stats: {
+            attack_power: { flat: 90 },
+            defense:      { flat: 90 },
+            agility:      { flat: 90 },
+        },
+    });
+    item_templates["晶铁腿衬"] = new Armor({
+        name: "晶铁腿衬",
+        description: "晶化硬藤编的腿衬，包裹感很强。",
+        value: 2.6e6,
+        component_type: "leg armor interior",
+        base_defense: 600,
+        component_tier: 5,
+        stats: {
+            attack_power: { flat: 90 },
+            defense:      { flat: 90 },
+            agility:      { flat: 90 },
+        },
+    });
+    item_templates["晶铁鞋垫"] = new Armor({
+        name: "晶铁鞋垫",
+        description: "晶化硬藤压出来的鞋垫，踩上去像踩在春天的苔上。",
+        value: 2.0e6,
+        component_type: "shoes interior",
+        base_defense: 450,
+        component_tier: 5,
+        stats: {
+            attack_power: { flat: 90 },
+            defense:      { flat: 90 },
+            agility:      { flat: 90 },
+        },
+    });
+})();
+
+// ==========================================================
+// v0.10 词缀洗练石
+// ==========================================================
+(function(){
+    item_templates["词缀洗练石"] = new UsableItem({
+        id: "词缀洗练石",
+        name: "词缀洗练石",
+        description: "学院图书馆特制的洗练石。对装备中的武器使用，随机挑一个部件（刃/柄），把那上面的词条重新洗成别的。",
+        value: 8e5,
+        effects: [],
+        spec: "reroll_trait",
+        image: "image/item/rune_workingtable.png",
+    });
+})();
+
+// ==========================================================
+// v0.11 丹盟二级考核：凝元丹 / 新药材 / 二层商铺货
+// ==========================================================
+(function(){
+    // ---- 新药材与种子（二层商铺有售，可用于升级灵田） ----
+    item_templates["凝元草种子"] = new Material({
+        id: "凝元草种子", name: "凝元草种子",
+        description: "丹盟二层培育的灵草种子，叶片会在夜里泛起淡淡的蓝光。可种在灵田里。",
+        value: 800, image: "image/item/forest_leaf.png",
+    });
+    item_templates["凝元草"] = new Material({
+        id: "凝元草", name: "凝元草",
+        description: "炼丹常用的辅药，能把药性一点点收拢起来，是凝元丹的主料。",
+        value: 2600, image: "image/item/blue_reed.png",
+    });
+    item_templates["雪参种子"] = new Material({
+        id: "雪参种子", name: "雪参种子",
+        description: "要埋在阴凉处才会发芽的参种。可种在灵田里。",
+        value: 1500, image: "image/item/floating_fern.png",
+    });
+    item_templates["雪参"] = new Material({
+        id: "雪参", name: "雪参",
+        description: "根须里带着一丝凉意的参，能压住丹药的火气。",
+        value: 5200, image: "image/item/ice_fruit.png",
+    });
+
+    // ---- 二级考核丹方与成品 ----
+    item_templates["凝元丹配方"] = new Book({
+        name: "凝元丹配方",
+        description: "丹盟二级考核用的丹方。记载着凝元丹的配伍与火候，读完就能自己炼了。",
+        value: 12000,
+        image: "image/item/evolve_script.png",
+    });
+    item_templates["凝元丹"] = new UsableItem({
+        id: "凝元丹", name: "凝元丹",
+        description: "二品丹药。服下后 60 秒内每秒回复 5% 生命上限，并少量提升攻防。",
+        value: 16000,
+        effects: [{ effect: "凝元", duration: 60 }],
+        image: "image/item/B4_medicine.png",
+    });
+    item_templates["二级炼丹师徽章"] = new Material({
+        id: "二级炼丹师徽章", name: "二级炼丹师徽章",
+        description: "二级炼丹师的凭证，丹盟二层的通行证，可不要丢了。",
+        value: 0, image: "image/item/gem_ingot.png",
+    });
+    item_templates["炼丹大会邀请函"] = new Material({
+        id: "炼丹大会邀请函", name: "炼丹大会邀请函",
+        description: "丹盟寄来的请柬，火漆印上是一株燃着火焰的草。大会还没开始，先把请柬收着吧。",
+        value: 0, image: "image/item/evolve_script.png",
+    });
+})();
+
+book_stats["凝元丹配方"] = new BookData({
+    required_time: 45,
+    literacy_xp_rate: 2,
+    unlocks: {
+        recipes: ["凝元丹"],
+    },
+});
+
 Object.keys(item_templates).forEach(id => {
     item_templates[id].id = id;
-})
+});
+
+// ★ v0.10 关键道具：不可出售（卖店、卖交易都不行；避免流程被卡死）
+// 注意：魔力抵消器必须有价格（值钱但不能卖），所以这里用标记而不是 0 价值。
+["战斗学院徽章", "贡献点", "一级炼丹师徽章", "二级炼丹师徽章",
+ "精灵信物", "精灵赠予的残图", "韩墨白的残图", "带血的布片", "邪教密信",
+ "魔力抵消器", "魔力抵消器·壹", "魔力抵消器·贰", "魔力抵消器·叁",
+ "凝元丹配方", "炼丹大会邀请函"].forEach(id => {
+    if (item_templates[id]) item_templates[id].no_sell = true;
+});
 
 export {
     item_templates, 
@@ -8004,5 +8467,6 @@ export {
     WeaponComponent, ArmorComponent, ShieldComponent,
     getItem, setLootSoldCount, recoverItemPrices, round_item_price, getArmorSlot, getEquipmentValue,
     book_stats, loot_sold_count,
-    rarity_multipliers, getItemRarity , ScaledQualityMultiplier
+    rarity_multipliers, getItemRarity , ScaledQualityMultiplier,
+    TRAITS_POOL, getTraitByName
 };

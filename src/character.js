@@ -64,6 +64,30 @@ const ARMOR_SETS = {
             },
         },
     },	
+    // ★ v0.09 晶化铁套：偏全属性
+    "晶铁": {
+        name: "晶铁套装",
+        thresholds: {
+            2: {
+                stats: {
+                    attack_power: { flat: 500 },
+                    defense:      { flat: 500 },
+                    agility:      { flat: 500 },
+                    max_health:   { flat: 5000 },
+                },
+                description: "攻击/防御/敏捷 +500，生命上限 +5000",
+            },
+            4: {
+                stats: {
+                    attack_power: { flat: 1000 },
+                    defense:      { flat: 1000 },
+                    agility:      { flat: 1000 },
+                    max_health:   { flat: 10000 },
+                },
+                description: "攻击/防御/敏捷 +1000，生命上限 +10000",
+            },
+        },
+    },
     // 想加更多套装，照这个格式继续写就行
     // 例如给"铁制"系列在 items.js 里加 set_name: "铁制"，然后这里加一条：
     // "铁制": {
@@ -193,6 +217,9 @@ character.equipment = {
         sickle: null,
 };
 character.money = 0;
+
+// ★ v0.10 词缀洗练结果：部件id -> 词条name（Weapon 构造时优先读取）
+character.trait_roll = {};
 
 character.C_scaling = {
         "40G":0,
@@ -877,10 +904,34 @@ character.take_damage = function (enemy_spec = [0],{damage_value, can_faint = tr
         let damage_taken;
 
         if(enemy_spec.includes(0)){
-                damage_taken = Math.ceil(10*Math.max(damage_value,0))/10;//魔攻，无视防御
+                // ★ v0.08 魔力抵消器实装：受到魔攻时，用护甲抵消部分伤害，再按等级削减最终魔攻伤害
+                let magic_damage = Math.max(damage_value, 0);
+                const ma_off = character.equipment.special;
+                const MA_OFF_TABLE = {
+                        "魔力抵消器":   { armor: 0.25, final: 0.00 },
+                        "魔力抵消器·壹": { armor: 0.25, final: 0.05 },
+                        "魔力抵消器·贰": { armor: 0.30, final: 0.08 },
+                        "魔力抵消器·叁": { armor: 0.35, final: 0.11 },
+                };
+                if(ma_off && ma_off.name && MA_OFF_TABLE[ma_off.name]){
+                        const cfg = MA_OFF_TABLE[ma_off.name];
+                        // 抵消量 = 护甲 × 转化率，但最多抵消掉这一击的90%
+                        const absorb = Math.min(character.stats.full.defense * cfg.armor, magic_damage * 0.9);
+                        magic_damage = Math.max(magic_damage - absorb, 0) * (1 - cfg.final);
+                        if(absorb > 0 && magic_damage >= character.stats.full.max_health * 0.02){
+                                log_message(`【${ma_off.name}】以护甲抵消了 ${format_number(absorb)} 点魔攻伤害，并削弱了 ${Math.round(cfg.final * 100)}% 的剩余伤害。`, "hero_regened");
+                        }
+                }
+                damage_taken = Math.ceil(10*magic_damage)/10;//魔攻，无视普通防御，但会被魔力抵消器削减
         }
         else{
-                damage_taken = Math.ceil(10*Math.max(damage_value - character.stats.full.defense * def_mul,0))/10;
+                // ★ v0.10 词条【武器格挡】：受到非魔攻伤害时，有 20% 概率格挡，结算时防御额外加上攻击力
+                let effective_defense = character.stats.full.defense * def_mul;
+                if(character.equipment.weapon?.hasTrait?.("weaponblock") && Math.random() < 0.2) {
+                        effective_defense += character.stats.full.attack_power;
+                        log_message(`【武器格挡】架住了这一击！（防御结算额外 +${format_number(character.stats.full.attack_power)}）`, "hero_regened");
+                }
+                damage_taken = Math.ceil(10*Math.max(damage_value - effective_defense,0))/10;
                 
         }
 

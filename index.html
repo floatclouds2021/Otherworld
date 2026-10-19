@@ -7,19 +7,23 @@
 		<style>
 			#farm_div {
 				display: none;
-				padding: 12px;
+				height: 411px;
+				width: 100%;
+				padding: 2px 8px; /* 从 4px 10px 减小 */
 				box-sizing: border-box;
 				text-align: center;
+				overflow-y: auto;
 			}
 			#farm_grid {
 				display: grid;
-				gap: 4px;
-				margin: 10px auto;
+				gap: 3px; /* 从 4px 减小 */
+				margin: 2px auto; /* 从 4px auto 减小 */
 				justify-content: center;
 			}
 			.farm_plot {
-				width: 52px;
-				height: 52px;
+				/* ★ 尺寸由 main.js 按田地规模写入 --farm_cell（6x6 会缩到 42px 才放得下） */
+				width: var(--farm_cell, 52px);
+				height: var(--farm_cell, 52px);
 				border: 2px solid #666;
 				background-color: #2a1a10;
 				display: flex;
@@ -37,7 +41,7 @@
 				font-size: 10px;
 				color: #eee;
 				text-align: center;
-				line-height: 1.15;
+				line-height: 1.1;
 				word-break: break-all;
 				pointer-events: none;
 				z-index: 1;
@@ -51,8 +55,26 @@
 				width: 0%;
 				z-index: 0;
 			}
-			#farm_controls_div { margin-top: 10px; }
+			#farm_controls_div { margin-top: 4px; }
 			#farm_controls_div select { margin-right: 6px; }
+
+			/* ===== v0.08 石记杂货（商铺）===== */
+			#shop_div {
+				display: none;
+				max-height: 411px;
+				width: 100%;
+				padding: 8px 12px;
+				box-sizing: border-box;
+				text-align: center;
+				overflow-y: auto;
+			}
+			#shop_div .shop_stat_line {
+				margin: 4px 0;
+				color: #ffe0a0;
+			}
+			#shop_controls_div { margin-top: 10px; }
+			#shop_controls_div select { margin-right: 6px; max-width: 320px; }
+			#shop_upgrade_info_div { margin-top: 8px; color: #cfc; }
 			</style>
         <script>
 		window.addEventListener('error', (e) => {
@@ -802,6 +824,30 @@
 								<span class="money_button" onclick = "leave_farm()">[离开]</span>
 							</div>
 							<div id = "farm_upgrade_info_div" style="margin-top:8px;"></div>
+						</div>
+						<!-- v0.08 石记杂货（商铺） -->
+						<div id = "shop_div">
+							<div id = "shop_info_div">
+								<b>= 石记杂货 = </b>石猛在替你打理这家铺子。<br>
+								<span style="color:lime">店铺会在后台自动累积收入（最多累计12小时），随时回来取就行。</span><br>
+							</div>
+							<div id = "shop_stat_div">
+								<div class="shop_stat_line">店铺等级：<span id="shop_level">1</span>　|　客流量：<span id="shop_traffic">10 / 15</span>　|　美观度：<span id="shop_beauty">5 / 12</span></div>
+								<div class="shop_stat_line">当前收入：<span id="shop_rate">0/秒</span>　|　塞货加成：<span id="shop_boost">无</span></div>
+								<div class="shop_stat_line">待领取：<span id="shop_pending">0</span></div>
+							</div>
+							<div id = "shop_controls_div">
+								<span class="money_button" onclick = "shop_advertise()">[花钱宣传]</span>
+								<span class="money_button" onclick = "shop_decorate()">[装修铺面]</span>
+								<span class="money_button" onclick = "shop_upgrade()">[升级店铺]</span>
+								<span class="money_button" onclick = "shop_collect()">[领取收益]</span>
+								<span class="money_button" onclick = "leave_shop()">[离开]</span>
+							</div>
+							<div id = "shop_deposit_div" style="margin-top:8px;">
+								塞点货上架: <select id="shop_deposit_select"></select>
+								<span class="money_button" onclick = "shop_deposit()">[塞货]</span>
+							</div>
+							<div id = "shop_upgrade_info_div"></div>
 						</div>
                     </div>
                     <div id = "location_actions_div">	
@@ -1813,7 +1859,7 @@
 
             function prepareGame() { //called on body loaded
                 //版本号
-                document.getElementById("changelog_button").children[0].innerHTML = "V0.08";
+                document.getElementById("changelog_button").children[0].innerHTML = "V0.09";
 
                 let tooltip_move_ticks = 60;
                 let tooltip_wait = 0;
