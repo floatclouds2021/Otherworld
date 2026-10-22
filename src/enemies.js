@@ -10201,6 +10201,19 @@ C4 225851433717/365435296162/591286729879
 			{item_name: "邪教密信", chance: 1},
 		],
 	});
+	// ★ v0.12 炼丹大会决赛：混进散修里的邪教执事
+	// spec 0 = 魔攻；spec 75 = 重伤（命中后削弱玩家生命恢复，可叠加）
+	enemy_templates["邪教执事[大会]"] = new Enemy({
+		name: "邪教执事[大会]",
+		description: "穿着散修衣裳的老者，袖口下露出一点血纹。他原本是来拿药的，现在不打算再演下去了。",
+		xp_value: 220000, rank: 2302,
+		realm: "<span class=realm_basic><b>纳气境七层</b></span>",
+		size: "small", tags: ["living", "human"], spec: [0, 75],
+		stats: {health: 18000000, attack: 520000, agility: 85000, attack_speed: 1.35, defense: 9000},
+		loot_list: [
+			{item_name: "邪教令牌", chance: 1},
+		],
+	});
 	
 /*
 

@@ -555,4 +555,32 @@ effect_templates["凝元"] = new ActiveEffect({
         }
     }
 });
+
+// ===== v0.12 炼丹大会 =====
+// 清心丹：稳定回血 + 少量防御
+effect_templates["清心"] = new ActiveEffect({
+    name: "清心",
+    effects: {
+        stats: {
+            health_regeneration_flat: { flat: 8000 },
+            defense: { flat: 1200 },
+        }
+    }
+});
+// 九转回元丹：百分比回血 + 攻防
+effect_templates["九转"] = new ActiveEffect({
+    name: "九转",
+    effects: {
+        stats: {
+            health_regeneration_percent: { flat: 8 },
+            attack_power: { flat: 4000 },
+            defense: { flat: 4000 },
+        }
+    }
+});
+// 重伤：叠加式削弱生命恢复（层数记在实例的 stacks 上，由 main.js 结算）
+effect_templates["重伤"] = new ActiveEffect({
+    name: "重伤",
+    effects: { stats: {} }
+});
 export {effect_templates, ActiveEffect};

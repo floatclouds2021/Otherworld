@@ -781,6 +781,8 @@ console.log(`[change_location] 尝试进入 "${location_name}", is_finished=${lo
         log_message(`错误: 目标地点 "${location_name}" 不存在。`, "message_critical");
         return;
     }
+    // ★ v0.12.1 老存档修复：进任何地点时顺手检查一次大会选项
+    if(location_name === "炼丹大会会场") repair_meet_dialogue();
     
 	if(location_name !== current_location?.name && location.is_finished && !location.is_arena) {
 		return;
@@ -1395,6 +1397,8 @@ function enough_time_for_earnings(selected_job) {
  */
 function start_dialogue(dialogue_key) {
     current_dialogue = dialogue_key;
+    // ★ v0.12.1 打开大会对话前先修一次：把"条件已经满足但被旧版本锁掉"的选项放回来
+    if(dialogue_key === "炼丹大会事务") repair_meet_dialogue();
 
     update_displayed_dialogue(dialogue_key);
 }
@@ -1655,6 +1659,108 @@ function textline_special(t_key){
 					displayed_text += `信封上压着丹盟的火漆印，是一株燃着火的草。<br>是炼丹大会的请柬。<br>`;
 					displayed_text += `<span style="color:#888">（大会的正式内容还在筹备中，先把请柬收着吧。）</span><br>`;
 				}
+			}
+		}
+		// ===== v0.12 炼丹大会 =====
+		else if(t_key == "meet_plan_approve"){
+			const f_lv = skills["Formation"].current_level;
+			const t_lv = skills["Talismans"].current_level;
+			if(f_lv < 5 || t_lv < 5){
+				displayed_text += `林大师扫了一眼你的手法：布阵 ${f_lv}/5、画符 ${t_lv}/5。<br>`;
+				displayed_text += `「这点火候还上不了台面。先去学院练练，够了再来找我。」<br>`;
+			} else {
+				const venue = locations["炼丹大会会场"];
+				if(!venue.is_unlocked) {
+					venue.is_unlocked = true;
+					log_message("解锁地点 炼丹大会会场", "location_unlocked");
+				}
+				const acts = venue.activities || {};
+				if(acts["meet_formation_help"]) acts["meet_formation_help"].is_unlocked = true;
+				if(acts["meet_talisman_help"]) acts["meet_talisman_help"].is_unlocked = true;
+				inf_combat.MEET_PREP = inf_combat.MEET_PREP || { formation: 0, talisman: 0, _t: {} };
+				displayed_text += `林大师把一张会场图纸推给你：「阵法两处、符箓两道，弄好了再来找我。」<br>`;
+				displayed_text += `（去【炼丹大会会场】，用行动里的「协助布置阵法」「协助绘制符箓」推进进度，各两轮即可）<br>`;
+			}
+		}
+		else if(t_key == "meet_round1_start"){
+			if(global_flags.alchemy_meet_started){
+				displayed_text += `初赛的钟已经响过了，台上还在炼丹呢。<br>`;
+			} else {
+				const P = inf_combat.MEET_PREP || { formation: 0, talisman: 0 };
+				if((P.formation || 0) < 2 || (P.talisman || 0) < 2){
+					displayed_text += `大会还没开始——布置还没做完：<br>`;
+					displayed_text += `阵法：<b>${P.formation || 0}/2</b>　符箓：<b>${P.talisman || 0}/2</b><br>`;
+					displayed_text += `<span style="color:#888">（在会场用「协助布置阵法」「协助绘制符箓」推进进度）</span><br>`;
+				} else {
+					global_flags.alchemy_meet_started = true;
+					if(dialogues["炼丹大会事务"]?.textlines?.["大会开始"]) {
+						dialogues["炼丹大会事务"].textlines["大会开始"].is_finished = true;
+					}
+					add_to_character_inventory([
+						{ item: getItem(item_templates["清心丹配方"]), count: 1 },
+						{ item: getItem(item_templates["凝元草"]), count: 10 },
+						{ item: getItem(item_templates["雪参"]), count: 10 },
+						{ item: getItem(item_templates["灵液"]), count: 20 },
+					]);
+					displayed_text += `钟响三声，大会开始。<br>看台坐得满满当当，中央三十座炼丹台同时点起了火。<br>`;
+					displayed_text += `初赛的题目是【清心丹】——丹方和药材都摆在你案上了。<br>`;
+					displayed_text += `炼出一枚成色合格的清心丹，再来提交。<br>`;
+					unlock_textline("炼丹大会事务", "初赛提交");
+				}
+			}
+		}
+		else if(t_key == "meet_round1_submit"){
+			const pill = "{\"id\":\"清心丹\"}";
+			const cnt = character.inventory[pill]?.count || 0;
+			if(global_flags.alchemy_round1_passed){
+				displayed_text += `你已经通过初赛了，直接准备决赛的丹药吧。<br>`;
+			} else if(cnt < 1){
+				displayed_text += `监考的人摇了摇头：托盘是空的。<br>（先炼出【清心丹】再来提交）<br>`;
+			} else {
+				global_flags.alchemy_round1_passed = true;
+				if(dialogues["炼丹大会事务"]?.textlines?.["初赛提交"]) {
+					dialogues["炼丹大会事务"].textlines["初赛提交"].is_finished = true;
+				}
+				remove_from_character_inventory([{ item_key: pill, item_count: 1 }]);
+				displayed_text += `清心丹过炉，色泽清透，杂质极少。<br>评委们交换了一下眼神，点了点头：<b>初赛通过。</b><br>`;
+				displayed_text += `「决赛不一样。」有人把一张残破的纸推到你面前，「丹方是残缺的，只给十份材料。」<br>`;
+				displayed_text += `「炼得出几枚、成色如何，全看你自己。」<br>`;
+				add_to_character_inventory([
+					{ item: getItem(item_templates["残缺的决赛丹方"]), count: 1 },
+					{ item: getItem(item_templates["荒古莲"]), count: 10 },
+					{ item: getItem(item_templates["凝元草"]), count: 20 },
+					{ item: getItem(item_templates["雪参"]), count: 10 },
+					{ item: getItem(item_templates["灵液"]), count: 30 },
+				]);
+				unlock_textline("炼丹大会事务", "决赛提交");
+			}
+		}
+		else if(t_key == "meet_final_submit"){
+			const pill = "{\"id\":\"九转回元丹\"}";
+			const cnt = character.inventory[pill]?.count || 0;
+			if(global_flags.alchemy_final_done){
+				displayed_text += `决赛已经结束了——那位"第二名"还被捆在丹盟后院呢。<br>`;
+			} else if(cnt < 1){
+				displayed_text += `评委看了看空着的托盘：「一枚都没有？」<br>（决赛至少要炼成一枚【九转回元丹】再提交）<br>`;
+			} else {
+				global_flags.alchemy_final_done = true;
+				if(dialogues["炼丹大会事务"]?.textlines?.["决赛提交"]) {
+					dialogues["炼丹大会事务"].textlines["决赛提交"].is_finished = true;
+				}
+				// ★ 丹盟只给十份材料，评审也只收十枚（多炼的自己留着）
+				const submit_cnt = Math.min(cnt, 10);
+				remove_from_character_inventory([{ item_key: pill, item_count: submit_cnt }]);
+				displayed_text += `你把 ${submit_cnt} 枚九转回元丹放上托盘。`;
+				if(cnt > 10) displayed_text += `<span style="color:#888">（你炼出了 ${cnt} 枚，丹盟只收十份材料对应的量，多的自己收着）</span>`;
+				displayed_text += `<br>评委们一枚一枚看过去，最后把成色最好的那枚举了起来。<br>`;
+				displayed_text += `「残缺丹方能补到这种程度——本届冠军，就是这位了。」<br><br>`;
+				displayed_text += `台下忽然有人站起来。是刚才拿了第二的那位散修。<br>`;
+				displayed_text += `「不服。」他一边说一边往前走，袖口滑下去，露出一截扭曲的血纹。<br>`;
+				displayed_text += `「我拿不到的东西，谁也别想拿。」<br><br>`;
+				displayed_text += `会场四周的梁柱忽然亮起一片细密的纹路——阵法。<br>`;
+				displayed_text += `埋在柱子里的符箓一张接一张炸开，雷光顺着地面扑向他。<br>`;
+				unlock_location(locations["炼丹大会 - 决赛"], true);
+				log_message("【阵法】与【符箓】已经发动，压制了邪教的属性！", "enemy_enhanced");
 			}
 		}
         else if(t_key == "upgrade_ma_off"){
@@ -2674,6 +2780,97 @@ function set_new_combat({enemies} = {}) {
     start_arrow_rain_support();
     // ★ v0.10 词条：新一场战斗，重置蓄势/时封计时
     reset_trait_combat_state();
+    // ★ v0.12 炼丹大会决赛：阵法压制 + 符箓先手
+    if(current_location && current_location.name === "炼丹大会 - 决赛") {
+        apply_meet_battle_prep();
+    }
+}
+
+/**
+ * ★ v0.12 炼丹大会决赛的场地准备：
+ * 阵法压制敌人全属性 15%，预先埋下的符箓先手炸一次。
+ */
+function apply_meet_battle_prep(){
+    if(!current_enemies || current_enemies.length === 0) return;
+    for(const e of current_enemies) {
+        if(!e || !e.stats) continue;
+        e.stats.attack *= 0.85;
+        e.stats.defense *= 0.85;
+        e.stats.agility *= 0.85;
+    }
+    log_message("【阵法】会场阵纹亮起，黑雾里的身影被压制了：攻击/防御/敏捷 -15%。", "hero_regened");
+    for(const e of current_enemies) {
+        if(!e || !e.stats || !e.is_alive) continue;
+        const dmg = e.stats.max_health * 0.12;
+        e.stats.health -= dmg;
+        log_message(`【符箓】预埋的雷符炸开，对 ${e.name} 造成 ${format_number(dmg)} 点伤害。`, "enemy_attacked_critically");
+    }
+    update_displayed_health_of_enemies();
+}
+
+/**
+ * ★ v0.12 大会前的布置进度：每 30 次行动推进一格，最多 3 格
+ * @param {String} activity_id 会场里的行动 key
+ */
+/**
+ * ★ v0.12.1 修复：旧版本把「大会开始 / 初赛提交 / 决赛提交」挂在 locks_lines 上，
+ * 条件不满足时点一次就会被永久隐藏。这里在进入会场、打开大会对话时自动补回
+ * 那些"其实还能做"的选项（老存档也能救回来）。
+ */
+function repair_meet_dialogue(){
+    const d = dialogues["炼丹大会事务"];
+    if(!d || !d.textlines) return;
+    const inv = (id) => character.inventory[`{"id":"${id}"}`]?.count || 0;
+
+    // 大会开始：布置够两轮却还没开始
+    if(!global_flags.alchemy_meet_started) {
+        const P = inf_combat.MEET_PREP || {};
+        if((P.formation || 0) >= 2 && (P.talisman || 0) >= 2) {
+            const t = d.textlines["大会开始"];
+            if(t && t.is_finished) t.is_finished = false;
+        }
+    }
+    // 初赛提交：手里有清心丹但初赛还没通过
+    if(!global_flags.alchemy_round1_passed && inv("清心丹") > 0) {
+        const t = d.textlines["初赛提交"];
+        if(t && (t.is_finished || !t.is_unlocked)) {
+            t.is_finished = false;
+            t.is_unlocked = true;
+        }
+    }
+    // 决赛提交：手里有九转回元丹但还没交
+    if(!global_flags.alchemy_final_done && inv("九转回元丹") > 0) {
+        const t = d.textlines["决赛提交"];
+        if(t && (t.is_finished || !t.is_unlocked)) {
+            t.is_finished = false;
+            t.is_unlocked = true;
+        }
+    }
+}
+
+function meet_prep_tick(activity_id){
+    inf_combat.MEET_PREP = inf_combat.MEET_PREP || { formation: 0, talisman: 0, _t: {} };
+    const P = inf_combat.MEET_PREP;
+    P._t = P._t || {};
+    const key = activity_id === "meet_formation_help" ? "formation" : "talisman";
+    const label = key === "formation" ? "布阵" : "制符";
+    if((P[key] || 0) >= 3) return;
+    P._t[key] = (P._t[key] || 0) + 1;
+    const t = P._t[key];
+    const seg = (P[key] || 0) + 1;          // 当前第几段（1..3）
+    const within = ((t - 1) % 30) + 1;      // 本段内第几次
+    // 10% / 25% / 50% / 75% 各报一次，满 30 次算完成一段
+    const pct_map = { 3: 10, 8: 25, 15: 50, 23: 75 };
+    if(pct_map[within]) {
+        log_message(`【${label}】进度 ${pct_map[within]}%（第 ${seg}/3 段）`, "activity_unlocked");
+    }
+    if(within === 30) {
+        P[key] = (P[key] || 0) + 1;
+        log_message(`【${label}】第 ${P[key]}/3 段完成`, "activity_unlocked");
+        if(P[key] >= 3) {
+            log_message(label === "布阵" ? "阵法已经布置妥当，只等收网。" : "符箓已经贴满会场，只等收网。", "location_unlocked");
+        }
+    }
 }
 
 /**
@@ -3516,6 +3713,23 @@ function do_enemy_combat_action(enemy_id,spec_hint,E_atk_mul = 1,E_dmg_mul = 1) 
         } else if(existing.duration < seal_duration){
             existing.duration = seal_duration;
         }
+    }
+
+    // ★ v0.12 重伤：命中后削弱生命恢复 7%/层（最多 5 层，8 秒未再命中则失效）
+    if(attacker.spec.includes(75)){
+        const wound = active_effects["重伤"];
+        if(!wound){
+            const eff = new ActiveEffect({...effect_templates["重伤"], duration: 8});
+            eff.stacks = 1;
+            active_effects["重伤"] = eff;
+        } else {
+            wound.stacks = Math.min(5, (wound.stacks || 1) + 1);
+            wound.duration = 8;
+        }
+        const st = active_effects["重伤"].stacks || 1;
+        log_message(`【重伤】${character.name} 的生命恢复被削弱 ${Math.round(st * 7)}%（${st} 层）`, "enemy_enhanced");
+        update_displayed_effect_durations();
+        update_displayed_effects();
     }
 
     if(attacker.spec.includes(66)){
@@ -8602,6 +8816,10 @@ function update() {
                         add_xp_to_skill({skill: skills[activities[current_activity.activity_name].base_skills_names[i]], xp_to_add: current_activity.skill_xp_per_tick});
                     }
                 }
+                // ★ v0.12 大会前布置：这两项行动会推进准备进度
+                if(current_activity.id === "meet_formation_help" || current_activity.id === "meet_talisman_help") {
+                    meet_prep_tick(current_activity.id);
+                }
 
                 current_activity.gathering_time += 1;
                 if(current_activity.gained_resources)
@@ -8714,11 +8932,14 @@ function update() {
         update_displayed_effects();
 		//health regen
         const regen_sealed = active_effects["禁疗"] != undefined;
+        // ★ v0.12 重伤：按层数削弱恢复量（最多 5 层 → -35%，最低保留 65%）
+        const wound_eff = active_effects["重伤"];
+        const wound_mult = wound_eff ? Math.max(0.65, 1 - 0.07 * (wound_eff.stacks || 1)) : 1;
         if(!regen_sealed && character.stats.full.health_regeneration_flat) {
-            character.stats.full.health += character.stats.full.health_regeneration_flat;
+            character.stats.full.health += character.stats.full.health_regeneration_flat * wound_mult;
         }
         if(!regen_sealed && character.stats.full.health_regeneration_percent) {
-            character.stats.full.health += character.stats.full.max_health * character.stats.full.health_regeneration_percent/100;
+            character.stats.full.health += character.stats.full.max_health * character.stats.full.health_regeneration_percent/100 * wound_mult;
         }
         // ★ 毒液伤害：独立计算，不受生命恢复的倍率影响
         if(character.stats.environment_toxic_damage && character.stats.environment_toxic_damage > 0) {
@@ -9541,4 +9762,6 @@ export { current_enemies, can_work,
         realm_rate,
         character_equip_item, get_baby_cost,
         // ★ v0.10 词条相关（供调试/测试调用）
-        enemyIncomingDamage, heroWeaponIs, heroTraitDamageMul };
+        enemyIncomingDamage, heroWeaponIs, heroTraitDamageMul,
+        // ★ v0.12 炼丹大会布置（供调试/测试调用）
+        meet_prep_tick, repair_meet_dialogue };

@@ -1113,6 +1113,58 @@ function get_location_type_penalty(type, stage, stat) {
         is_unlocked: false,
         name: "丹盟·二层", 
     });
+
+	// ==========================================================
+	// v0.12 炼丹大会会场（诱饵作战的舞台）
+	// ==========================================================
+	locations["炼丹大会会场"] = new Location({
+        connected_locations: [{location: locations["丹盟"], custom_text: "回丹盟"}],
+        description: "丹盟为炼丹大会搭起来的会场。看台一圈圈围上来，中央是一片炼丹台，四周的梁柱和地面下已经埋好了阵纹与符箓。",
+        bgm: 3,
+        dialogues: ["炼丹大会事务", "邪教密谋"],
+        crafting: {
+            is_unlocked: true,
+            use_text: "大会炼丹台",
+            tiers: { alchemy: 5 },
+        },
+        is_unlocked: false,
+        name: "炼丹大会会场",
+    });
+	locations["炼丹大会会场"].activities = {
+		"meet_formation_help": new LocationActivity({
+			activity_name: "FormationPrep",
+			infinite: true,
+			starting_text: "协助布置阵法（进度 ↑）",
+			skill_xp_per_tick: 25,
+			is_unlocked: false,
+		}),
+		"meet_talisman_help": new LocationActivity({
+			activity_name: "TalismanPrep",
+			infinite: true,
+			starting_text: "协助绘制符箓（进度 ↑）",
+			skill_xp_per_tick: 25,
+			is_unlocked: false,
+		}),
+	};
+
+	locations["炼丹大会 - 决赛"] = new Challenge_zone({
+		description: "决赛场上，第二名忽然掀了桌子。袖口下的血纹亮起来的时候，四周的阵纹也跟着亮了。",
+		enemy_count: 1,
+		enemies_list: ["邪教执事[大会]"],
+		enemy_group_size: [1, 1],
+		is_unlocked: false,
+		is_challenge: true,
+		name: "炼丹大会 - 决赛",
+		rank: 610,
+		bgm: 3,
+		parent_location: locations["炼丹大会会场"],
+		first_reward: { xp: 400000 },
+		repeatable_reward: {
+			flags: ["alchemy_meet_done"],
+			textlines: [{ dialogue: "炼丹大会事务", lines: ["颁奖"] }],
+		},
+		unlock_text: "第二名终于动了手——是邪教的手法！",
+	});
     locations["城外墓园"] = new Location({ 
         bgm: 1,
         connected_locations: [{location: locations["主城"], custom_text: "回到主城"}], 
@@ -1132,6 +1184,8 @@ function get_location_type_penalty(type, stage, stat) {
 	locations["丹盟"].connected_locations.push({location: locations["一级炼丹考核"]});
 	locations["丹盟"].connected_locations.push({location: locations["二级炼丹考核"]});
 	locations["丹盟"].connected_locations.push({location: locations["丹盟·二层"]});
+	locations["丹盟"].connected_locations.push({location: locations["炼丹大会会场"]});
+	locations["炼丹大会会场"].connected_locations.push({location: locations["炼丹大会 - 决赛"]});
 
 // 【在 locations["战斗学院"] 的下方，新增演武楼】
 	locations["演武楼"] = new Location({

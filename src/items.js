@@ -8447,6 +8447,80 @@ book_stats["凝元丹配方"] = new BookData({
     },
 });
 
+// ==========================================================
+// v0.12 炼丹大会：初赛/决赛丹方、奖品、英勇徽章
+// ==========================================================
+(function(){
+    // ---- 初赛：清心丹 ----
+    item_templates["清心丹配方"] = new Book({
+        name: "清心丹配方",
+        description: "炼丹大会初赛用的丹方。药性平和，讲究的是火候稳、杂质少。",
+        value: 24000,
+        image: "image/item/evolve_script.png",
+    });
+    item_templates["清心丹"] = new UsableItem({
+        id: "清心丹", name: "清心丹",
+        description: "三品丹药。服下后 90 秒内每秒回复 8000 点生命，并小幅提升防御。",
+        value: 32000,
+        effects: [{ effect: "清心", duration: 90 }],
+        image: "image/item/B4_medicine.png",
+    });
+
+    // ---- 决赛：残缺丹方 + 九转回元丹 ----
+    item_templates["残缺的决赛丹方"] = new Book({
+        name: "残缺的决赛丹方",
+        description: "决赛用的残缺丹方，边角缺了一大块。能读出配伍的只有寥寥几行，剩下的全看炼丹师自己补。",
+        value: 60000,
+        image: "image/item/ancient_shard.png",
+    });
+    item_templates["九转回元丹"] = new UsableItem({
+        id: "九转回元丹", name: "九转回元丹",
+        description: "四品丹药。服下后 120 秒内每秒回复 8% 生命上限，并大幅提升攻防。药性极猛。",
+        value: 180000,
+        effects: [{ effect: "九转", duration: 120 }],
+        image: "image/item/B4_medicine.png",
+    });
+
+    // ---- 奖品与徽章 ----
+    item_templates["九叶灵芝"] = new Material({
+        id: "九叶灵芝", name: "九叶灵芝",
+        description: "丹盟压箱底的灵药，九片叶子层层堆叠，每一片都凝着一层药力。这次被拿出来当大会的彩头。",
+        value: 2400000,
+        image: "image/item/ice_jade.png",
+    });
+    item_templates["英勇徽章"] = new Props({
+        name: "英勇徽章",
+        id: "英勇徽章",
+        description: "炼丹大会之后，丹盟、战斗学院和精灵一族一起给你打的徽章。正面是一株燃着火的草，背面刻着三个字：知其险。",
+        value: 8e6,
+        image: "image/item/gem_ingot.png",
+        stats: {
+            attack_power: { flat: 5000 },
+            defense:      { flat: 5000 },
+            agility:      { flat: 4000 },
+            max_health:   { flat: 500000 },
+            crit_rate:    { flat: 0.02 },
+        }
+    });
+    item_templates["邪教令牌"] = new Material({
+        id: "邪教令牌", name: "邪教令牌",
+        description: "从大会执事身上搜出来的黑铁令牌，正面刻着一扇没有光的门，背面是一串看不懂的刻痕。令牌边缘被摩得很亮——他带在身上很多年了。",
+        value: 60000,
+        image: "image/item/darkness_soul.png",
+    });	
+})();
+
+book_stats["清心丹配方"] = new BookData({
+    required_time: 45,
+    literacy_xp_rate: 3,
+    unlocks: { recipes: ["清心丹"] },
+});
+book_stats["残缺的决赛丹方"] = new BookData({
+    required_time: 90,
+    literacy_xp_rate: 4,
+    unlocks: { recipes: ["九转回元丹"] },
+});
+
 Object.keys(item_templates).forEach(id => {
     item_templates[id].id = id;
 });
@@ -8456,7 +8530,8 @@ Object.keys(item_templates).forEach(id => {
 ["战斗学院徽章", "贡献点", "一级炼丹师徽章", "二级炼丹师徽章",
  "精灵信物", "精灵赠予的残图", "韩墨白的残图", "带血的布片", "邪教密信",
  "魔力抵消器", "魔力抵消器·壹", "魔力抵消器·贰", "魔力抵消器·叁",
- "凝元丹配方", "炼丹大会邀请函"].forEach(id => {
+ "凝元丹配方", "炼丹大会邀请函",
+ "清心丹配方", "残缺的决赛丹方","九叶灵芝","邪教令牌"].forEach(id => {
     if (item_templates[id]) item_templates[id].no_sell = true;
 });
 

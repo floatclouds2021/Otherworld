@@ -813,7 +813,10 @@ function log_loot(loot_list, is_combat=true) {
 }
 
 function start_activity_animation(settings) {
-    clearInterval(end_activity_animation);
+    // ★ 修复：原本这里清的是函数本身而不是定时器句柄，
+    // 上一个定时器没被清掉，两套动画同时改写状态栏，
+    // 读书时就会在"剩余秒数"和旧书残留的"0 秒"之间反复横跳。
+    end_activity_animation();
     activity_anim = setInterval(() => { //sets a tiny little "animation" for activity text
         const action_status_div = document.getElementById("action_status_div");
         let end = "";
@@ -4041,8 +4044,14 @@ let spec_stat = [[0, '魔攻', '#bbb0ff','这个敌人似乎掌握了魔法。<b
 [71, "嘲讽", "#ff9a3c", "魔犬会死死缠住你，根本不给你绕过去的机会。<br>只要场上还有带【嘲讽】的敌人存活，<span style='color:#87CEFA'>角色只能攻击它们</span>。"],
 [72, "守护", "#8fa7ff", "邪教执事用魔犬当盾牌。<br>每有<span style='color:#87CEFA'>一只存活的魔犬</span>，敌人受到的伤害<span style='color:#87CEFA'>降低20%</span>（最多80%）。"],
 [73, "箭雨", "#7fe0a0", "精灵小队的场外支援。<br>每隔<span style='color:#87CEFA'>10秒</span>，对所有敌人造成其<span style='color:#87CEFA'>最大生命10%</span>的伤害。"],
+[75, "重伤", "#d05a7a", "邪法留下的伤口止不住。<br>敌人命中角色后，角色的<span style='color:#87CEFA'>生命恢复降低7%</span>，可叠加到<span style='color:#87CEFA'>5层</span>（8秒未再命中则失效）。"],
 
 ];
+// ★ 修复：spec_stat 是按"顺序"存的数组，而查找是按 spec id 索引的。
+// id 有空洞时（74 没有、75 有）就会取不到，图鉴里"重伤"不显示。这里按 id 再挂一份。
+for (const _spec_entry of spec_stat) {
+    spec_stat[_spec_entry[0]] = _spec_entry;
+}
 //超过25倍倍率的攻击暂时视为必中！
 function format_perc(perc){
     if(perc < 10) return format_number(100*perc) + '%';
@@ -4370,6 +4379,7 @@ function add_bestiary_zones(enemy_name)
 	// ★ v0.08 新增分组：邪教线（邪恶沼泽 22）与新生校内赛（演武楼 23）
 	if(enemy_name == "嗜血魔犬") add_bestiary_lines(22);
 	if(enemy_name == "邪教执事[BOSS]") add_bestiary_lines(22);
+	if(enemy_name == "邪教执事[大会]") add_bestiary_lines(22);
 	if(enemy_name == "铁拳·石猛") add_bestiary_lines(23);
 	if(enemy_name == "快剑·沈青云") add_bestiary_lines(23);
 	if(enemy_name == "灵巧·白小婉") add_bestiary_lines(23);

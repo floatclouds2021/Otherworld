@@ -147,6 +147,21 @@ class Gathering extends Training {
 		is_unlocked: true,
 		base_skills_names: ["Literacy"], 
     });
+	// ★ v0.12 炼丹大会前的布置（技能经验远高于学院日常训练）
+	activities["FormationPrep"] = new Training({
+		name: "FormationPrep",
+		action_text: "协助布置阵法",
+		description: "在会场四周埋设阵旗与阵纹，把整座场地的灵气串成一张网",
+		is_unlocked: true,
+		base_skills_names: ["Formation"],
+	});
+	activities["TalismanPrep"] = new Training({
+		name: "TalismanPrep",
+		action_text: "协助绘制符箓",
+		description: "把雷符与困阵符一张张贴到会场的梁柱与地面下",
+		is_unlocked: true,
+		base_skills_names: ["Calligraphy", "Talismans"],
+	});
 })();
 
 //resource gatherings

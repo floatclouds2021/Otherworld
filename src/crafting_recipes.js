@@ -2337,6 +2337,39 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
     });
 })();
 
+// ========== v0.12 炼丹大会：初赛 / 决赛丹方 ==========
+(function(){
+    alchemy_recipes.items["清心丹"] = new ItemRecipe({
+        name: "清心丹",
+        recipe_type: "material",
+        materials: [
+            {material_id: "凝元草", count: 1},
+            {material_id: "雪参", count: 1},
+            {material_id: "灵液", count: 2},
+        ],
+        result: {result_id: "清心丹", count: 1},
+        success_chance: [0.5, 1],
+        recipe_level: [12, 18],
+        recipe_skill: "Alchemy",
+        is_unlocked: false,
+    });
+    alchemy_recipes.items["九转回元丹"] = new ItemRecipe({
+        name: "九转回元丹",
+        recipe_type: "material",
+        materials: [
+            {material_id: "荒古莲", count: 1},
+            {material_id: "凝元草", count: 2},
+            {material_id: "雪参", count: 1},
+            {material_id: "灵液", count: 3},
+        ],
+        result: {result_id: "九转回元丹", count: 1},
+        success_chance: [0.35, 1],
+        recipe_level: [20, 25],   // ★ 决赛难度：20-25
+        recipe_skill: "Alchemy",
+        is_unlocked: false,
+    });
+})();
+
 const recipes = {
     crafting: crafting_recipes, 
     cooking: cooking_recipes, 
