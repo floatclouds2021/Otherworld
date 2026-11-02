@@ -8507,7 +8507,27 @@ book_stats["凝元丹配方"] = new BookData({
         description: "从大会执事身上搜出来的黑铁令牌，正面刻着一扇没有光的门，背面是一串看不懂的刻痕。令牌边缘被摩得很亮——他带在身上很多年了。",
         value: 60000,
         image: "image/item/darkness_soul.png",
-    });	
+    });
+
+    // ---- v0.11 序：北上准备 ----
+    item_templates["空间戒指"] = new OtherItem({
+        id: "空间戒指", name: "空间戒指",
+        description: "学院发的素白戒指，戒面光得能照出人影。里面装得下一间屋子——装不下人心。",
+        value: 0,
+        image: "image/item/gem_ingot.png",
+    });
+    item_templates["传讯玉简"] = new OtherItem({
+        id: "传讯玉简", name: "传讯玉简",
+        description: "一枚青玉简，贴在额头上就能把一句话递到千里之外。北境的风雪压不住它，可那边有没有人接，是另一回事。",
+        value: 0,
+        image: "image/item/ice_jade.png",
+    });
+    item_templates["空间转移符"] = new OtherItem({
+        id: "空间转移符", name: "空间转移符",
+        description: "学院画的保命符。撕开就会把人往随机方向扔出几千里——不一定落在哪，但一定不在原地。",
+        value: 0,
+        image: "image/item/evolve_script.png",
+    });
 })();
 
 book_stats["清心丹配方"] = new BookData({
@@ -8531,7 +8551,8 @@ Object.keys(item_templates).forEach(id => {
  "精灵信物", "精灵赠予的残图", "韩墨白的残图", "带血的布片", "邪教密信",
  "魔力抵消器", "魔力抵消器·壹", "魔力抵消器·贰", "魔力抵消器·叁",
  "凝元丹配方", "炼丹大会邀请函",
- "清心丹配方", "残缺的决赛丹方","九叶灵芝","邪教令牌"].forEach(id => {
+ "清心丹配方", "残缺的决赛丹方","九叶灵芝","邪教令牌",
+ "空间戒指", "传讯玉简", "空间转移符"].forEach(id => {
     if (item_templates[id]) item_templates[id].no_sell = true;
 });
 

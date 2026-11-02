@@ -1420,7 +1420,10 @@ function get_enemy_killcount(){
 }
 function textline_special(t_key){
     let displayed_text = "";
-        if(t_key == "DeathCount-1")
+        if(t_key == "quest_hint"){
+            displayed_text += quest_hint_text();
+        }
+        else if(t_key == "DeathCount-1")
         {   
             displayed_text = "如今也算是历经了" + format_number(total_deaths)  + "次生死呢，<br>也知道了父亲大人的话是什么意思。";
         }
@@ -1762,6 +1765,10 @@ function textline_special(t_key){
 				unlock_location(locations["炼丹大会 - 决赛"], true);
 				log_message("【阵法】与【符箓】已经发动，压制了邪教的属性！", "enemy_enhanced");
 			}
+		}
+		// ===== v0.11 序：审问问到底 =====
+		else if(t_key.startsWith("interrogation_clue_check:")){
+			sync_interrogation_clue(t_key.substring("interrogation_clue_check:".length));
 		}
         else if(t_key == "upgrade_ma_off"){
             // 检查材料
@@ -2809,9 +2816,21 @@ function apply_meet_battle_prep(){
 }
 
 /**
- * ★ v0.12 大会前的布置进度：每 30 次行动推进一格，最多 3 格
- * @param {String} activity_id 会场里的行动 key
+ * ★ v0.11 序：三条线索都问完之后，把【追问·残图】放出来。
+ * 线索选项执行时 unlocks.spec 会调用它（"interrogation_clue_check:<刚问的那条>"）。
+ * 用「刚问的那条」补进去，是因为 locks_lines 在本行执行完才把它标成 is_finished。
+ * @param {String} just_asked 刚问完的线索 key
  */
+function sync_interrogation_clue(just_asked){
+    const d = dialogues["炼丹大会事务"];
+    if(!d || !d.textlines["追问·残图"]) return;
+    const ask = d.textlines["追问·残图"];
+    if(ask.is_finished) return;   // 已经问死了，别把选项放回来
+    const clues = ["线索·药", "线索·图", "线索·门"];
+    const all_asked = clues.every(k => k === just_asked || d.textlines[k]?.is_finished);
+    if(all_asked) ask.is_unlocked = true;   // 同一个对话里的选项，直接放开即可，不走 unlock_textline 的消息提示
+}
+
 /**
  * ★ v0.12.1 修复：旧版本把「大会开始 / 初赛提交 / 决赛提交」挂在 locks_lines 上，
  * 条件不满足时点一次就会被永久隐藏。这里在进入会场、打开大会对话时自动补回
@@ -2846,8 +2865,151 @@ function repair_meet_dialogue(){
             t.is_unlocked = true;
         }
     }
+    // ★ v0.11 序：三条线索都问完的存档，补出【追问·残图】
+    // （旧版本在「线索·门」后面就是 v0.10 终点，没有这一项；老档走到这里要能接上）
+    const ask = d.textlines["追问·残图"];
+    if(ask && !ask.is_finished && !ask.is_unlocked) {
+        const clues = ["线索·药", "线索·图", "线索·门"];
+        if(clues.every(k => d.textlines[k]?.is_finished)) {
+            ask.is_unlocked = true;
+        }
+    }
+    // ★ v0.11 序：审问已经问死（追问·残图 完成）→ 【审问邪教执事】入口也收掉，
+    // 否则人死了，玩家还能点进去再"审"一遍（旧版本 locks_lines 只锁了追问本身）
+    if(ask && ask.is_finished && d.textlines["审问"] && !d.textlines["审问"].is_finished) {
+        d.textlines["审问"].is_finished = true;
+    }
 }
 
+/**
+ * ★ v0.11 序：旅途手记 —— 按当前进度算「下一步去哪」
+ * 只做文本，不改任何状态；解析失败/进度不明时给回兜底提示。
+ * @returns {String} 一段带 <br> 的指引文本
+ */
+function quest_hint_text(){
+    const d = dialogues["炼丹大会事务"];
+    const done = (k) => !!(d && d.textlines[k] && d.textlines[k].is_finished);
+    const doneIn = (dlg, k) => !!(dialogues[dlg] && dialogues[dlg].textlines[k] && dialogues[dlg].textlines[k].is_finished);
+    const inv = (id) => character.inventory[`{"id":"${id}"}`]?.count || 0;
+    const hint = (s) => `<br>${s}<br>`;
+    // 石记杂货开店之后，顺手带一句副线提示
+    const side = global_flags.shop_opened ? "（顺路：主城街角的【石记杂货】开张了，石猛在等你。）<br>" : "";
+
+    // ===== 序章：初到主城 =====
+    if(!locations["主城"].is_unlocked){
+        return hint("先从【未知平原】出去，经【乡村小镇】的驿站去【主城】。");
+    }
+    if(!locations["中心广场"].is_unlocked && !locations["城外墓园"].is_unlocked){
+        return hint("去【主城】的【公告栏】看看：招生公告会开【中心广场】，那条吓人的骨头会开【城外墓园】。");
+    }
+    if(!locations["战斗学院"].is_unlocked){
+        return hint("去【中心广场】找招生人员，把报名流程走完；想先看看白骨，就去【城外墓园】。");
+    }
+
+    // ===== 初到战斗学院 =====
+    if(inv("战斗学院徽章") < 1){
+        if(!doneIn("与周远航对话", "见面礼")){
+            return hint("先去【炼器楼】找【周远航】拿见面礼（武器兑换券 + 魔力抵消器），然后再去【与校长对话】。");
+        }
+        return hint("去【与校长对话】找校长——他会给你学院徽章、聚气丹和贡献点。");
+    }
+
+    // ===== 任务阁 =====
+    if(!doneIn("任务阁学姐", "接取任务")){
+        return hint("去【任务阁】找学姐接任务：邪恶沼泽的魔物、矿山的采集，接哪个都行。");
+    }
+
+    // ===== 新生校内赛 =====
+    if(!global_flags.arena_champion){
+        if(!doneIn("开学典礼", "校长发言")){
+            return hint("回【你的住宅】点【度过时间，等待开学典礼开始】，等开学典礼，然后去【演武楼】参加新生校内赛。");
+        }
+        if(!global_flags.arena_32_done){
+            return hint("去【演武楼】找【新生校内赛助手】，从 32 强开始打。");
+        }
+        if(!global_flags.arena_16_done) return hint("校内赛下一场：16 强，对手是快剑沈青云（演武楼）。");
+        if(!global_flags.arena_8_done) return hint("校内赛下一场：8 强，对手是灵巧白小婉（演武楼）。");
+        if(!global_flags.arena_4_done) return hint("校内赛下一场：4 强，对手是秘法陆行舟（演武楼）。");
+        return hint("校内赛下一场：决赛，对手是天才顾寒山（演武楼）。");
+    }
+
+    // ===== 影部 · 精灵求援 =====
+    if(!doneIn("与影部导师对话", "精灵求援")){
+        return hint("去【影部】找导师——精灵一族派人来求援了，指名要学院帮忙。");
+    }
+
+    // ===== 沼泽：找精灵踪迹 =====
+    if(!doneIn("与影部导师对话", "汇报情况")){
+        return hint("去【邪恶沼泽】找精灵的踪迹：沿着沼泽往里搜，找到线索后回学院向影部导师复命。" + side);
+    }
+
+    // ===== 残图 =====
+    if(!doneIn("与校长对话", "残图请教")){
+        return hint("把在沼泽拿到的残图带去给【校长】看看。");
+    }
+
+    // ===== 炼丹大会这条线：从丹盟考核开始 =====
+    if(inv("二级炼丹师徽章") < 1){
+        if(inv("一级炼丹师徽章") < 1){
+            return hint("先去【丹盟】把一级炼丹师考下来——丹炼好了再报名。");
+        }
+        return hint("二级考核在【丹盟】：带上【一级炼丹师徽章】和一枚【凝元丹】，找林大师报名。");
+    }
+    if(!inf_combat.ALCHEMY_MEET_DAY){
+        return hint("二级徽章到手了。回【战斗学院】找林大师问问炼丹大会的事。");
+    }
+    if(!global_flags.alchemy_letter_sent){
+        const left = inf_combat.ALCHEMY_MEET_DAY - current_game_time.day_count;
+        return hint(left > 0
+            ? `离大会还有 ${left} 天。到日子了，去【你的住宅】翻信箱。`
+            : "请柬该到了——去【你的住宅】翻信箱。");
+    }
+    if(!locations["炼丹大会会场"].is_unlocked){
+        return hint("拿着请柬回【战斗学院】找校长：商量怎么用大会把邪教钓出来。");
+    }
+    const P = inf_combat.MEET_PREP || {};
+    if((P.formation || 0) < 2 || (P.talisman || 0) < 2){
+        return hint(`去【炼丹大会会场】，用行动里的「协助布置阵法」「协助绘制符箓」各推两段（现在：阵 ${P.formation || 0}/2、符 ${P.talisman || 0}/2）。`);
+    }
+    if(!global_flags.alchemy_meet_started){
+        return hint("布置好了——回【炼丹大会会场】，点【大会开始】。");
+    }
+    if(!global_flags.alchemy_round1_passed){
+        return hint("初赛：炼一枚【清心丹】，去会场交。");
+    }
+    if(!global_flags.alchemy_final_done){
+        return hint("决赛：读【残缺的决赛丹方】，炼【九转回元丹】（只给十份材料，按成丹枚数评），炼好了就交。");
+    }
+    if(!done("颁奖")){
+        return hint("打赢了就回会场领奖（【颁奖】）。");
+    }
+    if(!done("后台")){
+        return hint("去后台：丹盟、学院、精灵都在等你。");
+    }
+    if(!done("追问·残图")){
+        const clues = ["线索·药", "线索·图", "线索·门"];
+        const asked = clues.filter(k => done(k)).length;
+        if(asked === 0){
+            return hint("去会场【审问】那个被捆着的邪教执事，先把三条线索问出来。");
+        }
+        if(asked < 3){
+            return hint(`审问还在会场等着——线索还剩 ${3 - asked} 条没问（已问 ${asked}/3）。`);
+        }
+        return hint("三条线索都问完了——再问他一句：你们那块残图，在哪。");
+    }
+    if(!done("对线索")){
+        return hint("人已经死了。和丹盟、学院、精灵把线索对一遍。");
+    }
+    if(!done("北上准备")){
+        return hint("去丹盟后院，领【空间戒指】和路上用的东西。");
+    }
+    return hint("收拾好了就去【主城】北面的【地精火车站】，学院和丹盟的人先过去打点了。");
+}
+
+/**
+ * ★ v0.12 大会前的布置进度：每 30 次行动推进一格，最多 3 格
+ * @param {String} activity_id 会场里的行动 key
+ */
 function meet_prep_tick(activity_id){
     inf_combat.MEET_PREP = inf_combat.MEET_PREP || { formation: 0, talisman: 0, _t: {} };
     const P = inf_combat.MEET_PREP;
@@ -9764,4 +9926,6 @@ export { current_enemies, can_work,
         // ★ v0.10 词条相关（供调试/测试调用）
         enemyIncomingDamage, heroWeaponIs, heroTraitDamageMul,
         // ★ v0.12 炼丹大会布置（供调试/测试调用）
-        meet_prep_tick, repair_meet_dialogue };
+        meet_prep_tick, repair_meet_dialogue,
+        // ★ v0.11 序 审问后续（供调试/测试调用）
+        sync_interrogation_clue, quest_hint_text };

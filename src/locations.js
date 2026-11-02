@@ -1147,6 +1147,20 @@ function get_location_type_penalty(type, stage, stat) {
 		}),
 	};
 
+	// ==========================================================
+	// v0.11 序：主城 · 地精火车站（北上起点）
+	// 领完空间戒指（beifang_depart）才会解锁
+	// ==========================================================
+	locations["地精火车站"] = new Location({
+		connected_locations: [{ location: locations["主城"], custom_text: "回主城" }],
+		description: "主城北面的车站。铁轨一直铺到看不见的地方，站台上堆着货箱，地精们正往车头里添煤。",
+		bgm: 3,
+		dialogues: ["地精火车站", "旅途手记"],
+		is_unlocked: false,
+		name: "地精火车站",
+	});
+	locations["主城"].connected_locations.push({ location: locations["地精火车站"] });
+
 	locations["炼丹大会 - 决赛"] = new Challenge_zone({
 		description: "决赛场上，第二名忽然掀了桌子。袖口下的血纹亮起来的时候，四周的阵纹也跟着亮了。",
 		enemy_count: 1,
@@ -1306,6 +1320,14 @@ function get_location_type_penalty(type, stage, stat) {
     locations["战斗学院"].connected_locations.push({location: locations["图书馆"]});	
 	locations["战斗学院"].connected_locations.push({location: locations["任务阁"]});
 	locations["战斗学院"].connected_locations.push({location: locations["你的住宅"]});	
+
+	// v0.11 序：把【旅途手记】挂到常去的几个地方（同一本手记，随时能翻）
+	["未知平原", "乡村小镇", "主城", "中心广场", "城外墓园",
+	 "战斗学院", "演武楼", "任务阁", "影部", "丹盟", "炼丹大会会场", "你的住宅"].forEach(n => {
+		if(locations[n] && !locations[n].dialogues.includes("旅途手记")) {
+			locations[n].dialogues.push("旅途手记");
+		}
+	});
 
 	// --- 在 战斗学院 内部添加部门练级地点 ---
 	locations["炼丹实训室"] = new Location({
