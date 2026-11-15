@@ -546,6 +546,7 @@ function enemyIncomingDamage(target, rawDamage) {
     // 减伤类特技
     if(target.spec.includes(1)) dmg = Math.min(dmg, 1);                       // 坚固
     if(target.spec.includes(27)) dmg *= 0.9;                                  // 柔骨
+    if(target.spec.includes(91)) dmg *= 0.9;                                  // 硬甲（冲锋类敌人）
     if(target.spec.includes(37)) dmg *= Math.max(1 - target.stats.health / character.stats.full.health, 0); // 散华
     if(target.spec.includes(68)) dmg *= Math.max(1 - 0.1 * target.stats.health / character.stats.full.health, 0); // 散华·改
     if(target.spec.includes(72)) {                                            // 守护
@@ -783,6 +784,8 @@ console.log(`[change_location] 尝试进入 "${location_name}", is_finished=${lo
     }
     // ★ v0.12.1 老存档修复：进任何地点时顺手检查一次大会选项
     if(location_name === "炼丹大会会场") repair_meet_dialogue();
+    if(location_name === "主城" || location_name === "地精火车站") repair_train_unlock();
+    if(location_name === "魔犀栖息地") repair_habitat_unlock();
     
 	if(location_name !== current_location?.name && location.is_finished && !location.is_arena) {
 		return;
@@ -1399,6 +1402,11 @@ function start_dialogue(dialogue_key) {
     current_dialogue = dialogue_key;
     // ★ v0.12.1 打开大会对话前先修一次：把"条件已经满足但被旧版本锁掉"的选项放回来
     if(dialogue_key === "炼丹大会事务") repair_meet_dialogue();
+    // ★ v0.11 系统等级已到 6 的老档，进系统空间时补上【技能进化】
+    if(dialogue_key === "查看系统词条" || dialogue_key === "技能进化") {
+        repair_skill_evo_unlock();
+        refresh_skill_evo_labels();
+    }
 
     update_displayed_dialogue(dialogue_key);
 }
@@ -2079,28 +2087,22 @@ function textline_special(t_key){
         }
 		else if(t_key.startsWith("repeat_turnin:")){
 			// ★ v0.10 可重复委托：repeat_turnin:奖励贡献点:材料=数量;材料=数量
-			const seg = t_key.split(":");
-			const reward = Number(seg[1]) || 0;
-			const reqs = (seg[2] || "").split(";").filter(Boolean).map(s => {
-				const [name, cnt] = s.split("=");
-				return { name: name, count: Number(cnt) || 1 };
-			}).map(r => {
-				const key = "{\"id\":\"" + r.name + "\"}";
-				return { name: r.name, count: r.count, key: key, have: character.inventory[key]?.count || 0 };
-			});
-			const all_ok = reqs.length > 0 && reqs.every(r => r.have >= r.count);
-			if(!all_ok){
-				displayed_text += `委托还没凑齐：<br>`;
-				for(const r of reqs) {
-					displayed_text += `${r.name}: <b>${r.have}/${r.count}</b> ${r.have >= r.count ? "✔" : "❌"}<br>`;
-				}
-			} else {
-				remove_from_character_inventory(reqs.map(r => ({ item_key: r.key, item_count: r.count })));
-				add_to_character_inventory([{ item: getItem(item_templates["贡献点"]), count: reward }]);
-				log_message(`完成【任务阁委托】，获取 贡献点 x${reward}`, "location_reward");
-				displayed_text += `委托完成！<br>获得 <b>贡献点 x${reward}</b>。<br>`;
-				displayed_text += `<span style="color:#888">（这个委托可以反复接）</span>`;
-			}
+			displayed_text += repeat_turnin(t_key.substring("repeat_turnin:".length));
+		}
+		else if(t_key === "train_board"){ train_board_enter(); }
+		else if(t_key === "train_alarm"){ train_alarm_start(); }
+		else if(t_key === "train_arrive"){ train_arrive_finish(); }
+		else if(t_key === "train_to_habitat"){ train_to_habitat(); }
+		else if(t_key === "habitat_purify"){ habitat_purify(); }
+		else if(t_key === "pet_contract"){ pet_contract(); }
+		else if(t_key.startsWith("skill_evo:")){
+			// ★ v0.11 技能进化：status / buy_money / buy_kills / reset / add:<节点>
+			const evo_cmd = t_key.substring("skill_evo:".length);
+			if(evo_cmd === "status") displayed_text += skill_evo_status();
+			else if(evo_cmd === "buy_money") displayed_text += skill_evo_buy("money");
+			else if(evo_cmd === "buy_kills") displayed_text += skill_evo_buy("kills");
+			else if(evo_cmd === "reset") displayed_text += skill_evo_reset();
+			else if(evo_cmd.startsWith("add:")) displayed_text += skill_evo_add(evo_cmd.substring(4));
 		}
 		else if(t_key == "farm"){
             start_farm_minigame();
@@ -2708,6 +2710,10 @@ function change_stance(stance_id, is_temporary = false) {
     } else {
         selected_stance = stance_id;
         update_displayed_stance();
+        // 切换姿态时顺手刷新一下数值（技能等级会随横扫成长）
+        if(typeof update_stance_tooltip === "function") {
+            try { update_stance_tooltip(stance_id); } catch(e) { /* 面板未初始化时忽略 */ }
+        }
     }
     
     current_stance = stance_id;
@@ -2879,6 +2885,352 @@ function repair_meet_dialogue(){
     if(ask && ask.is_finished && d.textlines["审问"] && !d.textlines["审问"].is_finished) {
         d.textlines["审问"].is_finished = true;
     }
+}
+
+// ======================================================================
+// ★ v0.11 技能进化：金钱 / 杀敌数 → 进化点 → 进化树加点（可洗点）
+// 数据存在 inf_combat.SKILL_EVO（随存档），属性走 character.stats 的
+// flat/multiplier.skill_evo 两个独立桶，重算即可完全撤销。
+// ======================================================================
+const SKILL_EVO_NODES = [
+    { id: "edge",    name: "锋锐", kind: "mult", stat: "attack_power",    per: 0.02,  desc: "攻击力 +2%/级" },
+    { id: "wall",    name: "铁壁", kind: "mult", stat: "defense",         per: 0.03,  desc: "防御 +3%/级" },
+    { id: "vital",   name: "生机", kind: "mult", stat: "max_health",      per: 0.03,  desc: "生命上限 +3%/级" },
+    { id: "swift",   name: "疾风", kind: "mult", stat: "agility",         per: 0.02,  desc: "敏捷 +2%/级" },
+    { id: "quick",   name: "迅捷", kind: "mult", stat: "attack_speed",    per: 0.01,  desc: "攻击速度 +1%/级" },
+    { id: "precise", name: "精准", kind: "flat", stat: "crit_rate",       per: 0.005, desc: "暴击率 +0.5%/级" },
+    { id: "fury",    name: "战意", kind: "flat", stat: "crit_multiplier", per: 0.03,  desc: "暴击伤害 +3%/级" },
+    // —— 三个武器被动：读对应书籍解锁后才能加点 ——
+    { id: "sword",  name: "剑心", kind: "weapon", skill: "Swords", weapon: "sword", per: 0.005,
+      desc: "持剑时全属性 +0.5%/级", require_flag: "is_sword_heart_unlocked", book: "剑心要诀" },
+    { id: "dagger", name: "影步", kind: "weapon", skill: "Daggers", weapon: "dagger", per: 0.005,
+      desc: "持匕首时闪避与反击 +0.5%/级", require_flag: "is_shadow_step_unlocked", book: "影步要诀" },
+    { id: "bow",    name: "集中", kind: "weapon", skill: "Bows", weapon: "bow", per: 0.005,
+      desc: "持弓时命中与攻速 +0.5%/级", require_flag: "is_bow_focus_unlocked", book: "集中心法" },
+];
+const SKILL_EVO_MAX_LEVEL = 10;
+const SKILL_EVO_MONEY_BASE = 1e7;     // 第 1 点：1000 万
+const SKILL_EVO_KILL_BASE = 300;      // 第 1 点：300 击杀
+const SKILL_EVO_GROWTH = 1.5;         // 每多一点，价格 ×1.5
+const SKILL_EVO_UNLOCK_SYSTEM_LEVEL = 6;
+
+function skill_evo_state(){
+    if(!inf_combat.SKILL_EVO || typeof inf_combat.SKILL_EVO !== "object") {
+        inf_combat.SKILL_EVO = { points: 0, bought: 0, kills_used: 0, alloc: {} };
+    }
+    const s = inf_combat.SKILL_EVO;
+    s.points = s.points || 0;
+    s.bought = s.bought || 0;
+    s.kills_used = s.kills_used || 0;
+    s.alloc = s.alloc || {};
+    return s;
+}
+
+function skill_evo_next_cost(s){
+    const st = s || skill_evo_state();
+    const mul = Math.pow(SKILL_EVO_GROWTH, st.bought);
+    return { money: Math.round(SKILL_EVO_MONEY_BASE * mul), kills: Math.round(SKILL_EVO_KILL_BASE * mul) };
+}
+
+function skill_evo_spent(s){
+    return Object.values(s.alloc).reduce((a, b) => a + (Number(b) || 0), 0);
+}
+
+/** 按当前加点重算 skill_evo 属性桶（洗点后调用即可完全撤销） */
+function skill_evo_recalc(){
+    const s = skill_evo_state();
+    character.stats.flat.skill_evo = {};
+    character.stats.multiplier.skill_evo = {};
+    // 三个武器被动：把进化等级交给 character，由 add_weapon_type_bonuses 叠加
+    character.skill_evo_levels = {
+        Swords: s.alloc.sword || 0,
+        Daggers: s.alloc.dagger || 0,
+        Bows: s.alloc.bow || 0,
+    };
+    for(const node of SKILL_EVO_NODES) {
+        const lv = s.alloc[node.id] || 0;
+        if(lv <= 0 || node.kind === "weapon") continue;
+        if(node.kind === "mult") {
+            character.stats.multiplier.skill_evo[node.stat] =
+                (character.stats.multiplier.skill_evo[node.stat] || 1) * (1 + node.per * lv);
+        } else {
+            character.stats.flat.skill_evo[node.stat] =
+                (character.stats.flat.skill_evo[node.stat] || 0) + node.per * lv;
+        }
+    }
+    update_character_stats();
+    // 让三个武器被动的技能条描述跟着刷新（否则要等升级/换装才会更新）
+    for(const sid of ["Swords", "Daggers", "Bows"]) {
+        if(skills[sid] && typeof update_displayed_skill_bar === "function") {
+            try { update_displayed_skill_bar(skills[sid], false); } catch(e) { /* 面板未初始化时忽略 */ }
+        }
+    }
+}
+
+/** 把一个节点的累计加成写成 “当前 +X%” 的形式 */
+function skill_evo_current_text(node, lv){
+    const val = node.per * lv * 100;
+    const shown = Math.round(val * 100) / 100;
+    return "当前 +" + shown + "%";
+}
+
+function skill_evo_status(){
+    const s = skill_evo_state();
+    const c = skill_evo_next_cost(s);
+    const kill_left = Math.max(0, get_enemy_killcount() - s.kills_used);
+    let out = "<br>可用进化点：<b>" + s.points + "</b>　（已兑换 " + s.bought + " 次）<br>";
+    out += "下一点：<b>" + format_money(c.money) + "</b> 或 <b>" + format_number(c.kills) + "</b> 击杀（杀敌余量 " + format_number(kill_left) + "）<br><br>";
+    for(const node of SKILL_EVO_NODES) {
+        const lv = s.alloc[node.id] || 0;
+        let suffix = "";
+        if(node.require_flag && !global_flags[node.require_flag]) {
+            suffix = "　<span style='color:#888'>（未解锁：读《" + node.book + "》）</span>";
+        }
+        out += "【" + node.name + "】LV" + lv + "　" + node.desc + "，" + skill_evo_current_text(node, lv) + suffix + "<br>";
+    }
+    return out;
+}
+
+/**
+ * @param {String} currency "money" | "kills"
+ */
+function skill_evo_buy(currency){
+    const s = skill_evo_state();
+    const c = skill_evo_next_cost(s);
+    if(currency === "money") {
+        if(character.money < c.money) {
+            return "<br>钱不够：需要 <b>" + format_money(c.money) + "</b>，你现在只有 " + format_money(character.money) + "。<br>";
+        }
+        character.money -= c.money;
+        update_displayed_money();
+        log_message("【技能进化】消耗 " + format_money(c.money) + "，兑换了 1 点进化点。", "activity_unlocked");
+    } else {
+        const kill_left = Math.max(0, get_enemy_killcount() - s.kills_used);
+        if(kill_left < c.kills) {
+            return "<br>杀敌数不够：需要 <b>" + format_number(c.kills) + "</b>，你还有 " + format_number(kill_left) + " 没兑换。<br>";
+        }
+        s.kills_used += c.kills;
+        log_message("【技能进化】消耗 " + format_number(c.kills) + " 击杀，兑换了 1 点进化点。", "activity_unlocked");
+    }
+    s.bought += 1;
+    s.points += 1;
+    return "<br>兑换成功，获得 <b>1</b> 点进化点（现有 <b>" + s.points + "</b> 点）。<br>" +
+           "<span style='color:#888'>下一点价格会涨：" + format_money(skill_evo_next_cost(s).money) + " 或 " + format_number(skill_evo_next_cost(s).kills) + " 击杀。</span><br>";
+}
+
+/**
+ * @param {String} nodeId 进化树节点 id
+ */
+function skill_evo_add(nodeId){
+    const s = skill_evo_state();
+    const node = SKILL_EVO_NODES.find(n => n.id === nodeId);
+    if(!node) return "";
+    if(node.require_flag && !global_flags[node.require_flag]) {
+        return "<br>【" + node.name + "】还没解锁——先去图书馆读《" + node.book + "》。<br>";
+    }
+    const lv = s.alloc[nodeId] || 0;
+    if(s.points < 1) return "<br>没有可用的进化点——先去兑换。<br>";
+    if(lv >= SKILL_EVO_MAX_LEVEL) return "<br>【" + node.name + "】已经满级（" + SKILL_EVO_MAX_LEVEL + " 级）了。<br>";
+    s.points -= 1;
+    s.alloc[nodeId] = lv + 1;
+    skill_evo_recalc();
+    const now = skill_evo_current_text(node, lv + 1);
+    return "<br>【" + node.name + "】提升到 <b>LV" + (lv + 1) + "</b>：" + node.desc + "，" + now + "<br>" +
+           "剩余进化点：<b>" + s.points + "</b><br>";
+}
+
+function skill_evo_reset(){
+    const s = skill_evo_state();
+    const refund = skill_evo_spent(s);
+    if(refund < 1) return "<br>还没有加点，没什么可洗的。<br>";
+    s.points += refund;
+    s.alloc = {};
+    skill_evo_recalc();
+    log_message("【技能进化】洗点，退回 " + refund + " 点。", "activity_unlocked");
+    return "<br>洗点完成，退回 <b>" + refund + "</b> 点。花掉的金钱/杀敌不返还。<br>";
+}
+
+// ===== v0.11 批次②：栖息地 =====
+
+/** 对地图之后：车厢里多出“去魔犀栖息地” */
+function train_to_habitat(){
+    const car = locations["地精火车 - 车厢"];
+    const hab = locations["魔犀栖息地"];
+    const st = locations["地精火车站"];
+    if(!car || !hab) return;
+    hab.is_unlocked = true;
+    const herd = locations["魔犀栖息地 - 兽群"];
+    if(herd) herd.is_unlocked = true;
+    if(!car.connected_locations.some(c => c.location && c.location.name === "魔犀栖息地")) {
+        car.connected_locations.push({ location: hab, custom_text: "去魔犀栖息地" });
+    }
+    if(st && !car.connected_locations.some(c => c.location && c.location.name === "地精火车站")) {
+        car.connected_locations.push({ location: st, custom_text: "下车（回站台）" });
+    }
+    if(!hab.connected_locations.some(c => c.location && c.location.name === "地精火车 - 车厢")) {
+        hab.connected_locations = [{ location: car, custom_text: "回车厢" }];
+    }
+}
+
+/** 净化：消耗一张净化符；战斗图保留，玩家可以继续刷材料 */
+function habitat_purify(){
+    const key = "{\"id\":\"净化符\"}";
+    if(character.inventory[key]?.count > 0) {
+        remove_from_character_inventory([{ item_key: key, item_count: 1 }]);
+        log_message("消耗了一张【净化符】。", "enemy_enhanced");
+    }
+}
+
+/** 契约灵宠：攻击/防御 +5%、生命上限 +10%（跟存档走） */
+function apply_pet_bonus(){
+    if(!global_flags.pet_contract) return;
+    character.stats.multiplier.pet = {
+        attack_power: 1.05,
+        defense: 1.05,
+        max_health: 1.10,
+    };
+    // 老档补：已经契约过但系统词条还没解锁
+    const line = dialogues["查看系统词条"]?.textlines?.["契约灵宠"];
+    if(line && !line.is_unlocked) line.is_unlocked = true;
+    update_character_stats();
+}
+
+function pet_contract(){
+    global_flags.pet_contract = true;
+    apply_pet_bonus();
+    // 系统词条里挂一条【契约灵宠】，玩家随时能看到
+    const line = dialogues["查看系统词条"]?.textlines?.["契约灵宠"];
+    if(line && !line.is_unlocked) line.is_unlocked = true;
+    log_message("灵宠契约成立：魔犀牛王与你共享生命。", "activity_unlocked");
+}
+
+// ===== v0.11 批次①：火车三个剧情动作 =====
+
+/** 上车：直接进车厢；火车开动后站台的“下车”收起来 */
+function train_board_enter(){
+    const car = locations["地精火车 - 车厢"];
+    if(!car) return;
+    car.is_unlocked = true;
+    car.connected_locations = (car.connected_locations || []).filter(c => c.location && c.location.name !== "地精火车站");
+    change_location("地精火车 - 车厢");
+    current_dialogue = "地精火车车厢";
+}
+
+/** 兽潮：放出去迎战的入口，并解锁防御战1 */
+function train_alarm_start(){
+    const car = locations["地精火车 - 车厢"];
+    const z1 = locations["火车防御战 - 一"];
+    if(!car || !z1) return;
+    z1.is_unlocked = true;
+    if(!car.connected_locations.some(c => c.location && c.location.name === "火车防御战 - 一")) {
+        car.connected_locations.push({ location: z1, custom_text: "下车迎战" });
+    }
+    // 第二波先挂着连接（等第一波打完再解锁）
+    const z2 = locations["火车防御战 - 二"];
+    if(z2 && !car.connected_locations.some(c => c.location && c.location.name === "火车防御战 - 二")) {
+        car.connected_locations.push({ location: z2, custom_text: "继续迎战" });
+    }
+}
+
+/** 兽潮结束：恢复“下车”，两道防御战不再重复进 */
+function train_arrive_finish(){
+    // 下车往哪走由【对地图】决定（train_to_habitat 会挂上栖息地和站台）
+    if(locations["火车防御战 - 一"]) locations["火车防御战 - 一"].is_unlocked = false;
+    if(locations["火车防御战 - 二"]) locations["火车防御战 - 二"].is_unlocked = false;
+}
+
+/** 把「加点：XXX」选项名刷新成带当前等级/加成的样子（打开面板、每次加点后都会跑） */
+const SKILL_EVO_LABELS = {
+    edge:    { label: "锋锐（攻击）",   stat: "攻击力" },
+    wall:    { label: "铁壁（防御）",   stat: "防御" },
+    vital:   { label: "生机（生命）",   stat: "生命上限" },
+    swift:   { label: "疾风（敏捷）",   stat: "敏捷" },
+    quick:   { label: "迅捷（攻速）",   stat: "攻击速度" },
+    precise: { label: "精准（暴击率）", stat: "暴击率" },
+    fury:    { label: "战意（暴击伤害）", stat: "暴击伤害" },
+    sword:   { label: "剑心（持剑）",   stat: "全属性" },
+    dagger:  { label: "影步（持匕首）", stat: "闪避" },
+    bow:     { label: "集中（持弓）",   stat: "命中" },
+};
+function refresh_skill_evo_labels(){
+    const dlg = dialogues["技能进化"];
+    if(!dlg || !dlg.textlines) return;
+    const s = skill_evo_state();
+    for(const node of SKILL_EVO_NODES) {
+        const line = dlg.textlines["加点·" + node.name];
+        if(!line) continue;
+        const info = SKILL_EVO_LABELS[node.id] || { label: node.name, stat: "" };
+        const lv = s.alloc[node.id] || 0;
+        const cur = Math.round(node.per * lv * 10000) / 100;
+        line.name = "加点：" + info.label + "，LV" + lv + "，" + info.stat + " +" + cur + "%";
+    }
+}
+
+/** 老存档：栖息地已经开了，但兽群图还没解锁（新版才加的两条入口） */
+function repair_habitat_unlock(){
+    const hab = locations["魔犀栖息地"];
+    if(!hab || !hab.is_unlocked) return;
+    const herd = locations["魔犀栖息地 - 兽群"];
+    const king = locations["魔犀栖息地 - 牛王"];
+    if(herd) { herd.is_unlocked = true; herd.is_finished = false; }
+    // 牛王是一次性的挑战区：只补解锁，打完（is_finished）就保持消失
+    if(king && global_flags.habitat_herd_done && !king.is_finished) king.is_unlocked = true;
+}
+
+/** 老存档：领戒指时【地精火车站】这个地点还没做出来，补一次解锁 */
+function repair_train_unlock(){
+    if(!global_flags.beifang_depart) return;
+    const loc = locations["地精火车站"];
+    if(loc && !loc.is_unlocked) {
+        loc.is_unlocked = true;
+        log_message("【地精火车站】已解锁。", "location_unlocked");
+    }
+}
+
+/** 系统等级 6 时解锁「技能进化」词条与面板（老档进一次系统空间也会补上） */function repair_skill_evo_unlock(){
+    if(skills["system"].current_level < SKILL_EVO_UNLOCK_SYSTEM_LEVEL) return;
+    const line = dialogues["查看系统词条"]?.textlines?.["技能进化"];
+    if(line && !line.is_unlocked) {
+        line.is_unlocked = true;
+        log_message("系统词条解锁：技能进化", "activity_unlocked");
+    }
+    const dlg = dialogues["技能进化"];
+    if(dlg && !dlg.is_unlocked) dlg.is_unlocked = true;
+}
+
+/**
+ * ★ v0.10 可重复委托 + v0.11 批量交付：手里够几份就一次交几份
+ * @param {String} spec "奖励贡献点:材料=数量;材料=数量"
+ * @returns {String} 显示文本
+ */
+function repeat_turnin(spec){
+    const seg = ("x:" + spec).split(":");   // 前面补一位，保持 seg[1]=奖励、seg[2]=材料 的取法
+    const reward = Number(seg[1]) || 0;
+    const reqs = (seg[2] || "").split(";").filter(Boolean).map(s => {
+        const [name, cnt] = s.split("=");
+        return { name: name, count: Number(cnt) || 1 };
+    }).map(r => {
+        const key = "{\"id\":\"" + r.name + "\"}";
+        return { name: r.name, count: r.count, key: key, have: character.inventory[key]?.count || 0 };
+    });
+    const sets = reqs.length ? Math.min(...reqs.map(r => Math.floor(r.have / r.count))) : 0;
+
+    if(sets < 1){
+        let out = "委托还没凑齐：<br>";
+        for(const r of reqs) {
+            out += `${r.name}: <b>${r.have}/${r.count}</b> ${r.have >= r.count ? "✔" : "❌"}<br>`;
+        }
+        return out;
+    }
+
+    remove_from_character_inventory(reqs.map(r => ({ item_key: r.key, item_count: r.count * sets })));
+    add_to_character_inventory([{ item: getItem(item_templates["贡献点"]), count: reward * sets }]);
+    log_message(`完成【任务阁委托】×${sets}，获取 贡献点 x${format_number(reward * sets)}`, "location_reward");
+
+    let out = `委托完成 <b>×${sets}</b>！<br>获得 <b>贡献点 x${format_number(reward * sets)}</b>。<br>`;
+    if(sets > 1) out += `<span style="color:#888">（一次性把你手上够数的材料全交了）</span><br>`;
+    out += `<span style="color:#888">（这个委托可以反复接）</span>`;
+    return out;
 }
 
 /**
@@ -3196,6 +3548,10 @@ function do_enemy_attack_loop(enemy_id, count, E_round = 1,isnew = false) {//E_r
                     return;
                 }
 
+                if(current_enemies != null) if(current_enemies[enemy_id].spec.includes(90) && E_round % 5 == 0)//冲锋：每5回合一次
+                {
+                    do_enemy_combat_action(enemy_id,"[冲锋]"+Spec_S,1.6);
+                }
                 if(current_enemies != null) if(current_enemies[enemy_id].spec.includes(13) && E_round <= 3)//惑幻
                 {
                     do_enemy_combat_action(enemy_id,"[惑幻]"+Spec_S,0);
@@ -3369,10 +3725,12 @@ function do_character_attack_loop({base_cooldown, actual_cooldown, attack_power,
                 
                 if(leveled) {
                     let R_skill =  skills[stances[current_stance].related_skill];
-                    for(let j=0;j < R_skill.related_stances.length; j+=1){
-                        
-                        update_stance_tooltip(R_skill.related_stances[j]);
-                    }
+                    // ★ 横扫升级后，所有挂在这个技能上的姿态（含【群攻】）都要刷新数值
+                    Object.keys(stances).forEach(sid => {
+                        if(stances[sid].related_skill === R_skill.skill_id && typeof update_stance_tooltip === "function") {
+                            try { update_stance_tooltip(sid); } catch(e) { /* 面板未初始化时忽略 */ }
+                        }
+                    });
                     update_character_stats();
                 }
             }
@@ -3727,6 +4085,11 @@ function do_enemy_combat_action(enemy_id,spec_hint,E_atk_mul = 1,E_dmg_mul = 1) 
     {
         E_atk_mul_f *= Math.min(100,attacker.stats.health / character.stats.full.health);
     }//生命限制
+    if(attacker.spec.includes(92) && attacker.stats.health <= attacker.stats.max_health * 0.5)
+    {
+        E_atk_mul_f *= 1.5;   // 半血狂暴
+        spec_hint += '[狂暴]';
+    }
 
     
     if(active_effects["硬化 C6"]!=undefined){
@@ -3750,7 +4113,7 @@ function do_enemy_combat_action(enemy_id,spec_hint,E_atk_mul = 1,E_dmg_mul = 1) 
 	// 闪避率修正
 	if(heroWeaponIs("dagger") 
 	   && global_flags.is_shadow_step_unlocked) {
-		const lv = skills["Daggers"].current_level;
+		const lv = skills["Daggers"].current_level + (character.skill_evo_levels?.Daggers || 0);
 		evasion_agi_modifier *= 1 + (5 + lv * 0.5) / 100;
 	}
 
@@ -3762,7 +4125,7 @@ function do_enemy_combat_action(enemy_id,spec_hint,E_atk_mul = 1,E_dmg_mul = 1) 
 
         // ★ v0.10 影步：闪避成功后反击（受敌人防御与减伤特技影响）
         if(heroWeaponIs("dagger") && global_flags.is_shadow_step_unlocked) {
-            const lv = skills["Daggers"].current_level;
+            const lv = skills["Daggers"].current_level + (character.skill_evo_levels?.Daggers || 0);
             const mul = 0.3 + lv * 0.02;
             const raw = character.get_attack_power() * mul;
             const dmg = enemyIncomingDamage(attacker, raw);
@@ -4362,7 +4725,7 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
 	// 命中率修正
 	if(heroWeaponIs("bow") 
 	   && global_flags.is_bow_focus_unlocked) {
-		const lv = skills["Bows"].current_level;
+		const lv = skills["Bows"].current_level + (character.skill_evo_levels?.Bows || 0);
 		hit_agi_modifier *= 1 + (5 + lv * 0.5) / 100;
 	}
     
@@ -4372,7 +4735,7 @@ function do_character_combat_action({target, attack_power}, target_num,c_atk_mul
 		// ★ 集中攻速 buff
 		if(heroWeaponIs("bow") 
 		   && global_flags.is_bow_focus_unlocked) {
-			const lv = skills["Bows"].current_level;
+			const lv = skills["Bows"].current_level + (character.skill_evo_levels?.Bows || 0);
 			const spd = 3 + lv * 0.1;
 			if(!character.runtime_buffs) character.runtime_buffs = {};
 			character.runtime_buffs.bow_focus = {
@@ -4760,6 +5123,9 @@ function add_xp_to_skill({skill, xp_to_add = 1, should_info = true, use_bonus = 
 						locations["空间锚点"].is_unlocked = true;
 						log_message("【空间锚点】已激活！可通过任意特定地点进入。", "location_unlocked");
 					}
+				}
+				if(skill.current_level >= 6) {
+					repair_skill_evo_unlock();
 				}
 			}
 
@@ -6926,6 +7292,8 @@ function load(save_data) {
 
 	// 重新渲染配方界面
     create_displayed_crafting_recipes();
+    // 老档补：栖息地已开但兽群图还锁着（要在切换地点之前修，列表才会重绘）
+    repair_habitat_unlock();
     change_location(save_data["current location"]);
 
     //set activity if any saved
@@ -6963,7 +7331,14 @@ function load(save_data) {
     }
 	
     update_quests();
-	//种田新增
+	// 技能进化：按存档里的加点重算属性桶
+	skill_evo_recalc();
+	// 老档补解锁：领过戒指但当时还没有【地精火车站】
+	repair_train_unlock();
+	// 契约灵宠的常驻加成
+	apply_pet_bonus();
+	// 老档补：栖息地已开但兽群图还锁着
+	repair_habitat_unlock();
 	const farm_cb = document.getElementById("options_farm_auto");
 	if(farm_cb) farm_cb.checked = !!(save_data.inf_combat && save_data.inf_combat.FARM && save_data.inf_combat.FARM.auto);
 
@@ -9928,4 +10303,15 @@ export { current_enemies, can_work,
         // ★ v0.12 炼丹大会布置（供调试/测试调用）
         meet_prep_tick, repair_meet_dialogue,
         // ★ v0.11 序 审问后续（供调试/测试调用）
-        sync_interrogation_clue, quest_hint_text };
+        sync_interrogation_clue, quest_hint_text,
+        // ★ v0.11 常驻委托批量交付（供调试/测试调用）
+        repeat_turnin,
+        // ★ v0.11 技能进化（供调试/测试调用）
+        skill_evo_status, skill_evo_buy, skill_evo_add, skill_evo_reset,
+        skill_evo_recalc, skill_evo_next_cost, SKILL_EVO_NODES,
+        repair_skill_evo_unlock, refresh_skill_evo_labels, enemy_killcount,
+        repair_train_unlock,
+        // ★ v0.11 批次① 火车剧情（供调试/测试调用）
+        train_board_enter, train_alarm_start, train_arrive_finish,
+        train_to_habitat, habitat_purify, pet_contract, apply_pet_bonus,
+        repair_habitat_unlock };

@@ -373,8 +373,16 @@ function create_item_tooltip_content({item, options={}}) {
                 `<br><br>Can block up to: ${Math.round(10*item.getShieldStrength(options.quality[0])*(character.stats.total_multiplier.block_strength))/10}-${Math.round(10*item.getShieldStrength(options.quality[1])*(character.stats.total_multiplier.block_strength))/10} damage [base: ${item.getShieldStrength(options.quality[0])}-${item.getShieldStrength(options.quality[1])}]`;
             }
 
-            const equip_stats_0 = item.getStats(options.quality[0]);
-            const equip_stats_1 = item.getStats(options.quality[1]);
+            let equip_stats_0 = item.getStats(options.quality[0]);
+            let equip_stats_1 = item.getStats(options.quality[1]);
+            // ★ 部件这类固定属性物品：按品质算出来是空的时候，退回固定属性再显示一次
+            if(Object.keys(equip_stats_0).length === 0) {
+                const fixed = item.getStats();
+                if(fixed && Object.keys(fixed).length > 0) {
+                    equip_stats_0 = fixed;
+                    equip_stats_1 = fixed;
+                }
+            }
             if(Object.keys(equip_stats_0).length > 0) {
                 item_tooltip += `<br>`;
             }
@@ -3071,6 +3079,7 @@ function update_stat_description(stat) {
 		gems: "宝石", stance: "秘法", active_effect: "效果", coins: "心之境界",
 		armor_set: "套装",   // ★ 新增
 		pills: "丹药",   // ★ 新增
+		pet: "灵宠",   // ★ v0.11 契约灵宠
 	};    
 	
     if(stat === "attack_power" && character.equipment.weapon != undefined) {
@@ -4049,9 +4058,15 @@ let spec_stat = [[0, '魔攻', '#bbb0ff','这个敌人似乎掌握了魔法。<b
 ];
 // ★ 修复：spec_stat 是按"顺序"存的数组，而查找是按 spec id 索引的。
 // id 有空洞时（74 没有、75 有）就会取不到，图鉴里"重伤"不显示。这里按 id 再挂一份。
-for (const _spec_entry of spec_stat) {
+for (let _i = 0; _i < spec_stat.length; _i++) {
+    const _spec_entry = spec_stat[_i];
+    if(!_spec_entry) { continue; }
     spec_stat[_spec_entry[0]] = _spec_entry;
 }
+// ★ v0.11 魔化硬角犀牛：按 id 直接挂（顺序插入会错位，图鉴本来是按 id 取的）
+spec_stat[90] = [90, "冲锋", "#e07b39", "硬角压低，整个身子撞过来。<br>每隔<span style='color:#87CEFA'>5回合</span>，额外发动一次<span style='color:#87CEFA'>1.6倍</span>攻击力的冲撞。"];
+spec_stat[91] = [91, "硬甲", "#9a8f7a", "厚得像铁板的外皮。<br>受到的伤害<span style='color:#87CEFA'>减少10%</span>。"];
+spec_stat[92] = [92, "半血狂暴", "#ff4d4d", "被逼到绝境时的暴怒。<br>生命低于<span style='color:#87CEFA'>50%</span>后，造成的伤害<span style='color:#87CEFA'>提高50%</span>。"];
 //超过25倍倍率的攻击暂时视为必中！
 function format_perc(perc){
     if(perc < 10) return format_number(100*perc) + '%';

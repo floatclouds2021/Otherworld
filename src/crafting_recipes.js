@@ -706,6 +706,7 @@ function get_recipe_xp_value({category, subcategory, recipe_id, material_count, 
         components: ["shoes interior", "shoes exterior"],
         item_type: "Armor",
     });
+    // ★ v0.11 兽潮材料做的内甲：挂到四个部位的内甲部件配方里（见文件末尾的 push）
 })();
 /*
 //clothes (which is also equipment, but shhhh)
@@ -2377,5 +2378,15 @@ const recipes = {
     forging: forging_recipes, 
     alchemy: alchemy_recipes
 }
+
+// ★ v0.11 兽潮：硬角碎片 / 坚硬皮革 → 四部位内甲
+;[["头部内甲", "头", 3], ["胸部内甲", "胸", 5], ["腿部内甲", "腿", 4], ["脚部内甲", "战靴", 3]].forEach(([recipe, slot, cnt]) => {
+    if(crafting_recipes.components[recipe]) {
+        crafting_recipes.components[recipe].materials.push(
+            {material_id: "硬角碎片", count: cnt, result_id: "硬角" + slot + (slot === "战靴" ? "" : "甲")},
+            {material_id: "坚硬皮革", count: cnt + 2, result_id: "硬皮" + slot + (slot === "战靴" ? "" : "甲")},
+        );
+    }
+});
 
 export {recipes, get_recipe_xp_value}

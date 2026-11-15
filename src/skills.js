@@ -629,15 +629,16 @@ function format_skill_rewards(milestone){
                                     return `Improves efficiency of the "Crushing force" stance`;
                                 }});
     skills["Wide swing"] = new Skill({skill_id: "Wide swing", 
-                                names: {0: "Broad arc"}, 
+                                names: {0: "横扫"}, 
                                 parent_skill: "Stance mastery",
-                                description: "A special technique that allows striking multiple enemies at once, although at a cost of lower damage", 
+                                description: "同时横扫多个敌人的技巧，代价是单次伤害会降低。", 
                                 max_level_coefficient: 2,
                                 base_xp_cost: 60,
                                 category: "Stance",
                                 max_level: 30,
+                                related_stances: ["wide", "群攻"],
                                 get_effect_description: ()=> {
-                                    return `Improves efficiency of the "Broad arc" stance`;
+                                    return `提升【横扫】姿态的效率`;
                                 }});
     skills["Defensive measures"] = new Skill({skill_id: "Defensive measures", 
                                 names: {0: "Defensive measures"}, 
@@ -1150,10 +1151,13 @@ function format_skill_rewards(milestone){
                             get_effect_description: () => {
 								let desc = `增加持弓时暴击率 ${Math.round(skills["Bows"].get_coefficient()*1000-1000)/10}%`;
 								if(window.global_flags?.is_bow_focus_unlocked) {
-									const lv = skills["Bows"].current_level;
+									const evo_lv = character.skill_evo_levels?.Bows || 0;
+									const lv = skills["Bows"].current_level + evo_lv;
 									const hit = 5 + lv * 0.5;
 									const spd = 3 + lv * 0.1;
+									const evo_hit = (evo_lv * 0.5).toFixed(1);
 									desc += `<br><span style="color:cyan">【集中】</span>装备弓时命中率 +${hit.toFixed(1)}%，命中后获得 ${spd.toFixed(1)}% 攻速加成，持续 3 秒。`;
+									desc += `<br><span style="color:#888">技能树加成：+${evo_hit}%（已计入上面的数值）</span>`;
 								}
 								return desc;
 							},
@@ -1208,9 +1212,12 @@ function format_skill_rewards(milestone){
 									get_effect_description: () => {
 										let desc = `增加持剑时暴击率 ${Math.round(skills["Swords"].get_coefficient()*1000-1000)/10}%`;
 										if(window.global_flags?.is_sword_heart_unlocked) {
-											const lv = skills["Swords"].current_level;
+											const evo_lv = character.skill_evo_levels?.Swords || 0;
+											const lv = skills["Swords"].current_level + evo_lv;
 											const bonus = (lv * 0.5).toFixed(1);
+											const evo_bonus = (evo_lv * 0.5).toFixed(1);
 											desc += `<br><span style="color:cyan">【剑心】</span>装备剑时，全属性 +${bonus}%。`;
+											desc += `<br><span style="color:#888">技能树加成：+${evo_bonus}%（已计入上面的数值）</span>`;
 										}
 										return desc;
 									},
@@ -1420,10 +1427,13 @@ Multiplies AP with hammers by ${Math.round((skills["Hammers"].get_coefficient("m
 								get_effect_description: () => {
 								let desc = `增加持匕首时暴击率 ${Math.round(skills["Daggers"].get_coefficient()*1000-1000)/10}%`;
 								if(window.global_flags?.is_shadow_step_unlocked) {
-									const lv = skills["Daggers"].current_level;
+									const evo_lv = character.skill_evo_levels?.Daggers || 0;
+									const lv = skills["Daggers"].current_level + evo_lv;
 									const eva = 5 + lv * 0.5;
 									const mul = 0.3 + lv * 0.02;
+									const evo_eva = (evo_lv * 0.5).toFixed(1);
 									desc += `<br><span style="color:cyan">【影步】</span>装备匕首时闪避率 +${eva.toFixed(1)}%，闪避成功后追加一次 ${(mul*100).toFixed(0)}% 攻击力的伤害。`;
+									desc += `<br><span style="color:#888">技能树加成：+${evo_eva}%（已计入上面的数值）</span>`;
 								}
 								return desc;
 								},

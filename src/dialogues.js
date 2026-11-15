@@ -589,6 +589,20 @@ class Textline {
                 name: "空间锚点",
                 text: "你去过的地方会产生锚点，可以在任意锚点之间传送",
             }),			
+			"技能进化": new Textline({
+                is_unlocked: false,
+                name: "技能进化",
+                text: "用金钱或杀敌数兑换进化点，在【技能进化】面板里给进化树加点。洗点免费，但花掉的金钱/杀敌不返还。",
+				unlocks: { dialogues: ["技能进化"] },
+            }),			
+			"契约灵宠": new Textline({
+                is_unlocked: false,
+                name: "契约灵宠",
+                text: "你把命分了一半给它，它把力气借给你。<br>"+
+                      "<br><span style='color:#87CEFA'>【魔犀牛王】</span><br>"+
+                      "攻击 +5%　防御 +5%　生命上限 +10%<br>"+
+                      "<span style='color:#888'>（契约共享生命：它不会死，你也不会因为它死。）</span>",
+            }),			
         }
     });
 
@@ -5142,8 +5156,263 @@ class Textline {
                       "艾莉希尔站在车厢门口，朝你抬了抬下巴：「就等你了。」<br>"+
                       "车长把一张票根拍在你手里：「明日卯时发车。往北，到边境的集市城。」<br>"+
                       "车厢老得像一件旧家具，绿漆掉了一半，木头被煤烟熏得发亮。<br>"+
-                      "<br><span style='color:gold'>—— 序章 终 ——</span><br>"+
-                      "<span style='color:#888'>（下一段：地精火车 · 兽潮与狼人，制作中）</span>",
+                      "<br><span style='color:gold'>—— 序章 终 ——</span>",
+            }),
+            "上车": new Textline({
+                name: "（上车，找座位）",
+                text: "汽笛拉长，铁轨在脚下咔哒一声。<br>"+
+                      "车轮碾过站台外的碎石，主城的轮廓一点点退到身后。<br>"+
+                      "车厢里一半是货箱，一半是座位。你把行李塞到头顶的架子上，在靠窗的位置坐下。<br>"+
+                      "<br><span style='color:#888'>（下一站：边境的集市城。前面还有很长的路。）</span>",
+                unlocks: {
+                    locations: ["地精火车 - 车厢"],
+                    spec: "train_board",
+                },
+                locks_lines: ["上车"],
+            }),
+        },
+    });
+
+    // ==========================================================
+    // v0.11 批次①：车厢 · 狼人与兽潮
+    // ==========================================================
+    dialogues["地精火车车厢"] = new Dialogue({
+        name: "车厢",
+        starting_text: "看看车厢",
+        ending_text: "坐着",
+        textlines: {
+            "邻座": new Textline({
+                name: "（看看邻座）",
+                text: "对面坐着一个比你高出一头的兽人，灰毛从领口里钻出来，耳朵尖上缺了一小块。<br>"+
+                      "他正把一枚硬币在指节上来回翻，看到你，咧嘴笑了笑：<br>"+
+                      "「第一次坐这趟车？」他说话带着点北边的口音，「我叫洛恩。主城斗技场混过几年，后来去了战斗学院，跟一个人类一起打过几场。」<br>"+
+                      "他目光落到你手上那枚戒指上，挑了挑眉：「这戒面……你是战斗学院的？」<br>"+
+                      "「巧了。」他把硬币收进掌心，「那咱们算是同门。学院里的那套，我熟。」<br>"+
+                      "<br>车窗外，北边的天色一点点暗下去。",
+                unlocks: {
+                    textlines: [{ dialogue: "地精火车车厢", lines: ["闲聊"] }],
+                },
+                locks_lines: ["邻座"],
+            }),
+            "闲聊": new Textline({
+                name: "（和洛恩聊聊）",
+                text: "「学院这几年怎么样？」洛恩靠在椅背上，「我走的时候，赵主任还没升职。」<br>"+
+                      "你从新生赛讲到炼丹大会，他听得直点头，听到邪教的时候皱起眉：<br>"+
+                      "「沼泽那事我也听过风。」他低声说，「北边不太平，黑气、没来由的兽群……都不是自然的东西。」<br>"+
+                      "「所以这趟我才跟着来。」他把腰间的短刀往旁边挪了挪，「真出了事，你不用管我，顾好你自己就行。」",
+                unlocks: {
+                    textlines: [{ dialogue: "地精火车车厢", lines: ["警报"] }],
+                },
+                locks_lines: ["闲聊"],
+            }),
+            "警报": new Textline({
+                name: "（车厢突然晃了一下）",
+                text: "车厢猛地一沉，茶碗从桌上滑下去摔碎。<br>"+
+                      "紧接着是第二下、第三下——货箱在地上滑动，有人的行李从架上掉下来。<br>"+
+                      "窗外传来很低沉的闷响，像有什么大东西在远处奔跑。<br>"+
+                      "洛恩一下子站起来，鼻翼动了动：「兽群。」<br>"+
+                      "车头的汽笛连拉了三声。然后是刺耳的刹车，整列车被拽得往前一顿，停了下来。<br>"+
+                      "车厢外，乘务长在砸门：「都别乱动！前面有东西在撞车！」<br>"+
+                      "洛恩把短刀抽出来，回头看了你一眼：<br>"+
+                      "「走吧。」他说，「总不能让地精自己去挡。」<br>"+
+                      "<br><span style='color:gold'>—— 批次① · 中段 ——</span><br>"+
+                      "<span style='color:#888'>（下一段：车厢外的兽潮，防御战 1 / 2）</span>",
+                unlocks: {
+                    textlines: [],
+                    spec: "train_alarm",
+                },
+                locks_lines: ["警报"],
+            }),
+            "教学": new Textline({
+                name: "（洛恩教你对付兽群）",
+                is_unlocked: false,
+                text: "第一波退下去，地上的黑纹还没散。<br>"+
+                      "洛恩把刀往肩上一扛，走过来：「你这样打不行。」<br>"+
+                      "「兽群不是排队上来送死的。」他抬手指了指夜色里又在聚拢的影子，「你要一出手就扫一片，别跟一只耗。」<br>"+
+                      "他示范了一遍：刀锋走的是弧线，脚步始终侧着，三头犀牛一头都没躲开。<br>"+
+                      "你照着做，手腕一沉，刀光扫出去。<br>"+
+                      "「对，就是这个。」洛恩点头，「记住这个感觉。」<br>"+
+                      "<br><span style='color:#888'>（学会了新姿态【群攻】：同时攻击 3 个目标，攻击力与攻速小幅提升）</span>",
+                unlocks: {
+                    stances: ["群攻"],
+                },
+                locks_lines: ["教学"],
+            }),
+            "感谢": new Textline({
+                name: "（地精车长过来道谢）",
+                is_unlocked: false,
+                text: "最后一头犀牛倒下，荒野里终于安静下来。<br>"+
+                      "地精们喘着气围拢过来，车长抹了一把脸上的灰，从怀里掏出一张边角烫着小火车的票：<br>"+
+                      "「拿着，这张乘车券不要钱。」他把票塞给你，「以后坐我们的车，随便坐。」<br>"+
+                      "洛恩靠在一节车厢上擦刀，冲你挑了下眉：「打得不错。」<br>"+
+                      "车长又说：「这车头得修一阵。不过往西边有个小城，能补给，也有修零件的铺子——我们载你们一程。」",
+                unlocks: {
+                    items: [{ item_name: "地精乘车券", count: 1 }],
+                    textlines: [{ dialogue: "地精火车车厢", lines: ["对地图"] }],
+                    spec: "train_arrive",
+                },
+                locks_lines: ["感谢"],
+            }),
+            "对地图": new Textline({
+                name: "（和地精对地图）",
+                is_unlocked: false,
+                text: "车长把一张周边区域的旧地图铺在货箱上，用指甲在上面划了几道：<br>"+
+                      "「这里是火车停的地方。」他敲了敲一个墨点，「犀牛是从这边过来的——这片是它们的栖息地。」<br>"+
+                      "「再往北，水就是从上游下来的。」他的手指往上移了一段，停在一处没标名字的地方，「最近那边不太干净。」<br>"+
+                      "洛恩俯身看了半晌，抬头看你：「先去犀牛那儿看看。它们不会无缘无故往铁轨这边冲。」<br>"+
+                      "<br><span style='color:gold'>—— 批次① · 终 ——</span><br>"+
+                      "<span style='color:#888'>（下一段：魔犀栖息地）</span>",
+                unlocks: {
+                    flags: ["train_map_read"],
+                    spec: "train_to_habitat",
+                },
+                locks_lines: ["对地图"],
+            }),
+        },
+    });
+
+    // ==========================================================
+    // v0.11 批次②：魔犀栖息地（压制 → 问话 → 净化 → 契约）
+    // ==========================================================
+    dialogues["魔犀栖息地"] = new Dialogue({
+        name: "魔犀栖息地",
+        starting_text: "看看四周",
+        ending_text: "离开",
+        textlines: {
+            "牛王": new Textline({
+                name: "（走近被压制的犀牛王）",
+                is_unlocked: false,
+                text: "犀牛王趴在地上，一只角断了半截，喘得像破风箱。<br>"+
+                      "它抬起头，喉咙里滚出一串低沉的音。<br>"+
+                      "你听懂了——<span style='color:#87CEFA'>实时翻译</span>把它的话翻成一行字：<br>"+
+                      "「……水。水里有东西。喝了，就吵。」<br>"+
+                      "洛恩凑近看了看它角上的黑纹，皱眉：「这黑气比普通犀牛淡多了。」<br>"+
+                      "<span style='color:#888'>（它说“吵”——大概是脑子里一直有声音。）</span>",
+                unlocks: {
+                    textlines: [{ dialogue: "魔犀栖息地", lines: ["水"] }],
+                },
+                locks_lines: ["牛王"],
+            }),
+            "水": new Textline({
+                name: "（检查它的状况）",
+                is_unlocked: false,
+                text: "你顺着它的目光看向坡下——那里有一条从北边流下来的溪。<br>"+
+                      "溪水不浑，可水面浮着一层很淡的暗色，像油膜。<br>"+
+                      "再检查犀牛王：黑气只在皮肉表层，没有往骨头里钻。<br>"+
+                      "「入得不深。」洛恩说，「还能救。」<br>"+
+                      "他抬头看了看天色：「不过靠我们俩，拔不干净。」",
+                unlocks: {
+                    textlines: [{ dialogue: "魔犀栖息地", lines: ["传讯"] }],
+                },
+                locks_lines: ["水"],
+            }),
+            "传讯": new Textline({
+                name: "（用传讯玉简联系校长）",
+                is_unlocked: false,
+                text: "你贴上玉简，把这边的情况说了一遍。<br>"+
+                      "校长的声音隔了一会儿才回来，带着点没睡醒的沙哑：「魔气入体？多深？」<br>"+
+                      "「表层。」你说，「但数量不少。」<br>"+
+                      "「那就还有救。」他那边传来翻东西的声音，「净化符我这儿有现成的，清心咒也抄几份给你。」<br>"+
+                      "「你现在在哪？」<br>"+
+                      "你描述了一下：火车停在半路，北边一片荒坡，坡下有条溪。<br>"+
+                      "「……行，我记下了。」校长顿了顿，「你回来一趟，东西当面给你。」",
+                unlocks: {
+                    textlines: [{ dialogue: "魔犀栖息地", lines: ["回学院"] }],
+                },
+                locks_lines: ["传讯"],
+            }),
+            "回学院": new Textline({
+                name: "（用空间锚点回学院）",
+                is_unlocked: false,
+                text: "你捏碎一枚空间锚点的引子。<br>"+
+                      "眼前一花，再睁眼已经站在学院的走廊里。校长正端着茶站在门口，看见你愣了一下：<br>"+
+                      "「你怎么——」他把后半句咽了回去，摆了摆手，「算了，不问。」<br>"+
+                      "他从柜子里取出一叠符和一小卷抄本，塞进你手里：<br>"+
+                      "「大范围净化符，展开能罩小半个营地。清心咒你带着，念一遍能压住魔气往外涌。」<br>"+
+                      "「记住，」他补了一句，「入得不深的才救得回来。深了的……别硬救。」",
+                unlocks: {
+                    items: [{ item_name: "净化符", count: 3 }],
+                    textlines: [{ dialogue: "魔犀栖息地", lines: ["净化"] }],
+                },
+                locks_lines: ["回学院"],
+            }),
+            "净化": new Textline({
+                name: "（回到栖息地，展开净化符）",
+                is_unlocked: false,
+                text: "你回到坡上，把净化符摊开。<br>"+
+                      "符纸无风自燃，一圈淡金色的光从脚下铺开，漫过犀牛王，又漫向坡下聚着的兽群。<br>"+
+                      "黑气像被烫到一样从皮肉里退出来，一缕缕散在光里。<br>"+
+                      "犀牛王低吼了一声，挣扎着站起来，断角上的黑纹一点点褪成灰色。<br>"+
+                      "它转过头，用剩下那半截角轻轻碰了推你的手背。<br>"+
+                      "洛恩抱着胳膊在旁边看：「它认你了。」",
+                unlocks: {
+                    textlines: [{ dialogue: "魔犀栖息地", lines: ["契约"] }],
+                    spec: "habitat_purify",
+                },
+                locks_lines: ["净化"],
+            }),
+            "契约": new Textline({
+                name: "（和犀牛王签订契约）",
+                is_unlocked: false,
+                text: "你把手按在它额头上。<br>"+
+                      "它闭上眼，喉咙里滚出一声很轻的响，像是回应。<br>"+
+                      "一道温热的联系顺着掌心缠上来——从此它跟你共享同一条命。<br>"+
+                      "「成了。」洛恩吹了声口哨，「一头犀牛王当灵宠，北境这一趟没白来。」<br>"+
+                      "<br><span style='color:#888'>（获得【契约灵宠·魔犀牛王】：攻击/防御 +5%，生命上限 +10%）</span>",
+                unlocks: {
+                    textlines: [{ dialogue: "魔犀栖息地", lines: ["上游"] }],
+                    spec: "pet_contract",
+                },
+                locks_lines: ["契约"],
+            }),
+            "上游": new Textline({
+                name: "（看看溪水的上游）",
+                is_unlocked: false,
+                text: "兽群安静下来，坡下只剩溪水的声音。<br>"+
+                      "你蹲下来看那层暗色——它顺着水流从北边过来，一路没散。<br>"+
+                      "「水是从上游来的。」洛恩说，「上面肯定有什么东西。」<br>"+
+                      "犀牛王在你身边打了个响鼻，朝北边抬了抬头。<br>"+
+                      "<br><span style='color:gold'>—— 批次② · 终 ——</span><br>"+
+                      "<span style='color:#888'>（下一段：水上游的污染源）</span>",
+                locks_lines: ["上游"],
+            }),
+        },
+    });
+    dialogues["技能进化"] = new Dialogue({
+        name: "技能进化",
+        is_unlocked: false,
+        starting_text: "打开进化树",
+        ending_text: "关闭",
+        textlines: {
+            "进化点": new Textline({
+                name: "（查看进化点与价格）",
+                text: "",
+                unlocks: { spec: "skill_evo:status" },
+            }),
+            "换钱": new Textline({
+                name: "用金钱兑换进化点",
+                text: "",
+                unlocks: { spec: "skill_evo:buy_money" },
+            }),
+            "换杀敌": new Textline({
+                name: "用杀敌数兑换进化点",
+                text: "",
+                unlocks: { spec: "skill_evo:buy_kills" },
+            }),
+            "加点·锋锐": new Textline({ name: "加点：锋锐（攻击）", text: "", unlocks: { spec: "skill_evo:add:edge" } }),
+            "加点·铁壁": new Textline({ name: "加点：铁壁（防御）", text: "", unlocks: { spec: "skill_evo:add:wall" } }),
+            "加点·生机": new Textline({ name: "加点：生机（生命）", text: "", unlocks: { spec: "skill_evo:add:vital" } }),
+            "加点·疾风": new Textline({ name: "加点：疾风（敏捷）", text: "", unlocks: { spec: "skill_evo:add:swift" } }),
+            "加点·迅捷": new Textline({ name: "加点：迅捷（攻速）", text: "", unlocks: { spec: "skill_evo:add:quick" } }),
+            "加点·精准": new Textline({ name: "加点：精准（暴击率）", text: "", unlocks: { spec: "skill_evo:add:precise" } }),
+            "加点·战意": new Textline({ name: "加点：战意（暴击伤害）", text: "", unlocks: { spec: "skill_evo:add:fury" } }),
+            "加点·剑心": new Textline({ name: "加点：剑心（持剑，需读剑心要诀）", text: "", unlocks: { spec: "skill_evo:add:sword" } }),
+            "加点·影步": new Textline({ name: "加点：影步（持匕首，需读影步要诀）", text: "", unlocks: { spec: "skill_evo:add:dagger" } }),
+            "加点·集中": new Textline({ name: "加点：集中（持弓，需读集中心法）", text: "", unlocks: { spec: "skill_evo:add:bow" } }),
+            "洗点": new Textline({
+                name: "洗点重加（免费，不退货币）",
+                text: "",
+                unlocks: { spec: "skill_evo:reset" },
             }),
         },
     });

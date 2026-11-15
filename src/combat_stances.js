@@ -107,7 +107,7 @@ stances["defensive"] = new Stance({
 });
 
 stances["wide"] = new Stance({
-    name: "Broad Arc",
+    name: "横扫",
     id: "wide",
     related_skill: "Wide swing",
     stat_multipliers: {
@@ -298,5 +298,19 @@ stances["SR_Blood"] = new Stance({
     max_bonus: 4,
 });
 
+
+// ★ v0.11 批次①：狼人洛恩教的群攻姿态（打 3，攻/速小幅提升）
+stances["群攻"] = new Stance({
+    name: "群攻",
+    id: "群攻",
+    description: "洛恩教的打法：不要只盯着眼前的敌人。<br>同时攻击 <span style='color:#87CEFA'>3 个</span>目标，攻击力与攻击速度小幅提升。",
+    related_skill: "Wide swing",
+    stat_multipliers: {
+        attack_power: 1.05,
+        attack_speed: 1.05,
+    },
+    target_count: 3,
+    max_bonus: 2,
+});
 
 export {stances};

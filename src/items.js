@@ -8528,6 +8528,63 @@ book_stats["凝元丹配方"] = new BookData({
         value: 0,
         image: "image/item/evolve_script.png",
     });
+
+    // ---- v0.11 批次①：兽潮与乘车券 ----
+    // 硬角/硬皮 四部位内甲（部件，tier 5）
+    const rhino_inner = [
+        ["头",  "helmet interior",    700, 1.6e7, "defense"],
+        ["胸",  "chestplate interior", 820, 2.2e7, "defense"],
+        ["腿",  "leg armor interior",  760, 1.9e7, "defense"],
+        ["战靴","shoes interior",      640, 1.5e7, "defense"],
+    ];
+    rhino_inner.forEach(([slot, type, def, val]) => {
+        item_templates["硬角" + slot + (slot === "战靴" ? "" : "甲")] = new Armor({
+            id: "硬角" + slot + (slot === "战靴" ? "" : "甲"),
+            name: "硬角" + slot + (slot === "战靴" ? "" : "甲"),
+            description: "用魔化硬角犀牛的断角磨片缝成的" + (slot === "战靴" ? "脚部" : slot + "部") + "内甲，轻、贴身，正面硬得能弹开刀锋。",
+            component_type: type,
+            component_tier: 5,
+            base_defense: def,
+            value: val,
+            image: "image/item/beast_armor.png",
+            stats: {defense: {flat: Math.round(def * 3)}},
+        });
+        item_templates["硬皮" + slot + (slot === "战靴" ? "" : "甲")] = new Armor({
+            id: "硬皮" + slot + (slot === "战靴" ? "" : "甲"),
+            name: "硬皮" + slot + (slot === "战靴" ? "" : "甲"),
+            description: "整张坚硬皮革鞣过之后缝成的" + (slot === "战靴" ? "脚部" : slot + "部") + "内甲，软一些，但更耐穿。偏生命向。",
+            component_type: type,
+            component_tier: 5,
+            base_defense: Math.round(def * 0.8),
+            value: Math.round(val * 0.7),
+            image: "image/item/beast_armor.png",
+            stats: {max_health: {flat: Math.round(def * 6000)}},
+        });
+    });
+    item_templates["坚硬皮革"] = new Material({
+        id: "坚硬皮革", name: "坚硬皮革",
+        description: "从魔化硬角犀牛背上剥下来的厚皮，硬得能立起来，缝内甲正合适。",
+        value: 6000,
+        image: "image/item/O5_leather.png",
+    });
+    item_templates["净化符"] = new OtherItem({
+        id: "净化符", name: "净化符",
+        description: "校长那边连夜画的大范围净化符，展开能罩住小半个营地。对魔气入体的活物有效——前提是入得不深。",
+        value: 0,
+        image: "image/item/light_twig.png",
+    });
+    item_templates["硬角碎片"] = new Material({
+        id: "硬角碎片", name: "硬角碎片",
+        description: "从魔化硬角犀牛角上崩下来的一块，边缘还缠着没散尽的黑纹，摸上去发凉。",
+        value: 8000,
+        image: "image/item/hard_rock.png",
+    });
+    item_templates["地精乘车券"] = new OtherItem({
+        id: "地精乘车券", name: "地精乘车券",
+        description: "地精车长给的免费乘车券，边角烫着一节小火车的图案。凭券可以再坐一次地精火车，不限趟次。",
+        value: 0,
+        image: "image/item/evolve_script.png",
+    });
 })();
 
 book_stats["清心丹配方"] = new BookData({
@@ -8552,7 +8609,7 @@ Object.keys(item_templates).forEach(id => {
  "魔力抵消器", "魔力抵消器·壹", "魔力抵消器·贰", "魔力抵消器·叁",
  "凝元丹配方", "炼丹大会邀请函",
  "清心丹配方", "残缺的决赛丹方","九叶灵芝","邪教令牌",
- "空间戒指", "传讯玉简", "空间转移符"].forEach(id => {
+ "空间戒指", "传讯玉简", "空间转移符", "地精乘车券"].forEach(id => {
     if (item_templates[id]) item_templates[id].no_sell = true;
 });
 

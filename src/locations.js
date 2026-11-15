@@ -1161,6 +1161,113 @@ function get_location_type_penalty(type, stage, stat) {
 	});
 	locations["主城"].connected_locations.push({ location: locations["地精火车站"] });
 
+	// ==========================================================
+	// v0.11 批次①：地精火车 · 车厢（上车后的场景）
+	// ==========================================================
+	locations["地精火车 - 车厢"] = new Location({
+		connected_locations: [{ location: locations["地精火车站"], custom_text: "下车" }],
+		description: "老式绿皮车厢，木座椅、煤烟味，窗外是往北去的荒野。洛恩坐在对面，正把一枚硬币在指节上翻来翻去。",
+		bgm: 3,
+		dialogues: ["地精火车车厢"],
+		is_unlocked: false,
+		name: "地精火车 - 车厢",
+	});
+	locations["地精火车站"].connected_locations.push({ location: locations["地精火车 - 车厢"], custom_text: "上车" });
+
+	// ==========================================================
+	// v0.11 批次①：火车防御战（5 波 / 10 波，每波 2~3 只犀牛）
+	// ==========================================================
+	locations["火车防御战 - 一"] = new Challenge_zone({
+		description: "车厢外的荒野。魔化硬角犀牛一头接一头从夜色里冲出来，地精们举着撬棍和扳手挡在铁轨边。",
+		enemy_count: 5,
+		enemies_list: ["魔化硬角犀牛"],
+		enemy_group_size: [2, 3],
+		is_unlocked: false,
+		is_challenge: true,
+		name: "火车防御战 - 一",
+		rank: 4800,
+		bgm: 3,
+		parent_location: locations["地精火车 - 车厢"],
+		first_reward: { xp: 120000 },
+		repeatable_reward: {
+			flags: ["train_def1_done"],
+			locations: [{location: "火车防御战 - 二"}],
+			textlines: [{ dialogue: "地精火车车厢", lines: ["教学"] }],
+		},
+		unlock_text: "兽潮涌上来了——先挡住前五波！",
+	});
+
+	locations["火车防御战 - 二"] = new Challenge_zone({
+		description: "第二波兽潮比刚才更密。远处还有更多影子在往这边聚，洛恩把刀横在身前：「别停。」",
+		enemy_count: 10,
+		enemies_list: ["魔化硬角犀牛"],
+		enemy_group_size: [3, 3],
+		is_unlocked: false,
+		is_challenge: true,
+		name: "火车防御战 - 二",
+		rank: 4900,
+		bgm: 3,
+		parent_location: locations["地精火车 - 车厢"],
+		first_reward: { xp: 300000 },
+		repeatable_reward: {
+			flags: ["train_def2_done"],
+			textlines: [{ dialogue: "地精火车车厢", lines: ["感谢"] }],
+		},
+		unlock_text: "兽潮还没退——再来十波！",
+	});
+
+	// ==========================================================
+	// v0.11 批次②：魔犀栖息地（兽群 + 犀牛王）
+	// ==========================================================
+	locations["魔犀栖息地"] = new Location({
+		connected_locations: [{ location: locations["地精火车 - 车厢"], custom_text: "回车厢" }],
+		description: "火车停靠点往北的一片荒坡。草被踩得东倒西歪，地上到处是深坑和断树——这里是犀牛群平时待的地方。",
+		bgm: 3,
+		dialogues: ["魔犀栖息地"],
+		is_unlocked: false,
+		name: "魔犀栖息地",
+	});
+
+	locations["魔犀栖息地 - 兽群"] = new Combat_zone({
+		description: "荒坡深处，十几头魔化硬角犀牛正低着头刨地。它们没有立刻冲上来，只是不安地打着响鼻。",
+		enemy_count: 8,
+		enemies_list: ["魔化硬角犀牛"],
+		enemy_group_size: [2, 3],
+		is_unlocked: false,
+		name: "魔犀栖息地 - 兽群",
+		rank: 4800,
+		bgm: 3,
+		parent_location: locations["魔犀栖息地"],
+		first_reward: { xp: 200000 },
+		repeatable_reward: {
+			flags: ["habitat_herd_done"],
+			locations: [{location: "魔犀栖息地 - 牛王"}],
+		},
+		unlock_text: "先把兽群压住，才看得见后面那头大的。",
+	});
+
+	locations["魔犀栖息地 - 牛王"] = new Challenge_zone({
+		description: "兽群散开，坡頂只剩一头犀牛王。它冲你吼了一声，四蹄在地上刨出两道深沟。",
+		enemy_count: 1,
+		enemies_list: ["魔犀牛王"],
+		enemy_group_size: [1, 1],
+		is_unlocked: false,
+		is_challenge: true,
+		name: "魔犀栖息地 - 牛王",
+		rank: 5000,
+		bgm: 3,
+		parent_location: locations["魔犀栖息地"],
+		first_reward: { xp: 500000 },
+		repeatable_reward: {
+			flags: ["habitat_king_done"],
+			textlines: [{ dialogue: "魔犀栖息地", lines: ["牛王"] }],
+		},
+		unlock_text: "犀牛王就在坡顶——压制它！",
+	});
+	// 栖息地里的两条路（战斗图靠 is_unlocked 控制显隐）
+	locations["魔犀栖息地"].connected_locations.push({ location: locations["魔犀栖息地 - 兽群"], custom_text: "往坡里走" });
+	locations["魔犀栖息地"].connected_locations.push({ location: locations["魔犀栖息地 - 牛王"], custom_text: "去坡顶" });
+
 	locations["炼丹大会 - 决赛"] = new Challenge_zone({
 		description: "决赛场上，第二名忽然掀了桌子。袖口下的血纹亮起来的时候，四周的阵纹也跟着亮了。",
 		enemy_count: 1,
@@ -1754,7 +1861,7 @@ locations["矿山"].connected_locations.push({location: locations["矿山 - X"]}
 				alchemy: 0,
 			}
 		},
-		dialogues: ["查看系统词条","灵田种植"],
+		dialogues: ["查看系统词条","灵田种植","技能进化"],
 		traders: ["I级商城"],
     })
 
@@ -1779,7 +1886,7 @@ locations["矿山"].connected_locations.push({location: locations["矿山 - X"]}
                 alchemy: 2,
             }
 		},
-		dialogues: ["查看系统词条","灵田种植"],
+		dialogues: ["查看系统词条","灵田种植","技能进化"],
 		traders: ["II级商城"],
     })
 
@@ -6189,12 +6296,15 @@ locations["城外墓园 - 1"] = new Combat_zone({
 	locations["空间锚点"].connected_locations.push({location: locations["战斗学院"]});	
 	locations["空间锚点"].connected_locations.push({location: locations["系统空间2"]});	
 	locations["空间锚点"].connected_locations.push({location: locations["邪恶沼泽"]});	
-	locations["空间锚点"].connected_locations.push({location: locations["矿山"]});	
+	locations["空间锚点"].connected_locations.push({location: locations["矿山"]});
+// ★ v0.11 北上新地点也进锚点（未解锁时列表里不会显示）
+locations["空间锚点"].connected_locations.push({location: locations["地精火车站"]});
+locations["空间锚点"].connected_locations.push({location: locations["魔犀栖息地"]});	
 
 	// —— 特定地点 → 空间锚点 ——
 	[
 		"未知平原", "乡村小镇", "战斗学院", "主城",
-		"城外墓园", "系统空间2","邪恶沼泽","矿山",
+		"城外墓园", "系统空间2","邪恶沼泽","矿山","魔犀栖息地","地精火车站",
 	].forEach(name => {
 		if(locations[name]) {
 			locations[name].connected_locations.push({

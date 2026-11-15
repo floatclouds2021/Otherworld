@@ -10274,4 +10274,46 @@ C3 862'6757'1272          /1395'8386'2445         exp
     });
 })()
 
+// ==========================================================
+// ★ v0.11 批次①：地精火车 · 兽潮（魔化硬角犀牛）
+// 属性按"有技能树 + 轮回百分比回血"的玩家调过的，偏硬
+// ==========================================================
+;(function(){
+    enemy_templates["魔化硬角犀牛"] = new Enemy({
+        name: "魔化硬角犀牛",
+        description: "比寻常犀牛大出一圈的兽类，角上缠着黑色的纹路，跑起来连铁轨都震。撞上车厢之前，它先压低身子——那是冲锋的起手。",
+        xp_value: 45000,
+        rank: 4800,
+        image: "image/enemy/E9999.png",
+        realm: "<span class=realm_basic><b>纳气境四层</b></span>",
+        size: "medium",
+        spec: [90, 91], // 冲锋 / 硬甲
+        tags: ["beast"],
+        stats: {health: 2600000, attack: 480000, agility: 90000, attack_speed: 0.95, defense: 14000},
+        loot_list: [
+            {item_name: "坚硬皮革", chance: 0.4},
+            {item_name: "硬角碎片", chance: 0.15},
+        ],
+    });
+})();
+
+;(function(){
+    enemy_templates["魔犀牛王"] = new Enemy({
+        name: "魔犀牛王",
+        description: "整个兽群的头领，肩高比普通犀牛还要高出一截。角上的黑纹一层压着一层，可仔细看，那些黑气比它身后的同类要淡一些。",
+        xp_value: 500000,
+        rank: 5000,
+        image: "image/boss/B9999.png",
+        realm: "<span class=realm_basic><b>纳气境六层</b></span>",
+        size: "large",
+        spec: [90, 91, 92], // 冲锋 / 硬甲 / 半血狂暴
+        tags: ["beast"],
+        stats: {health: 12000000, attack: 700000, agility: 110000, attack_speed: 0.9, defense: 30000},
+        loot_list: [
+            {item_name: "硬角碎片", chance: 0.6},
+            {item_name: "坚硬皮革", chance: 0.5},
+        ],
+    });
+})();
+
 export {Enemy, enemy_templates, enemy_killcount};

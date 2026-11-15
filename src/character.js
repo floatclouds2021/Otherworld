@@ -190,6 +190,8 @@ character.active_armor_sets = {};
 character.xp_bonuses = {};
 
 character.bonus_skill_levels = {};
+// ★ v0.11 技能进化：三个武器被动的额外等级（main.js 的 skill_evo_recalc 写入）
+character.skill_evo_levels = {};
 character.xp_bonuses.total_multiplier = {
         hero: 1,
         all: 1,
@@ -688,7 +690,7 @@ character.stats.add_weapon_type_bonuses = function() {
                 //character.stats.multiplier.skills.attack_points = skills[weapon_type_to_skill[character.equipment.weapon.weapon_type]].get_coefficient()**0.3333;
         }
 		if(character.equipment.weapon?.weapon_type === "sword" && window.global_flags?.is_sword_heart_unlocked) {
-			const lv = skills["Swords"].current_level;
+			const lv = skills["Swords"].current_level + (character.skill_evo_levels?.Swords || 0);
 			const mul = 1 + lv * 0.005; // 每级+0.5%
 			character.stats.multiplier.skills.attack_power = (character.stats.multiplier.skills.attack_power || 1) * mul;
 			character.stats.multiplier.skills.defense = (character.stats.multiplier.skills.defense || 1) * mul;
